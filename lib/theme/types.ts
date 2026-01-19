@@ -1,4 +1,4 @@
-export type Theme = 'light' | 'dark' | 'ssv-network';
+export type Theme = 'ssvdark' | 'ssvlight';
 
 export interface ThemeConfig {
   name: Theme;

@@ -13,7 +13,7 @@ interface ThemeContextValue {
 export const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>('ssvlight');
   const [mounted, setMounted] = useState(false);
 
   // Initialize theme from localStorage or system preference
@@ -36,7 +36,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setThemeState(newTheme);
   };
 
-  const themes: Theme[] = ['light', 'dark', 'ssv-network'];
+  const themes: Theme[] = ['ssvdark', 'ssvlight'];
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, themes }}>

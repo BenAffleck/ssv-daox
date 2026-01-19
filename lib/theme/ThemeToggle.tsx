@@ -7,9 +7,8 @@ export default function ThemeToggle() {
   const { theme, setTheme, themes } = useTheme();
 
   const themeLabels: Record<Theme, string> = {
-    light: 'Light',
-    dark: 'Dark',
-    'ssv-network': 'SSV Network',
+    ssvdark: 'SSV Dark',
+    ssvlight: 'SSV Light',
   };
 
   return (

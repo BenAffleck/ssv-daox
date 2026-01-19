@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Default theme (light) - Semantic color tokens */
+/* Default theme (ssv) - Semantic color tokens */
 @theme {
   --color-background: #faf9f5;
   --color-foreground: #141413;
@@ -13,43 +13,30 @@
   --color-card-hover: #f5f4f0;
 }
 
-/* Light theme (explicit) */
-:root[data-theme="light"] {
-  --color-background: #faf9f5;
-  --color-foreground: #141413;
-  --color-primary: #d97757;
-  --color-secondary: #6a9bcc;
-  --color-accent: #788c5d;
-  --color-muted: #b0aea5;
-  --color-border: #e8e6dc;
-  --color-card: #ffffff;
-  --color-card-hover: #f5f4f0;
+/* SSV Network dark theme (derived from ssvlight + SSV explorer dark mode) */
+:root[data-theme="ssvdark"] {
+  --color-background: #0f0f0f;      /* Very dark background */
+  --color-foreground: #f7f7f7;      /* Light text */
+  --color-primary: #2DD4E4;         /* Brighter teal for dark mode */
+  --color-secondary: #9B8BB8;       /* Lighter purple for contrast */
+  --color-accent: #4ADE80;          /* Brighter green for dark mode */
+  --color-muted: #a1a1a1;           /* Lighter gray for visibility */
+  --color-border: #2a2a2a;          /* Dark gray borders */
+  --color-card: #171717;            /* Dark card backgrounds */
+  --color-card-hover: #1f1f1f;      /* Subtle hover state */
 }
 
-/* Dark theme */
-:root[data-theme="dark"] {
-  --color-background: #1a1918;
-  --color-foreground: #faf9f5;
-  --color-primary: #e68a6a;
-  --color-secondary: #7ba9d4;
-  --color-accent: #8fa570;
-  --color-muted: #6b6964;
-  --color-border: #2d2c2a;
-  --color-card: #242320;
-  --color-card-hover: #2f2d2a;
-}
-
-/* SSV.network theme (placeholder) */
-:root[data-theme="ssv-network"] {
-  --color-background: #ffffff;
-  --color-foreground: #000000;
-  --color-primary: #3366ff;
-  --color-secondary: #6b7280;
-  --color-accent: #10b981;
-  --color-muted: #9ca3af;
-  --color-border: #e5e7eb;
-  --color-card: #f9fafb;
-  --color-card-hover: #f3f4f6;
+/* SSV Network theme (light mode - from Figma design) */
+:root[data-theme="ssvlight"] {
+  --color-background: #f7f7f7;      /* Light gray page background */
+  --color-foreground: #171717;      /* Dark text */
+  --color-primary: #1BA5C8;         /* SSV teal brand color */
+  --color-secondary: #6c588d;       /* Purple accent */
+  --color-accent: #22c55e;          /* Green for success/active */
+  --color-muted: #737373;           /* Gray secondary text */
+  --color-border: #e5e5e5;          /* Light gray borders */
+  --color-card: #ffffff;            /* White cards */
+  --color-card-hover: #fafafa;      /* Subtle hover state */
 }
 
 /* Smooth theme transitions */

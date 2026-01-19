@@ -29,7 +29,7 @@ A modular hub for SSV Network DAO members, providing governance tools and insigh
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd dao-hub
+cd ssv-daox
 
 # Install dependencies
 npm install
@@ -59,7 +59,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 ## Project Structure
 
 ```
-dao-hub/
+ssv-daox/
 ├── app/                    # Next.js app directory
 │   ├── [slug]/            # Dynamic module routes
 │   ├── layout.tsx         # Root layout with header

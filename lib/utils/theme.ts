@@ -2,15 +2,15 @@ import { Theme } from '@/lib/theme/types';
 
 /**
  * Detects the user's system theme preference
- * @returns 'dark' if system prefers dark mode, 'light' otherwise
+ * @returns 'ssvdark' if system prefers dark mode, 'ssvlight' otherwise
  */
 export function getSystemTheme(): Theme {
   if (typeof window === 'undefined') {
-    return 'light';
+    return 'ssvlight';
   }
 
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  return prefersDark ? 'dark' : 'light';
+  return prefersDark ? 'ssvdark' : 'ssvlight';
 }
 
 /**
@@ -40,7 +40,7 @@ export function loadThemePreference(): Theme | null {
 
   try {
     const saved = localStorage.getItem('theme');
-    if (saved === 'light' || saved === 'dark' || saved === 'ssv-network') {
+    if (saved === 'ssvdark' || saved === 'ssvlight') {
       return saved;
     }
     return null;
