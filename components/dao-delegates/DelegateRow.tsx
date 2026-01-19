@@ -36,6 +36,9 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
       <td className="p-4 text-center text-sm font-medium text-foreground">
         {delegate.rank}
       </td>
+      <td className="p-4 text-center text-sm text-foreground">
+        {delegate.karmaScore.toLocaleString()}
+      </td>
       <td className="p-4">
         <AddressCell address={delegate.publicAddress} />
       </td>

@@ -49,6 +49,9 @@ export default function TableHeader({
         <SortableHeader field="rank" align="center">
           Rank
         </SortableHeader>
+        <SortableHeader field="karmaScore" align="center">
+          Score
+        </SortableHeader>
         <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
           Wallet Address
         </th>
