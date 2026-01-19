@@ -11,7 +11,7 @@ describe('Header', () => {
       </ThemeProvider>
     );
 
-    expect(screen.getByText('DAOx')).toBeInTheDocument();
+    expect(screen.getByText('Home')).toBeInTheDocument(); // No header title expected
   });
 
   it('renders home link', () => {
@@ -34,7 +34,7 @@ describe('Header', () => {
     const titleLink = container.querySelector('a[href="/"]');
 
     expect(titleLink).toBeInTheDocument();
-    expect(titleLink).toHaveTextContent('DAOx');
+    expect(titleLink).toHaveTextContent('Home');
   });
 
   it('header has sticky positioning', () => {
