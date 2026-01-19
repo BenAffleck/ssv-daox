@@ -14,9 +14,9 @@ export default function EligibilityBadge({ delegate }: EligibilityBadgeProps) {
       badges.push(
         <span
           key={name}
-          className="inline-flex items-center rounded-full bg-accent/20 px-2.5 py-0.5 text-xs font-medium text-accent"
+          className="inline-flex items-center rounded-full bg-secondary/20 px-2.5 py-0.5 text-xs font-medium text-secondary"
         >
-          {name} (Guaranteed)
+          {name} (seated)
         </span>
       );
     });
