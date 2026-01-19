@@ -1,7 +1,11 @@
 # Claude
 CLAUDE.local.md
 .claude/
-.spec/
+
+# Specifications
+.spec/features/
+.spec/plans/
+.spec/progress/
 
 # Dependencies
 node_modules/
