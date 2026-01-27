@@ -5,6 +5,10 @@ import {
 import { serializeEvents } from '@/lib/dao-timeline/logic/event-transformer';
 import { sortEventsByDate } from '@/lib/dao-timeline/logic/event-aggregator';
 import Timeline from '@/components/dao-timeline/Timeline';
+import { getSnapshotTimelineSpaceId } from '@/lib/dao-timeline/config';
+import { fetchTimelineProposals } from '@/lib/snapshot/api/fetch-timeline-proposals';
+import { isAIExtractionAvailable } from '@/lib/ai-extraction';
+import { ProposalForExtraction } from '@/lib/ai-extraction/types';
 
 export const metadata = {
   title: 'DAO Timeline - DAOx',
@@ -23,6 +27,29 @@ export default async function DaoTimelinePage() {
 
   // Get source metadata for filters
   const sources = getSourcesMetadata();
+
+  // Fetch proposals for AI extraction if available
+  let proposals: ProposalForExtraction[] = [];
+  const aiAvailable = isAIExtractionAvailable();
+
+  if (aiAvailable) {
+    const spaceId = getSnapshotTimelineSpaceId();
+    if (spaceId) {
+      try {
+        const snapshotProposals = await fetchTimelineProposals(spaceId);
+        proposals = snapshotProposals.map((p) => ({
+          id: p.id,
+          title: p.title,
+          body: p.body,
+          end: p.end,
+          created: p.created,
+          link: p.link,
+        }));
+      } catch (error) {
+        console.error('Failed to fetch proposals for AI extraction:', error);
+      }
+    }
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
@@ -61,7 +88,12 @@ export default async function DaoTimelinePage() {
           </p>
         </div>
       ) : (
-        <Timeline events={serializedEvents} sources={sources} />
+        <Timeline
+          events={serializedEvents}
+          sources={sources}
+          proposals={proposals}
+          aiExtractionAvailable={aiAvailable}
+        />
       )}
     </div>
   );

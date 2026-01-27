@@ -21,6 +21,9 @@ ssv-daox/
 │   ├── layout.tsx            # Root layout + ThemeProvider
 │   ├── globals.css           # Tailwind v4 + theme tokens
 │   ├── [slug]/               # Dynamic module routes (fallback)
+│   ├── api/                  # API Routes
+│   │   └── ai-extraction/    # AI extraction endpoint
+│   │       └── route.ts      # POST /api/ai-extraction
 │   ├── dao-delegates/        # DAO Delegates module
 │   │   └── page.tsx          # Server component (data orchestration)
 │   └── dao-timeline/         # DAO Timeline module
@@ -36,11 +39,13 @@ ssv-daox/
 │   │   ├── DelegateRow.tsx       # Server: row rendering
 │   │   └── *Badge.tsx            # Server: badge components
 │   └── dao-timeline/         # DAO Timeline components
-│       ├── Timeline.tsx          # Client: main container
+│       ├── Timeline.tsx          # Client: main container + AI state
 │       ├── TimelineFilterControls.tsx
 │       ├── TimelineView.tsx      # Client: grouped display
-│       ├── EventCard.tsx         # Event display
-│       └── SourceBadge.tsx       # Source indicator
+│       ├── EventCard.tsx         # Event display + AI metadata
+│       ├── SourceBadge.tsx       # Source indicator
+│       ├── AIExtractionPanel.tsx # AI extraction UI
+│       └── AISourceBadge.tsx     # AI event badge with sparkle
 │
 ├── lib/                      # Business logic
 │   ├── types.ts              # Core types (Module, ModuleStatus)
@@ -62,6 +67,13 @@ ssv-daox/
 │   │   ├── parsers/          # ICS parser
 │   │   ├── logic/            # Transform, expand, aggregate
 │   │   └── utils/            # Date + ICS utilities
+│   ├── ai-extraction/        # AI-powered event extraction
+│   │   ├── types.ts          # AI extraction types + Zod schemas
+│   │   ├── config.ts         # Budget, model, prompt config
+│   │   ├── cache.ts          # File-based caching
+│   │   ├── extract-events.ts # Claude API integration
+│   │   ├── transform.ts      # AI events → UnifiedEvent
+│   │   └── __tests__/        # Unit tests
 │   └── snapshot/             # Snapshot.org integration
 │       ├── config.ts         # API config + env vars
 │       ├── types.ts          # API types
@@ -244,6 +256,35 @@ Displays events from multiple calendar sources in a chronological timeline view.
 - Links directly to proposal on Snapshot
 - Auto-enabled when `SNAPSHOT_DELEGATION_SPACE_FILTER` is set
 
+**AI Extracted Events** (`EventSource.AI_EXTRACTED`)
+- Uses Anthropic Claude API to extract milestones and deadlines from proposal text
+- Client-triggered extraction via button in Timeline UI
+- Time window selection (30d/90d/6m/all) to control costs
+- File-based caching to avoid re-processing proposals
+- Displays with distinct "AI Insights" badge and sparkle icon
+- Shows confidence level (high/medium/low) and source proposal link
+- Cost-controlled with budget limits (~$0.10 per extraction run)
+- Uses Claude Haiku model for efficiency
+
+### AI Extraction Pipeline
+
+```
+1. User selects time window (30d, 90d, 6m, all)
+2. User clicks "Extract Events" button
+3. Client filters proposals by selected time window
+4. Client → POST /api/ai-extraction with filtered proposals
+5. Server checks cache for existing extractions
+6. For uncached proposals:
+   - Generate extraction prompt with proposal body
+   - Call Claude API with Zod schema for structured output
+   - Parse dates (absolute or relative to proposal end date)
+   - Cache results to .cache/ai-extractions.json
+7. Transform AI events → SerializedEvent format
+8. Return to client with extraction stats
+9. Client merges AI events with regular events
+10. Display with filtering support
+```
+
 ### Key Types
 
 ```typescript
@@ -283,6 +324,18 @@ lib/dao-timeline/
     ├── date-utils.ts           # Date helpers
     └── ics-utils.ts            # ICS parsing utilities
 
+lib/ai-extraction/
+├── types.ts                    # AI event types, Zod schemas, time window utils
+├── config.ts                   # Budget, model, prompt generation
+├── cache.ts                    # File-based extraction cache
+├── extract-events.ts           # Claude API integration
+├── transform.ts                # AI events → UnifiedEvent
+├── index.ts                    # Module exports
+└── __tests__/
+    ├── types.test.ts           # Time window filtering tests
+    ├── transform.test.ts       # Transform function tests
+    └── config.test.ts          # Config function tests
+
 lib/snapshot/api/
 └── fetch-timeline-proposals.ts # Snapshot proposals fetcher
 ```
@@ -297,15 +350,23 @@ DAO_CALENDAR_ICS_URL=https://calendar.example.com/dao.ics
 SNAPSHOT_DELEGATION_SPACE_FILTER=mainnet.ssvnetwork.eth
 # Or override with:
 SNAPSHOT_TIMELINE_SPACE_ID=mainnet.ssvnetwork.eth
+
+# AI Extraction (optional)
+ANTHROPIC_API_KEY=sk-ant-...           # Anthropic API key
+AI_EXTRACTION_ENABLED=true             # Enable AI extraction feature
+AI_EXTRACTION_MAX_BUDGET=1.00          # Max USD per extraction run
+AI_EXTRACTION_MODEL=haiku              # Model: haiku, sonnet, or opus
 ```
 
 ### UI Components
 
-- **Timeline.tsx** (client) - Filter state, event grouping
+- **Timeline.tsx** (client) - Filter state, event grouping, AI extraction state
 - **TimelineFilterControls.tsx** (client) - Source filter, past events toggle
 - **TimelineView.tsx** (client) - Day groups with headers
-- **EventCard.tsx** - Event display with time, title, description, badges
+- **EventCard.tsx** - Event display with time, title, description, badges, AI source info
 - **SourceBadge.tsx** - Color-coded source indicator
+- **AIExtractionPanel.tsx** (client) - AI extraction button, progress, stats
+- **AISourceBadge.tsx** - Specialized badge with sparkle icon for AI events
 
 ---
 

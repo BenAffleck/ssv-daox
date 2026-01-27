@@ -4,6 +4,7 @@
 export enum EventSource {
   ICS = 'ics',
   SNAPSHOT_PROPOSALS = 'snapshot_proposals',
+  AI_EXTRACTED = 'ai_extracted',
 }
 
 /**

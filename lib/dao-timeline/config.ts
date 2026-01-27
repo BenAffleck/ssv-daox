@@ -84,6 +84,7 @@ export const SOURCE_COLORS: Record<string, string> = {
   secondary: 'bg-secondary text-secondary-foreground',
   accent: 'bg-accent text-accent-foreground',
   governance: 'bg-amber-500/20 text-amber-700 dark:text-amber-400',
+  'ai-insights': 'bg-violet-500/20 text-violet-700 dark:text-violet-400',
 };
 
 /**
