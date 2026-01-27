@@ -155,10 +155,10 @@ Shows each delegate's voting activity across the N most recent closed proposals 
 2. `fetchVotes()` - Get all votes for those proposals (paginated, 1000/page)
 3. `fetchVoteParticipation()` - Build map: `address → participation %`
 
-**Display:** Color-coded badge with tooltip
-- 90-100%: Green (high participation)
-- 80-89%: Yellow (medium participation)
-- 0-79%: Red (low participation)
+**Display:** Color-coded badge with tooltip (using semantic theme tokens)
+- 90-100%: `accent` (green) - high participation
+- 80-89%: `warning` (amber) - medium participation
+- 0-79%: `danger` (red) - low participation
 
 Uses the same space ID as delegation (`SNAPSHOT_DELEGATION_SPACE_FILTER`).
 

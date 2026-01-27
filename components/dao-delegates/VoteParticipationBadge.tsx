@@ -5,21 +5,23 @@ interface VoteParticipationBadgeProps {
 
 /**
  * Badge showing vote participation rate with color coding
- * - 80-100%: green (high participation)
- * - 40-79%: yellow (medium participation)
- * - 0-39%: red (low participation)
+ * Uses semantic theme tokens for consistent styling across themes
+ * - 90-100%: accent (green) - high participation
+ * - 80-89%: warning (amber) - medium participation
+ * - 0-79%: danger (red) - low participation
  */
 export default function VoteParticipationBadge({
-  participationRate, proposalCount
+  participationRate,
+  proposalCount,
 }: VoteParticipationBadgeProps) {
   // Determine color based on participation level
   let colorClass: string;
   if (participationRate >= 90) {
-    colorClass = 'text-accent bg-green-100';
+    colorClass = 'bg-accent/20 text-accent';
   } else if (participationRate >= 80) {
-    colorClass = 'text-muted bg-yellow-100';
+    colorClass = 'bg-warning/20 text-warning';
   } else {
-    colorClass = 'text-muted bg-red-100';
+    colorClass = 'bg-danger/20 text-danger';
   }
 
   return (
