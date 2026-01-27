@@ -130,11 +130,12 @@ The primary implemented module. Shows a ranked delegate leaderboard with eligibi
 1. Fetch CSV from Karma API
 2. Fetch committee members from Snapshot (parallel)
 3. Fetch delegation recipients from The Graph (parallel)
-4. Build eligibility Sets (O(1) lookups)
-5. Transform CSV → Delegate objects
-6. Calculate ranks by karma score
-7. Run three-phase program assignment
-8. Pass to client for filtering/sorting
+4. Fetch vote participation from Snapshot (parallel)
+5. Build eligibility Sets (O(1) lookups)
+6. Transform CSV → Delegate objects (inject participation rates)
+7. Calculate ranks by karma score
+8. Run three-phase program assignment
+9. Pass to client for filtering/sorting
 ```
 
 ### Three-Phase Program Assignment
@@ -144,6 +145,22 @@ The primary implemented module. Shows a ranked delegate leaderboard with eligibi
 3. **Phase 2:** Competitive allocation for eligible + complete profile delegates
 
 Configuration in `lib/dao-delegates/config.ts`.
+
+### Vote Participation
+
+Shows each delegate's voting activity across the N most recent closed proposals (configurable via `SNAPSHOT_CONFIG.voteParticipation.proposalCount`, default: 5).
+
+**Data flow:**
+1. `fetchProposals()` - Get latest closed proposals from Snapshot Hub
+2. `fetchVotes()` - Get all votes for those proposals (paginated, 1000/page)
+3. `fetchVoteParticipation()` - Build map: `address → participation %`
+
+**Display:** Color-coded badge with tooltip
+- 90-100%: Green (high participation)
+- 80-89%: Yellow (medium participation)
+- 0-79%: Red (low participation)
+
+Uses the same space ID as delegation (`SNAPSHOT_DELEGATION_SPACE_FILTER`).
 
 ### Key Environment Variables
 
@@ -194,4 +211,4 @@ npm run type-check # TypeScript check
 
 ---
 
-*Last Updated: 2026-01-19*
+*Last Updated: 2026-01-27*

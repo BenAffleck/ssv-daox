@@ -1,6 +1,7 @@
 import { Delegate, KarmaDelegateCSV, EligibilityLists } from '../types';
 import { checkEligibility, isAlreadyDelegated } from '../eligibility/checker';
 import { formatAddress } from '../utils/address';
+import type { VoteParticipationMap } from '@/lib/snapshot/types';
 
 /**
  * Transforms CSV delegate data into Delegate objects
@@ -8,7 +9,8 @@ import { formatAddress } from '../utils/address';
  */
 export function transformDelegates(
   csvDelegates: KarmaDelegateCSV[],
-  lists: EligibilityLists
+  lists: EligibilityLists,
+  voteParticipation?: VoteParticipationMap
 ): Delegate[] {
   return csvDelegates.map((csv) => {
     // Parse numeric fields
@@ -30,6 +32,10 @@ export function transformDelegates(
     const isProfileComplete =
       Boolean(csv.forumHandle && csv.forumHandle.trim()) &&
       Boolean(csv.discordUsername && csv.discordUsername.trim());
+
+    // Get vote participation rate (normalize address to lowercase for lookup)
+    const voteParticipationRate =
+      voteParticipation?.[csv.publicAddress.toLowerCase()] ?? 0;
 
     const delegate: Delegate = {
       // Raw CSV data
@@ -57,6 +63,9 @@ export function transformDelegates(
 
       // Programs (will be set by program assigner)
       delegationPrograms: [],
+
+      // Vote participation
+      voteParticipationRate,
     };
 
     return delegate;

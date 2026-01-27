@@ -6,6 +6,7 @@ import { calculateRanks } from '@/lib/dao-delegates/logic/rank-calculator';
 import { assignDelegationPrograms } from '@/lib/dao-delegates/logic/program-assigner';
 import { fetchAllCommitteeMembers } from '@/lib/snapshot/api/fetch-all-committees';
 import { fetchConfiguredDelegationRecipients } from '@/lib/snapshot/api/fetch-delegation-recipients';
+import { fetchVoteParticipation } from '@/lib/snapshot/api/fetch-vote-participation';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
 
@@ -15,12 +16,14 @@ export const metadata = {
 };
 
 export default async function DaoDelegatesPage() {
-  // Fetch external data in parallel (CSV, committee data, and delegation recipients)
-  const [csvData, committees, delegationRecipients] = await Promise.all([
-    fetchDelegatesCSV(),
-    fetchAllCommitteeMembers(),
-    fetchConfiguredDelegationRecipients(),
-  ]);
+  // Fetch external data in parallel (CSV, committee data, delegation recipients, and vote participation)
+  const [csvData, committees, delegationRecipients, voteParticipation] =
+    await Promise.all([
+      fetchDelegatesCSV(),
+      fetchAllCommitteeMembers(),
+      fetchConfiguredDelegationRecipients(),
+      fetchVoteParticipation(SNAPSHOT_CONFIG.delegation.spaceFilter),
+    ]);
 
   // Parse CSV into objects
   const csvDelegates = parseCSV(csvData);
@@ -32,8 +35,8 @@ export default async function DaoDelegatesPage() {
     delegationRecipients
   );
 
-  // Transform CSV data to Delegate objects
-  let delegates = transformDelegates(csvDelegates, lists);
+  // Transform CSV data to Delegate objects (including vote participation)
+  let delegates = transformDelegates(csvDelegates, lists, voteParticipation);
 
   // Calculate ranks based on karma score
   delegates = calculateRanks(delegates);

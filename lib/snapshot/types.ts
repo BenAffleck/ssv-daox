@@ -93,3 +93,43 @@ export interface SnapshotDelegation {
 export interface DelegationsQueryResponse {
   delegations: SnapshotDelegation[];
 }
+
+/**
+ * Snapshot proposal object
+ */
+export interface SnapshotProposal {
+  id: string;
+  title: string;
+  end: number;
+  state: string;
+}
+
+/**
+ * Response from proposals query
+ */
+export interface ProposalsQueryResponse {
+  proposals: SnapshotProposal[];
+}
+
+/**
+ * Snapshot vote object
+ */
+export interface SnapshotVote {
+  id: string;
+  voter: string;
+  proposal: {
+    id: string;
+  };
+}
+
+/**
+ * Response from votes query
+ */
+export interface VotesQueryResponse {
+  votes: SnapshotVote[];
+}
+
+/**
+ * Map of voter addresses to their vote participation rate (0-100)
+ */
+export type VoteParticipationMap = { [address: string]: number };
