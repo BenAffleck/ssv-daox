@@ -45,10 +45,9 @@ export default function Timeline({ events, sources }: TimelineProps) {
 
     // Filter by source
     if (selectedSources.length > 0) {
-      filtered = filtered.filter((event) => {
-        const sourceId = event.id.split('-')[0];
-        return selectedSources.includes(sourceId);
-      });
+      filtered = filtered.filter((event) =>
+        selectedSources.includes(event.sourceId)
+      );
     }
 
     // Filter past events

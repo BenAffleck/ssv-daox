@@ -95,7 +95,7 @@ export interface DelegationsQueryResponse {
 }
 
 /**
- * Snapshot proposal object
+ * Snapshot proposal object (basic - for vote participation)
  */
 export interface SnapshotProposal {
   id: string;
@@ -109,6 +109,27 @@ export interface SnapshotProposal {
  */
 export interface ProposalsQueryResponse {
   proposals: SnapshotProposal[];
+}
+
+/**
+ * Snapshot proposal with full details for timeline display
+ */
+export interface SnapshotTimelineProposal {
+  id: string;
+  title: string;
+  body: string;
+  created: number;
+  start: number;
+  end: number;
+  state: string;
+  link: string;
+}
+
+/**
+ * Response from timeline proposals query
+ */
+export interface TimelineProposalsQueryResponse {
+  proposals: SnapshotTimelineProposal[];
 }
 
 /**

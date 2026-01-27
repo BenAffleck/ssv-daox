@@ -40,36 +40,31 @@ export default function TimelineView({
 
   return (
     <div className="space-y-8">
-      {groups.map((group) => {
-        // Get source ID from first event's ID (format: sourceId-eventUid-instanceIndex)
-        const getSourceId = (eventId: string) => eventId.split('-')[0];
-
-        return (
-          <div key={group.date.toISOString()}>
-            {/* Day header */}
-            <div className="mb-4 flex items-center gap-4">
-              <h2 className="font-heading text-xl font-semibold text-foreground">
-                {group.label}
-              </h2>
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-sm text-muted">
-                {group.events.length} event{group.events.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-
-            {/* Events for this day */}
-            <div className="space-y-3">
-              {group.events.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  sourceColor={sourceColors[getSourceId(event.id)]}
-                />
-              ))}
-            </div>
+      {groups.map((group) => (
+        <div key={group.date.toISOString()}>
+          {/* Day header */}
+          <div className="mb-4 flex items-center gap-4">
+            <h2 className="font-heading text-xl font-semibold text-foreground">
+              {group.label}
+            </h2>
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-sm text-muted">
+              {group.events.length} event{group.events.length !== 1 ? 's' : ''}
+            </span>
           </div>
-        );
-      })}
+
+          {/* Events for this day */}
+          <div className="space-y-3">
+            {group.events.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                sourceColor={sourceColors[event.sourceId]}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

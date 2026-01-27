@@ -3,11 +3,15 @@
  */
 
 import { getEventSources } from '../config';
-import { transformICSEvents } from '../logic/event-transformer';
+import {
+  transformICSEvents,
+  transformSnapshotProposals,
+} from '../logic/event-transformer';
 import { expandAllRecurringEvents } from '../logic/recurrence-expander';
 import { mergeEvents } from '../logic/event-aggregator';
 import { EventSource, EventSourceConfig, UnifiedEvent } from '../types';
 import { fetchICSFromUrl } from './fetch-ics';
+import { fetchTimelineProposals } from '@/lib/snapshot/api/fetch-timeline-proposals';
 
 /**
  * Fetch events from a single source
@@ -21,7 +25,12 @@ async function fetchFromSource(
       const transformed = transformICSEvents(rawEvents, source);
       return expandAllRecurringEvents(transformed);
     }
-    // Future: add more source types here
+    case EventSource.SNAPSHOT_PROPOSALS: {
+      // source.url contains the space ID for Snapshot sources
+      const spaceId = source.url;
+      const proposals = await fetchTimelineProposals(spaceId);
+      return transformSnapshotProposals(proposals, source, spaceId);
+    }
     default:
       console.warn(`Unknown source type: ${source.type}`);
       return [];

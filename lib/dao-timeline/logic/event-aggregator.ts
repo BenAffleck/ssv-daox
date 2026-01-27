@@ -34,11 +34,7 @@ export function filterBySource(
 ): UnifiedEvent[] {
   if (!sourceIds.length) return events;
 
-  // Extract source ID from event ID (format: sourceId-eventUid)
-  return events.filter((event) => {
-    const eventSourceId = event.id.split('-')[0];
-    return sourceIds.includes(eventSourceId);
-  });
+  return events.filter((event) => sourceIds.includes(event.sourceId));
 }
 
 /**

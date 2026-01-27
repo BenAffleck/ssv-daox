@@ -3,7 +3,7 @@
  */
 export enum EventSource {
   ICS = 'ics',
-  // Future: GOOGLE_CALENDAR, NOTION, SNAPSHOT_PROPOSALS
+  SNAPSHOT_PROPOSALS = 'snapshot_proposals',
 }
 
 /**
@@ -23,6 +23,7 @@ export interface EventSourceConfig {
  */
 export interface UnifiedEvent {
   id: string;
+  sourceId: string;
   title: string;
   description: string | null;
   startDate: Date;
@@ -42,6 +43,7 @@ export interface UnifiedEvent {
  */
 export interface SerializedEvent {
   id: string;
+  sourceId: string;
   title: string;
   description: string | null;
   startDate: string; // ISO string

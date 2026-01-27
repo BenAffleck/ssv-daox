@@ -21,18 +21,26 @@ ssv-daox/
 │   ├── layout.tsx            # Root layout + ThemeProvider
 │   ├── globals.css           # Tailwind v4 + theme tokens
 │   ├── [slug]/               # Dynamic module routes (fallback)
-│   └── dao-delegates/        # DAO Delegates module
-│       └── page.tsx          # Server component (data orchestration)
+│   ├── dao-delegates/        # DAO Delegates module
+│   │   └── page.tsx          # Server component (data orchestration)
+│   └── dao-timeline/         # DAO Timeline module
+│       └── page.tsx          # Server component (event aggregation)
 │
 ├── components/               # Shared components
 │   ├── Header.tsx            # App header
 │   ├── ModuleCard.tsx        # Landing page cards
-│   └── dao-delegates/        # Module-specific components
-│       ├── DelegatesTable.tsx    # Client: filter/sort state
-│       ├── FilterControls.tsx    # Client: filter UI
-│       ├── TableHeader.tsx       # Client: sortable headers
-│       ├── DelegateRow.tsx       # Server: row rendering
-│       └── *Badge.tsx            # Server: badge components
+│   ├── dao-delegates/        # DAO Delegates components
+│   │   ├── DelegatesTable.tsx    # Client: filter/sort state
+│   │   ├── FilterControls.tsx    # Client: filter UI
+│   │   ├── TableHeader.tsx       # Client: sortable headers
+│   │   ├── DelegateRow.tsx       # Server: row rendering
+│   │   └── *Badge.tsx            # Server: badge components
+│   └── dao-timeline/         # DAO Timeline components
+│       ├── Timeline.tsx          # Client: main container
+│       ├── TimelineFilterControls.tsx
+│       ├── TimelineView.tsx      # Client: grouped display
+│       ├── EventCard.tsx         # Event display
+│       └── SourceBadge.tsx       # Source indicator
 │
 ├── lib/                      # Business logic
 │   ├── types.ts              # Core types (Module, ModuleStatus)
@@ -47,6 +55,13 @@ ssv-daox/
 │   │   ├── api/              # Data fetching
 │   │   ├── eligibility/      # Eligibility rules
 │   │   └── logic/            # Business logic
+│   ├── dao-timeline/         # DAO Timeline logic
+│   │   ├── types.ts          # Event types, sources
+│   │   ├── config.ts         # Source configuration
+│   │   ├── api/              # Source fetchers, registry
+│   │   ├── parsers/          # ICS parser
+│   │   ├── logic/            # Transform, expand, aggregate
+│   │   └── utils/            # Date + ICS utilities
 │   └── snapshot/             # Snapshot.org integration
 │       ├── config.ts         # API config + env vars
 │       ├── types.ts          # API types
@@ -197,6 +212,100 @@ THEGRAPH_API_KEY=your_key
 SNAPSHOT_DELEGATION_SOURCE_ADDRESSES=0x...,0x...
 SNAPSHOT_DELEGATION_SPACE_FILTER=ssv.dao.eth
 ```
+
+---
+
+## DAO Timeline Module
+
+Displays events from multiple calendar sources in a chronological timeline view. Supports ICS calendars and Snapshot governance proposals.
+
+### Data Pipeline
+
+```
+1. Load event sources from config (env vars)
+2. Fetch from all sources in parallel:
+   - ICS: Fetch → Parse → Transform → Expand recurrence
+   - Snapshot: Fetch proposals → Transform to events
+3. Merge all events
+4. Client-side: Filter by source, toggle past events
+5. Group by day for display
+```
+
+### Event Sources
+
+**ICS Calendar** (`EventSource.ICS`)
+- Custom RFC 5545 parser (no external dependency)
+- Handles line folding, all-day events, timezones
+- Expands RRULE recurrence (DAILY, WEEKLY, MONTHLY, YEARLY)
+
+**Snapshot Proposals** (`EventSource.SNAPSHOT_PROPOSALS`)
+- Fetches from Snapshot Hub GraphQL API
+- Shows voting period (start → end) as timeline events
+- Links directly to proposal on Snapshot
+- Auto-enabled when `SNAPSHOT_DELEGATION_SPACE_FILTER` is set
+
+### Key Types
+
+```typescript
+interface UnifiedEvent {
+  id: string;
+  sourceId: string;           // For filtering
+  title: string;
+  description: string | null;
+  startDate: Date;
+  endDate: Date | null;
+  isAllDay: boolean;
+  source: EventSource;
+  sourceName: string;
+  sourceUrl: string | null;   // Link to external event
+  location: string | null;
+  isRecurring: boolean;
+  metadata: Record<string, unknown>;
+}
+```
+
+### Directory Structure
+
+```
+lib/dao-timeline/
+├── types.ts                    # UnifiedEvent, EventSource enum
+├── config.ts                   # Source registration, colors
+├── api/
+│   ├── fetch-ics.ts            # ICS fetcher
+│   └── event-source-registry.ts # Orchestrates all sources
+├── parsers/
+│   └── ics-parser.ts           # RFC 5545 parser
+├── logic/
+│   ├── event-transformer.ts    # Raw → UnifiedEvent
+│   ├── recurrence-expander.ts  # RRULE expansion
+│   └── event-aggregator.ts     # Filter, sort, group
+└── utils/
+    ├── date-utils.ts           # Date helpers
+    └── ics-utils.ts            # ICS parsing utilities
+
+lib/snapshot/api/
+└── fetch-timeline-proposals.ts # Snapshot proposals fetcher
+```
+
+### Environment Variables
+
+```bash
+# ICS Calendar (optional)
+DAO_CALENDAR_ICS_URL=https://calendar.example.com/dao.ics
+
+# Snapshot Proposals (uses existing delegation space)
+SNAPSHOT_DELEGATION_SPACE_FILTER=mainnet.ssvnetwork.eth
+# Or override with:
+SNAPSHOT_TIMELINE_SPACE_ID=mainnet.ssvnetwork.eth
+```
+
+### UI Components
+
+- **Timeline.tsx** (client) - Filter state, event grouping
+- **TimelineFilterControls.tsx** (client) - Source filter, past events toggle
+- **TimelineView.tsx** (client) - Day groups with headers
+- **EventCard.tsx** - Event display with time, title, description, badges
+- **SourceBadge.tsx** - Color-coded source indicator
 
 ---
 
