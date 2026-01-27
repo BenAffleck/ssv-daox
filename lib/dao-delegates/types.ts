@@ -23,6 +23,9 @@ export interface Delegate {
 
   // Programs
   delegationPrograms: string[];
+
+  // Vote participation
+  voteParticipationRate: number;
 }
 
 export interface DelegationProgram {

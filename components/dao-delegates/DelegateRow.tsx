@@ -2,8 +2,10 @@ import { Delegate } from '@/lib/dao-delegates/types';
 import EligibilityBadge from './EligibilityBadge';
 import ProgramBadge from './ProgramBadge';
 import DelegationStatusBadge from './DelegationStatusBadge';
+import VoteParticipationBadge from './VoteParticipationBadge';
 import AddressCell from './AddressCell';
 import NameCell from './NameCell';
+import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 
 interface DelegateRowProps {
   delegate: Delegate;
@@ -72,6 +74,9 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
             Incomplete
           </span>
         )}
+      </td>
+      <td className="p-4">
+        <VoteParticipationBadge participationRate={delegate.voteParticipationRate} proposalCount={SNAPSHOT_CONFIG.voteParticipation.proposalCount} />
       </td>
       <td className="p-4">
         {nextRoundAction ? (

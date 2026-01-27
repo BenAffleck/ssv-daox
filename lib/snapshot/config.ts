@@ -82,4 +82,7 @@ export const SNAPSHOT_CONFIG = {
     grantees: parseAddresses(process.env.GRANTEES),
     professional: parseAddresses(process.env.PROFESSIONAL),
   },
+  voteParticipation: {
+    proposalCount: 5,
+  },
 } as const;
