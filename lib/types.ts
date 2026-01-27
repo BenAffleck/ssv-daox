@@ -10,3 +10,12 @@ export interface Module {
   status: ModuleStatus;
   sortOrder: number;
 }
+
+export interface CommunityTool {
+  id: string;
+  name: string;
+  description: string;
+  url: string;
+  iconUrl?: string;
+  sortOrder: number;
+}

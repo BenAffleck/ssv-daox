@@ -11,6 +11,8 @@
   --color-border: #e8e6dc;
   --color-card: #ffffff;
   --color-card-hover: #f5f4f0;
+  --color-warning: #b8860b;
+  --color-danger: #c44536;
 }
 
 /* SSV Network dark theme (derived from ssvlight + SSV explorer dark mode) */
@@ -24,6 +26,8 @@
   --color-border: #2a2a2a;          /* Dark gray borders */
   --color-card: #171717;            /* Dark card backgrounds */
   --color-card-hover: #1f1f1f;      /* Subtle hover state */
+  --color-warning: #f59e0b;         /* Amber for warnings */
+  --color-danger: #ef4444;          /* Red for danger/low */
 }
 
 /* SSV Network theme (light mode - from Figma design) */
@@ -37,6 +41,8 @@
   --color-border: #e5e5e5;          /* Light gray borders */
   --color-card: #ffffff;            /* White cards */
   --color-card-hover: #fafafa;      /* Subtle hover state */
+  --color-warning: #d97706;         /* Amber for warnings */
+  --color-danger: #dc2626;          /* Red for danger/low */
 }
 
 /* Smooth theme transitions */
