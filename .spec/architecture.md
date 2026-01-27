@@ -118,6 +118,28 @@ Modules are registered in `lib/data/modules.ts` with status (ACTIVE/COMING_SOON)
 3. Module-specific components go in `components/[module-slug]/`
 4. Module-specific logic goes in `lib/[module-slug]/`
 
+### 5. Community Tools
+
+External community-built tools are displayed in a "Featured DAO Community" section on the landing page. These are distinct from internal modules - they link externally and have a different visual treatment.
+
+**Data model:** `CommunityTool` interface in `lib/types.ts` with:
+- `id`, `name`, `description`, `url`, `sortOrder`
+- Optional `iconUrl` for favicon/logo
+
+**Files:**
+- `lib/data/community-tools.ts` - Tool registry and `getCommunityToolsSorted()`
+- `components/CommunityCard.tsx` - Card with gradient background, colored border, "Community" badge
+
+**Visual treatment:**
+- Gradient background: `from-secondary/10 to-accent/10`
+- Colored border: `border-secondary/40`, hover `border-secondary`
+- Colored shadow: `hover:shadow-secondary/20`
+- External link icon (top-right)
+
+**Adding a community tool:**
+1. Add entry to `lib/data/community-tools.ts`
+2. Provide `id`, `name`, `description`, `url`, and `sortOrder`
+
 ---
 
 ## DAO Delegates Module
