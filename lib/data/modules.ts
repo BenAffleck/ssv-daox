@@ -9,11 +9,18 @@ export const modules: Module[] = [
     sortOrder: 1,
   },
   {
+    id: 'dao-timeline',
+    slug: 'dao-timeline',
+    name: 'DAO Timeline',
+    status: ModuleStatus.ACTIVE,
+    sortOrder: 2,
+  },
+  {
     id: 'governance-proposals',
     slug: 'governance-proposals',
     name: 'Governance Proposals',
     status: ModuleStatus.COMING_SOON,
-    sortOrder: 2,
+    sortOrder: 3,
   },
 ];
 
