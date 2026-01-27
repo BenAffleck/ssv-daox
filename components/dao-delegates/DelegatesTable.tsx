@@ -16,33 +16,38 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
   const [showWithdrawn, setShowWithdrawn] = useState(false);
   const [showChangesOnly, setShowChangesOnly] = useState(false);
   const [showIncompleteProfile, setShowIncompleteProfile] = useState(false);
+  const [showCurrentOnly, setShowCurrentOnly] = useState(false);
   const [sortField, setSortField] = useState<SortField>('rank');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  // Store previous state of dependent filters before "Changes Only" is enabled
+  // Store previous state of dependent filters before "Changes Only" or "Current Only" is enabled
   const previousFiltersRef = useRef<{
     showWithdrawn: boolean;
     showIncompleteProfile: boolean;
+    source: 'changesOnly' | 'currentOnly';
   } | null>(null);
 
-  // When "Changes Only" is checked, save current state and enable dependent filters
+  // When "Changes Only" or "Current Only" is checked, save current state and enable dependent filters
   // When unchecked, restore previous state
   useEffect(() => {
-    if (showChangesOnly) {
+    const forcingFilter = showChangesOnly || showCurrentOnly;
+
+    if (forcingFilter && previousFiltersRef.current === null) {
       // Save current state before forcing to true
       previousFiltersRef.current = {
         showWithdrawn,
         showIncompleteProfile,
+        source: showChangesOnly ? 'changesOnly' : 'currentOnly',
       };
       setShowWithdrawn(true);
       setShowIncompleteProfile(true);
-    } else if (previousFiltersRef.current !== null) {
-      // Restore previous state when unchecking "Changes Only"
+    } else if (!forcingFilter && previousFiltersRef.current !== null) {
+      // Restore previous state when both forcing filters are unchecked
       setShowWithdrawn(previousFiltersRef.current.showWithdrawn);
       setShowIncompleteProfile(previousFiltersRef.current.showIncompleteProfile);
       previousFiltersRef.current = null;
     }
-  }, [showChangesOnly]);
+  }, [showChangesOnly, showCurrentOnly]);
 
   // Handle sort changes
   const handleSort = (field: SortField) => {
@@ -97,6 +102,11 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
       });
     }
 
+    // Apply current delegates only filter (show only delegates currently receiving delegation)
+    if (showCurrentOnly) {
+      filtered = filtered.filter((d) => d.isAlreadyDelegated);
+    }
+
     // Apply incomplete profile filter (hide by default, show when checked)
     if (!showIncompleteProfile) {
       filtered = filtered.filter((d) => d.isProfileComplete);
@@ -136,7 +146,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
     });
 
     return filtered;
-  }, [delegates, searchQuery, showEligibleOnly, showWithdrawn, showChangesOnly, showIncompleteProfile, sortField, sortDirection]);
+  }, [delegates, searchQuery, showEligibleOnly, showWithdrawn, showChangesOnly, showCurrentOnly, showIncompleteProfile, sortField, sortDirection]);
 
   return (
     <div>
@@ -151,7 +161,9 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
         onShowChangesOnlyChange={setShowChangesOnly}
         showIncompleteProfile={showIncompleteProfile}
         onShowIncompleteProfileChange={setShowIncompleteProfile}
-        disableDependentFilters={showChangesOnly}
+        showCurrentOnly={showCurrentOnly}
+        onShowCurrentOnlyChange={setShowCurrentOnly}
+        disableDependentFilters={showChangesOnly || showCurrentOnly}
       />
 
       {filteredDelegates.length === 0 ? (

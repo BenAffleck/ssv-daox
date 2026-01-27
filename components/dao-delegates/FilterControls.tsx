@@ -11,6 +11,8 @@ interface FilterControlsProps {
   onShowChangesOnlyChange: (value: boolean) => void;
   showIncompleteProfile: boolean;
   onShowIncompleteProfileChange: (value: boolean) => void;
+  showCurrentOnly: boolean;
+  onShowCurrentOnlyChange: (value: boolean) => void;
   disableDependentFilters: boolean;
 }
 
@@ -25,6 +27,8 @@ export default function FilterControls({
   onShowChangesOnlyChange,
   showIncompleteProfile,
   onShowIncompleteProfileChange,
+  showCurrentOnly,
+  onShowCurrentOnlyChange,
   disableDependentFilters,
 }: FilterControlsProps) {
   return (
@@ -77,6 +81,17 @@ export default function FilterControls({
           className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
         />
         <span>Changes Only</span>
+      </label>
+
+      {/* Show current delegates only filter */}
+      <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 font-body text-sm text-foreground transition-colors hover:bg-card-hover cursor-pointer">
+        <input
+          type="checkbox"
+          checked={showCurrentOnly}
+          onChange={(e) => onShowCurrentOnlyChange(e.target.checked)}
+          className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+        />
+        <span>Delegates Only</span>
       </label>
 
       {/* Show incomplete profile filter */}
