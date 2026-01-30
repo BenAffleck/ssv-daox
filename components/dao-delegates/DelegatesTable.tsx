@@ -5,6 +5,7 @@ import { Delegate } from '@/lib/dao-delegates/types';
 import FilterControls from './FilterControls';
 import TableHeader, { SortField, SortDirection } from './TableHeader';
 import DelegateRow from './DelegateRow';
+import IncompleteProfileEmptyState from './IncompleteProfileEmptyState';
 
 interface DelegatesTableProps {
   delegates: Delegate[];
@@ -148,6 +149,29 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
     return filtered;
   }, [delegates, searchQuery, showEligibleOnly, showWithdrawn, showChangesOnly, showCurrentOnly, showIncompleteProfile, sortField, sortDirection]);
 
+  // Detect if the search matches a delegate with an incomplete profile that was filtered out
+  const hiddenIncompleteDelegate = useMemo(() => {
+    // Only check when no results, there's a search query, and incomplete profiles are hidden
+    if (filteredDelegates.length > 0 || !searchQuery || showIncompleteProfile) {
+      return null;
+    }
+
+    const query = searchQuery.toLowerCase();
+
+    // Search through ALL delegates (before filtering) for incomplete profile match
+    return (
+      delegates.find(
+        (d) =>
+          !d.isProfileComplete &&
+          d.status.toLowerCase() === 'active' &&
+          (d.displayName.toLowerCase().includes(query) ||
+            d.publicAddress.toLowerCase().includes(query) ||
+            d.name.toLowerCase().includes(query) ||
+            d.ensName.toLowerCase().includes(query))
+      ) || null
+    );
+  }, [delegates, filteredDelegates.length, searchQuery, showIncompleteProfile]);
+
   return (
     <div>
       <FilterControls
@@ -167,15 +191,22 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
       />
 
       {filteredDelegates.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card p-12 text-center">
-          <p className="font-body text-muted">
-            {searchQuery
-              ? 'No delegates match your search'
-              : showEligibleOnly
-              ? 'No eligible delegates found'
-              : 'No delegates found'}
-          </p>
-        </div>
+        hiddenIncompleteDelegate ? (
+          <IncompleteProfileEmptyState
+            delegate={hiddenIncompleteDelegate}
+            onShowIncompleteProfiles={() => setShowIncompleteProfile(true)}
+          />
+        ) : (
+          <div className="rounded-lg border border-border bg-card p-12 text-center">
+            <p className="font-body text-muted">
+              {searchQuery
+                ? 'No delegates match your search'
+                : showEligibleOnly
+                ? 'No eligible delegates found'
+                : 'No delegates found'}
+            </p>
+          </div>
+        )
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border bg-card">
           <table className="w-full">
