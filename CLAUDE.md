@@ -26,10 +26,12 @@ Each feature is an isolated module with a plugin architecture:
 ## Development Commands
 
 - `npm run dev` - Start development server
-- `npm run build` - Build for production
+- `npm run build` - Build for production (also runs type checking)
 - `npm run test` - Run Vitest unit tests
 - `npm run test:e2e` - Run Playwright E2E tests
 - `npm run lint` - Run ESLint
+
+**Type Checking:** Do NOT run `tsc` or `npx tsc` directly on files. The project uses Next.js path aliases (`@/`) and JSX configuration that require the full Next.js build context. Always use `npm run build` to check for TypeScript errors.
 
 ## Key Files
 
