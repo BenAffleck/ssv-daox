@@ -1,6 +1,6 @@
 'use client';
 
-export type SortField = 'rank' | 'karmaScore' | 'delegatedTokens' | 'delegatorCount';
+export type SortField = 'rank' | 'karmaScore' | 'votingPower' | 'delegatedTokens' | 'delegatorCount';
 export type SortDirection = 'asc' | 'desc';
 
 interface TableHeaderProps {
@@ -51,6 +51,9 @@ export default function TableHeader({
         </SortableHeader>
         <SortableHeader field="karmaScore" align="center">
           Score
+        </SortableHeader>
+        <SortableHeader field="votingPower">
+          Voting Power
         </SortableHeader>
         <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
           Wallet Address

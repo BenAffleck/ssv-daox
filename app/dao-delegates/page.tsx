@@ -8,6 +8,7 @@ import { fetchAllCommitteeMembers } from '@/lib/snapshot/api/fetch-all-committee
 import { fetchConfiguredDelegationRecipients } from '@/lib/snapshot/api/fetch-delegation-recipients';
 import { fetchVoteParticipation } from '@/lib/snapshot/api/fetch-vote-participation';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
+import { fetchVotingPower } from '@/lib/gnosis';
 import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
 
 export const metadata = {
@@ -35,8 +36,17 @@ export default async function DaoDelegatesPage() {
     delegationRecipients
   );
 
-  // Transform CSV data to Delegate objects (including vote participation)
-  let delegates = transformDelegates(csvDelegates, lists, voteParticipation);
+  // Only fetch voting power for addresses that are already receiving delegation
+  // Others can fetch on-demand via the API to reduce initial page load time
+  const votingPower = await fetchVotingPower(delegationRecipients);
+
+  // Transform CSV data to Delegate objects (including vote participation and voting power)
+  let delegates = transformDelegates(
+    csvDelegates,
+    lists,
+    voteParticipation,
+    votingPower
+  );
 
   // Calculate ranks based on karma score
   delegates = calculateRanks(delegates);

@@ -1,3 +1,5 @@
+import type { VotingPowerData } from '@/lib/gnosis/types';
+
 export interface Delegate {
   publicAddress: string;
   name: string;
@@ -26,6 +28,9 @@ export interface Delegate {
 
   // Vote participation
   voteParticipationRate: number;
+
+  // Voting power from Gnosis delegation API
+  votingPowerData: VotingPowerData | null;
 }
 
 export interface DelegationProgram {

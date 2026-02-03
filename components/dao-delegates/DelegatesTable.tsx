@@ -127,6 +127,10 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
           aValue = a.karmaScore;
           bValue = b.karmaScore;
           break;
+        case 'votingPower':
+          aValue = a.votingPowerData?.votingPower ?? 0;
+          bValue = b.votingPowerData?.votingPower ?? 0;
+          break;
         case 'delegatedTokens':
           aValue = a.delegatedTokens;
           bValue = b.delegatedTokens;

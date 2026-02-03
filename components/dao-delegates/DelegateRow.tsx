@@ -3,6 +3,7 @@ import EligibilityBadge from './EligibilityBadge';
 import ProgramBadge from './ProgramBadge';
 import DelegationStatusBadge from './DelegationStatusBadge';
 import VoteParticipationBadge from './VoteParticipationBadge';
+import VotingPowerBadge from './VotingPowerBadge';
 import AddressCell from './AddressCell';
 import NameCell from './NameCell';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
@@ -40,6 +41,12 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
       </td>
       <td className="p-4 text-center text-sm text-foreground">
         {delegate.karmaScore.toLocaleString()}
+      </td>
+      <td className="p-4">
+        <VotingPowerBadge
+          votingPowerData={delegate.votingPowerData}
+          address={delegate.publicAddress}
+        />
       </td>
       <td className="p-4">
         <AddressCell address={delegate.publicAddress} />
