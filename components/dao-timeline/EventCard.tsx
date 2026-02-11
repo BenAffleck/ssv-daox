@@ -1,5 +1,6 @@
 import { EventSource, SerializedEvent } from '@/lib/dao-timeline/types';
 import { formatDateRange } from '@/lib/dao-timeline/utils/date-utils';
+import { downloadICS } from '@/lib/dao-timeline/utils/calendar-export';
 import SourceBadge from './SourceBadge';
 import RecurringBadge from './RecurringBadge';
 import AISourceBadge from './AISourceBadge';
@@ -161,6 +162,31 @@ export default function EventCard({ event, sourceColor }: EventCardProps) {
             <SourceBadge name={event.sourceName} color={sourceColor} />
           )}
           {event.isRecurring && <RecurringBadge />}
+          <button
+            type="button"
+            onClick={() => downloadICS(event)}
+            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted transition-colors hover:bg-border hover:text-foreground"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 10.5v6m3-3h-6"
+              />
+            </svg>
+            Add to calendar
+          </button>
         </div>
       </div>
     </div>
