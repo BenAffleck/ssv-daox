@@ -2,10 +2,16 @@ import { getModulesSorted } from '@/lib/data/modules';
 import { getCommunityToolsSorted } from '@/lib/data/community-tools';
 import ModuleCard from '@/components/ModuleCard';
 import CommunityCard from '@/components/CommunityCard';
+import ActiveVotes from '@/components/ActiveVotes';
+import { fetchActiveProposals } from '@/lib/snapshot/api/fetch-active-proposals';
+import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 
-export default function Home() {
+export default async function Home() {
   const modules = getModulesSorted();
   const communityTools = getCommunityToolsSorted();
+
+  const spaceId = SNAPSHOT_CONFIG.delegation.spaceFilter;
+  const activeProposals = spaceId ? await fetchActiveProposals(spaceId) : [];
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-12">
@@ -15,6 +21,8 @@ export default function Home() {
           Modular hub for SSV Network DAO members
         </p>
       </div>
+
+      {activeProposals.length > 0 && <ActiveVotes proposals={activeProposals} />}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {modules.map((module) => (

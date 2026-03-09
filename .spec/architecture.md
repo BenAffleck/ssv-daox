@@ -195,21 +195,53 @@ The primary implemented module. Shows a ranked delegate leaderboard with eligibi
 
 Configuration in `lib/dao-delegates/config.ts`.
 
-### Vote Participation
+### Vote Participation & Active Vote Status
 
-Shows each delegate's voting activity across the N most recent closed proposals (configurable via `SNAPSHOT_CONFIG.voteParticipation.proposalCount`, default: 5).
+Shows each delegate's voting activity in two sections:
 
-**Data flow:**
-1. `fetchProposals()` - Get latest closed proposals from Snapshot Hub
+**Historical Participation** — Color-coded badge showing voting rate across the N most recent closed proposals (configurable via `SNAPSHOT_CONFIG.voteParticipation.proposalCount`, default: 5), with a "Last N closed" label clarifying scope.
+
+**Data flow (historical):**
+1. `fetchProposals()` - Get latest closed, non-flagged proposals from Snapshot Hub
 2. `fetchVotes()` - Get all votes for those proposals (paginated, 1000/page)
 3. `fetchVoteParticipation()` - Build map: `address → participation %`
 
-**Display:** Color-coded badge with tooltip (using semantic theme tokens)
-- 90-100%: `accent` (green) - high participation
-- 80-89%: `warning` (amber) - medium participation
-- 0-79%: `danger` (red) - low participation
+All proposal queries use `flagged: false` to exclude moderator-deleted spam proposals.
+
+**Active Vote Status** — Colored dots showing whether a delegate has voted on each currently active proposal (accent=voted, danger=not voted). Capped at 3 dots with "+N" overflow.
+
+**Data flow (active):**
+1. `fetchActiveProposals()` - Get active proposals with scores/quorum/choices
+2. `fetchActiveVoteStatus()` - Combines active proposals + `fetchVotes()` into a `voterMap: Map<address, Set<proposalId>>`
+3. `transformDelegates()` - Populates `delegate.activeVoteStatus[]` per delegate
+
+**Display:** `VoteParticipationCell` component (replaces `VoteParticipationBadge`)
+- Historical badge colors: 90-100% `accent`, 80-89% `warning`, 0-79% `danger`
+- Active dots: `accent` (voted) / `danger` (not voted), with `title` tooltips
+- Column header: "Vote Activity"
 
 Uses the same space ID as delegation (`SNAPSHOT_DELEGATION_SPACE_FILTER`).
+
+### Active Votes on Home Page
+
+The landing page displays currently active governance proposals when any exist (renders nothing when none).
+
+**Data flow:**
+1. `fetchActiveProposals()` called in `app/page.tsx` (async server component)
+2. `ActiveVotes` section renders `ActiveVoteCard` for each proposal
+
+**ActiveVoteCard displays:**
+- Proposal title (linked to Snapshot)
+- Time remaining badge (e.g., "2d 5h left")
+- Stacked progress bar with score distribution per choice (semantic colors)
+- Voter count and quorum status
+
+**Files:**
+- `lib/snapshot/api/fetch-active-proposals.ts` - GraphQL query for active proposals
+- `lib/snapshot/api/fetch-active-vote-status.ts` - Orchestrator combining proposals + votes
+- `lib/snapshot/utils/time-remaining.ts` - Time formatting utility
+- `components/ActiveVotes.tsx` - Section wrapper
+- `components/ActiveVoteCard.tsx` - Individual proposal card
 
 ### Key Environment Variables
 
@@ -403,4 +435,4 @@ npm run type-check # TypeScript check
 
 ---
 
-*Last Updated: 2026-01-27*
+*Last Updated: 2026-03-09*

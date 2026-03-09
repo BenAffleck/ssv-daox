@@ -154,3 +154,28 @@ export interface VotesQueryResponse {
  * Map of voter addresses to their vote participation rate (0-100)
  */
 export type VoteParticipationMap = { [address: string]: number };
+
+/**
+ * Snapshot proposal with voting data for active votes display
+ */
+export interface SnapshotActiveProposal {
+  id: string;
+  title: string;
+  start: number;
+  end: number;
+  state: string;
+  choices: string[];
+  scores: number[];
+  scores_total: number;
+  votes: number;
+  quorum: number;
+  type: string;
+  link: string;
+}
+
+/**
+ * Response from active proposals query
+ */
+export interface ActiveProposalsQueryResponse {
+  proposals: SnapshotActiveProposal[];
+}

@@ -12,7 +12,7 @@ const PROPOSALS_QUERY = `
   query GetLatestProposals($spaceId: String!, $limit: Int!) {
     proposals(
       first: $limit
-      where: { space: $spaceId, state: "closed" }
+      where: { space: $spaceId, state: "closed", flagged: false }
       orderBy: "end"
       orderDirection: desc
     ) {

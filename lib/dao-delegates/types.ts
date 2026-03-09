@@ -28,6 +28,7 @@ export interface Delegate {
 
   // Vote participation
   voteParticipationRate: number;
+  activeVoteStatus: { proposalId: string; title: string; hasVoted: boolean; end: number }[];
 
   // Voting power from Gnosis delegation API
   votingPowerData: VotingPowerData | null;

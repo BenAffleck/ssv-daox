@@ -2,7 +2,7 @@ import { Delegate } from '@/lib/dao-delegates/types';
 import EligibilityBadge from './EligibilityBadge';
 import ProgramBadge from './ProgramBadge';
 import DelegationStatusBadge from './DelegationStatusBadge';
-import VoteParticipationBadge from './VoteParticipationBadge';
+import VoteParticipationCell from './VoteParticipationCell';
 import VotingPowerBadge from './VotingPowerBadge';
 import AddressCell from './AddressCell';
 import NameCell from './NameCell';
@@ -83,7 +83,11 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
         )}
       </td>
       <td className="p-4">
-        <VoteParticipationBadge participationRate={delegate.voteParticipationRate} proposalCount={SNAPSHOT_CONFIG.voteParticipation.proposalCount} />
+        <VoteParticipationCell
+          participationRate={delegate.voteParticipationRate}
+          proposalCount={SNAPSHOT_CONFIG.voteParticipation.proposalCount}
+          activeVoteStatus={delegate.activeVoteStatus}
+        />
       </td>
       <td className="p-4">
         {nextRoundAction ? (

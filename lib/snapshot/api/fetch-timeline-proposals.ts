@@ -12,7 +12,7 @@ const TIMELINE_PROPOSALS_QUERY = `
   query GetTimelineProposals($spaceId: String!, $limit: Int!) {
     proposals(
       first: $limit
-      where: { space: $spaceId }
+      where: { space: $spaceId, flagged: false }
       orderBy: "created"
       orderDirection: desc
     ) {

@@ -7,6 +7,7 @@ import { assignDelegationPrograms } from '@/lib/dao-delegates/logic/program-assi
 import { fetchAllCommitteeMembers } from '@/lib/snapshot/api/fetch-all-committees';
 import { fetchConfiguredDelegationRecipients } from '@/lib/snapshot/api/fetch-delegation-recipients';
 import { fetchVoteParticipation } from '@/lib/snapshot/api/fetch-vote-participation';
+import { fetchActiveVoteStatus } from '@/lib/snapshot/api/fetch-active-vote-status';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 import { fetchVotingPower } from '@/lib/gnosis';
 import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
@@ -18,12 +19,13 @@ export const metadata = {
 
 export default async function DaoDelegatesPage() {
   // Fetch external data in parallel (CSV, committee data, delegation recipients, and vote participation)
-  const [csvData, committees, delegationRecipients, voteParticipation] =
+  const [csvData, committees, delegationRecipients, voteParticipation, activeVoteData] =
     await Promise.all([
       fetchDelegatesCSV(),
       fetchAllCommitteeMembers(),
       fetchConfiguredDelegationRecipients(),
       fetchVoteParticipation(SNAPSHOT_CONFIG.delegation.spaceFilter),
+      fetchActiveVoteStatus(SNAPSHOT_CONFIG.delegation.spaceFilter),
     ]);
 
   // Parse CSV into objects
@@ -40,12 +42,13 @@ export default async function DaoDelegatesPage() {
   // Others can fetch on-demand via the API to reduce initial page load time
   const votingPower = await fetchVotingPower(delegationRecipients);
 
-  // Transform CSV data to Delegate objects (including vote participation and voting power)
+  // Transform CSV data to Delegate objects (including vote participation, voting power, and active vote status)
   let delegates = transformDelegates(
     csvDelegates,
     lists,
     voteParticipation,
-    votingPower
+    votingPower,
+    activeVoteData
   );
 
   // Calculate ranks based on karma score

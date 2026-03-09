@@ -3,6 +3,7 @@ import { checkEligibility, isAlreadyDelegated } from '../eligibility/checker';
 import { formatAddress } from '../utils/address';
 import type { VoteParticipationMap } from '@/lib/snapshot/types';
 import type { VotingPowerMap } from '@/lib/gnosis/types';
+import type { ActiveVoteData } from '@/lib/snapshot/api/fetch-active-vote-status';
 
 /**
  * Transforms CSV delegate data into Delegate objects
@@ -12,7 +13,8 @@ export function transformDelegates(
   csvDelegates: KarmaDelegateCSV[],
   lists: EligibilityLists,
   voteParticipation?: VoteParticipationMap,
-  votingPower?: VotingPowerMap
+  votingPower?: VotingPowerMap,
+  activeVoteData?: ActiveVoteData
 ): Delegate[] {
   return csvDelegates.map((csv) => {
     // Parse numeric fields
@@ -43,6 +45,17 @@ export function transformDelegates(
     const votingPowerData =
       votingPower?.[csv.publicAddress.toLowerCase()] ?? null;
 
+    // Build active vote status for this delegate
+    const addressLower = csv.publicAddress.toLowerCase();
+    const activeVoteStatus = activeVoteData
+      ? activeVoteData.proposals.map((p) => ({
+          proposalId: p.id,
+          title: p.title,
+          hasVoted: activeVoteData.voterMap.get(addressLower)?.has(p.id) ?? false,
+          end: p.end,
+        }))
+      : [];
+
     const delegate: Delegate = {
       // Raw CSV data
       publicAddress: csv.publicAddress,
@@ -72,6 +85,7 @@ export function transformDelegates(
 
       // Vote participation
       voteParticipationRate,
+      activeVoteStatus,
 
       // Voting power from Gnosis delegation API
       votingPowerData,
