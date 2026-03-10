@@ -67,9 +67,9 @@ function parseAPIError(error: unknown): string {
  */
 function getModelId(): string {
   const modelMap: Record<string, string> = {
-    haiku: 'claude-3-5-haiku-20241022',
-    sonnet: 'claude-sonnet-4-5-20250929',
-    opus: 'claude-opus-4-5-20251101',
+    haiku: 'claude-haiku-4-5-20251001',
+    sonnet: 'claude-sonnet-4-6',
+    opus: 'claude-opus-4-6',
   };
   return modelMap[AI_EXTRACTION_CONFIG.model] || modelMap.haiku;
 }
