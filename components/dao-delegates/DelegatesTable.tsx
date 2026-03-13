@@ -176,6 +176,16 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
     );
   }, [delegates, filteredDelegates.length, searchQuery, showIncompleteProfile]);
 
+  // Collect non-empty handles from filtered delegates
+  const forumHandles = useMemo(
+    () => filteredDelegates.map((d) => d.forumHandle).filter(Boolean),
+    [filteredDelegates]
+  );
+  const discordHandles = useMemo(
+    () => filteredDelegates.map((d) => d.discordUsername).filter(Boolean),
+    [filteredDelegates]
+  );
+
   return (
     <div>
       <FilterControls
@@ -192,6 +202,8 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
         showCurrentOnly={showCurrentOnly}
         onShowCurrentOnlyChange={setShowCurrentOnly}
         disableDependentFilters={showChangesOnly || showCurrentOnly}
+        forumHandles={forumHandles}
+        discordHandles={discordHandles}
       />
 
       {filteredDelegates.length === 0 ? (

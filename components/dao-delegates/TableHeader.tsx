@@ -74,7 +74,8 @@ export default function TableHeader({
           Profile
         </th>
         <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
-          Vote Activity
+          <div>Vote Activity</div>
+          <div className="text-[10px] font-normal text-muted">Last 5 closed</div>
         </th>
         <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
           Next Round

@@ -32,6 +32,10 @@ export interface Delegate {
 
   // Voting power from Gnosis delegation API
   votingPowerData: VotingPowerData | null;
+
+  // Profile handles
+  forumHandle: string;
+  discordUsername: string;
 }
 
 export interface DelegationProgram {

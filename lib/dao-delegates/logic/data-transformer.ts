@@ -89,6 +89,10 @@ export function transformDelegates(
 
       // Voting power from Gnosis delegation API
       votingPowerData,
+
+      // Profile handles
+      forumHandle: csv.forumHandle?.trim() || '',
+      discordUsername: csv.discordUsername?.trim() || '',
     };
 
     return delegate;

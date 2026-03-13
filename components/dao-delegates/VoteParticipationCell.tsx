@@ -45,7 +45,6 @@ export default function VoteParticipationCell({
         >
           {participationRate}%
         </span>
-        <span className="text-[10px] text-muted">Last {proposalCount} closed</span>
       </div>
 
       {/* Active vote dots */}
