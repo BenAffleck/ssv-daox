@@ -5,6 +5,7 @@ import CommunityCard from '@/components/CommunityCard';
 import ActiveVotes from '@/components/ActiveVotes';
 import { fetchActiveProposals } from '@/lib/snapshot/api/fetch-active-proposals';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
+import { isAISummaryAvailable } from '@/lib/ai-summary';
 
 export default async function Home() {
   const modules = getModulesSorted();
@@ -12,6 +13,7 @@ export default async function Home() {
 
   const spaceId = SNAPSHOT_CONFIG.delegation.spaceFilter;
   const activeProposals = spaceId ? await fetchActiveProposals(spaceId) : [];
+  const aiSummaryAvailable = isAISummaryAvailable();
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-12">
@@ -28,7 +30,7 @@ export default async function Home() {
         </p>
       </div>
 
-      {activeProposals.length > 0 && <ActiveVotes proposals={activeProposals} />}
+      {activeProposals.length > 0 && <ActiveVotes proposals={activeProposals} isAISummaryAvailable={aiSummaryAvailable} />}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {modules.map((module) => (

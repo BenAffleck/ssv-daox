@@ -22,8 +22,10 @@ ssv-daox/
 │   ├── globals.css           # Tailwind v4 + theme tokens
 │   ├── [slug]/               # Dynamic module routes (fallback)
 │   ├── api/                  # API Routes
-│   │   └── ai-extraction/    # AI extraction endpoint
-│   │       └── route.ts      # POST /api/ai-extraction
+│   │   ├── ai-extraction/    # AI extraction endpoint
+│   │   │   └── route.ts      # POST /api/ai-extraction
+│   │   └── ai-summary/       # AI summary endpoint
+│   │       └── route.ts      # POST /api/ai-summary
 │   ├── dao-delegates/        # DAO Delegates module
 │   │   └── page.tsx          # Server component (data orchestration)
 │   └── dao-timeline/         # DAO Timeline module
@@ -67,12 +69,22 @@ ssv-daox/
 │   │   ├── parsers/          # ICS parser
 │   │   ├── logic/            # Transform, expand, aggregate
 │   │   └── utils/            # Date + ICS utilities
+│   ├── ai/                   # Shared AI infrastructure
+│   │   ├── config.ts         # isAIEnabled(), getAnthropicApiKey(), model config
+│   │   └── client.ts         # getModelId(), parseAPIError(), truncateBody(), createClient()
 │   ├── ai-extraction/        # AI-powered event extraction
 │   │   ├── types.ts          # AI extraction types + Zod schemas
-│   │   ├── config.ts         # Budget, model, prompt config
+│   │   ├── config.ts         # Extraction-specific config + prompt (delegates to lib/ai/)
 │   │   ├── cache.ts          # File-based caching
-│   │   ├── extract-events.ts # Claude API integration
+│   │   ├── extract-events.ts # Claude API integration (uses lib/ai/ client)
 │   │   ├── transform.ts      # AI events → UnifiedEvent
+│   │   └── __tests__/        # Unit tests
+│   ├── ai-summary/           # AI proposal TL;DR summaries
+│   │   ├── types.ts          # ProposalSummary type + Zod schemas
+│   │   ├── config.ts         # Summary-specific config + prompt
+│   │   ├── cache.ts          # File-based caching (.cache/ai-summaries.json)
+│   │   ├── generate-summary.ts # Core logic (uses lib/ai/ client)
+│   │   ├── index.ts          # Module exports
 │   │   └── __tests__/        # Unit tests
 │   └── snapshot/             # Snapshot.org integration
 │       ├── config.ts         # API config + env vars
@@ -228,20 +240,33 @@ The landing page displays currently active governance proposals when any exist (
 
 **Data flow:**
 1. `fetchActiveProposals()` called in `app/page.tsx` (async server component)
-2. `ActiveVotes` section renders `ActiveVoteCard` for each proposal
+2. `isAISummaryAvailable()` checked server-side and passed as prop
+3. `ActiveVotes` section renders `ActiveVoteCard` for each proposal
 
 **ActiveVoteCard displays:**
 - Proposal title (linked to Snapshot)
 - Time remaining badge (e.g., "2d 5h left")
 - Stacked progress bar with score distribution per choice (semantic colors)
 - Voter count and quorum status
+- **"Vote Now" CTA** - Primary-colored button linking to Snapshot
+- **"AI TL;DR" button** (when AI is available) - Fetches/toggles AI-generated summary with choice explanations via `/api/ai-summary`
+
+**AI Summary flow:**
+1. User clicks "AI TL;DR" on an ActiveVoteCard (client component)
+2. Client POSTs `{ proposalId, title, body, choices }` to `/api/ai-summary`
+3. Server checks file cache (`.cache/ai-summaries.json`), returns cached if valid
+4. Otherwise calls Claude API via shared `lib/ai/` client
+5. Caches result and returns `ProposalSummary` with `tldr` + `choiceExplanations`
+6. Card displays summary inline; subsequent clicks toggle visibility
 
 **Files:**
-- `lib/snapshot/api/fetch-active-proposals.ts` - GraphQL query for active proposals
+- `lib/snapshot/api/fetch-active-proposals.ts` - GraphQL query for active proposals (includes `body`)
 - `lib/snapshot/api/fetch-active-vote-status.ts` - Orchestrator combining proposals + votes
 - `lib/snapshot/utils/time-remaining.ts` - Time formatting utility
-- `components/ActiveVotes.tsx` - Section wrapper
-- `components/ActiveVoteCard.tsx` - Individual proposal card
+- `lib/ai-summary/` - Summary generation module (types, config, cache, generate)
+- `app/api/ai-summary/route.ts` - POST endpoint for summary generation
+- `components/ActiveVotes.tsx` - Section wrapper (passes `isAISummaryAvailable`)
+- `components/ActiveVoteCard.tsx` - Client component with Vote Now CTA + AI TL;DR
 
 ### Key Environment Variables
 
@@ -356,17 +381,26 @@ lib/dao-timeline/
     ├── date-utils.ts           # Date helpers
     └── ics-utils.ts            # ICS parsing utilities
 
-lib/ai-extraction/
-├── types.ts                    # AI event types, Zod schemas, time window utils
-├── config.ts                   # Budget, model, prompt generation
-├── cache.ts                    # File-based extraction cache
-├── extract-events.ts           # Claude API integration
-├── transform.ts                # AI events → UnifiedEvent
-├── index.ts                    # Module exports
+lib/ai/                             # Shared AI infrastructure
+├── config.ts                       # isAIEnabled(), getAnthropicApiKey(), AI_MODEL_CONFIG
+└── client.ts                       # createClient(), getModelId(), parseAPIError(), truncateBody()
+
+lib/ai-extraction/                  # AI event extraction (uses lib/ai/)
+├── types.ts                        # AI event types, Zod schemas, time window utils
+├── config.ts                       # Extraction-specific config + prompt (re-exports from lib/ai/)
+├── cache.ts                        # File-based extraction cache
+├── extract-events.ts               # Claude API integration
+├── transform.ts                    # AI events → UnifiedEvent
+├── index.ts                        # Module exports
 └── __tests__/
-    ├── types.test.ts           # Time window filtering tests
-    ├── transform.test.ts       # Transform function tests
-    └── config.test.ts          # Config function tests
+
+lib/ai-summary/                     # AI proposal summaries (uses lib/ai/)
+├── types.ts                        # ProposalSummary, Zod schemas
+├── config.ts                       # Summary-specific config + prompt
+├── cache.ts                        # File-based summary cache
+├── generate-summary.ts             # Claude API integration
+├── index.ts                        # Module exports
+└── __tests__/
 
 lib/snapshot/api/
 └── fetch-timeline-proposals.ts # Snapshot proposals fetcher
@@ -435,4 +469,4 @@ npm run type-check # TypeScript check
 
 ---
 
-*Last Updated: 2026-03-09*
+*Last Updated: 2026-03-14*

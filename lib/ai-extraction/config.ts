@@ -2,19 +2,8 @@
  * Configuration for AI event extraction
  */
 
-/**
- * Check if AI extraction feature is enabled
- */
-export function isAIExtractionEnabled(): boolean {
-  return process.env.AI_EXTRACTION_ENABLED === 'true';
-}
-
-/**
- * Get Anthropic API key
- */
-export function getAnthropicApiKey(): string | null {
-  return process.env.ANTHROPIC_API_KEY || null;
-}
+// Re-export shared AI config for backwards compatibility
+export { isAIEnabled as isAIExtractionEnabled, getAnthropicApiKey } from '@/lib/ai/config';
 
 /**
  * AI extraction configuration

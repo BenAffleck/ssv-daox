@@ -18,6 +18,7 @@ const ACTIVE_PROPOSALS_QUERY = `
     ) {
       id
       title
+      body
       start
       end
       state

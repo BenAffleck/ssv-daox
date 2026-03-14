@@ -59,18 +59,14 @@ export default function AIExtractionPanel({
   if (stats && !isExtracting) {
     const hasError = error || stats.errors > 0;
     const borderClass = hasError
-      ? 'border-red-500/30 bg-red-500/5'
-      : 'border-violet-500/30 bg-violet-500/5';
+      ? 'border-danger/30 bg-danger/5'
+      : 'border-secondary/20 bg-secondary/5';
 
     return (
       <div className={`mb-6 rounded-lg border p-4 ${borderClass}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span
-              className="text-lg"
-              role="img"
-              aria-label={hasError ? 'warning' : 'sparkles'}
-            >
+            <span className="text-lg" role="img" aria-label={hasError ? 'warning' : 'sparkles'}>
               {hasError ? '⚠️' : '✨'}
             </span>
             <div>
@@ -109,8 +105,8 @@ export default function AIExtractionPanel({
           </button>
         </div>
         {error && (
-          <div className="mt-3 rounded-md bg-red-500/10 p-3">
-            <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+          <div className="mt-3 rounded-md bg-danger/10 p-3">
+            <p className="text-sm text-danger">{error}</p>
           </div>
         )}
       </div>
@@ -120,15 +116,11 @@ export default function AIExtractionPanel({
   // Show extracting state
   if (isExtracting) {
     return (
-      <div className="mb-6 rounded-lg border border-violet-500/30 bg-violet-500/5 p-4">
+      <div className="mb-6 rounded-lg border border-secondary/20 bg-secondary/5 p-4">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <span className="text-lg" role="img" aria-label="sparkles">
+            <span className="text-lg animate-pulse" role="img" aria-label="sparkles">
               ✨
-            </span>
-            <span className="absolute -right-1 -top-1 flex h-3 w-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-75"></span>
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-violet-500"></span>
             </span>
           </div>
           <div className="flex-1">
@@ -142,9 +134,9 @@ export default function AIExtractionPanel({
             </p>
             {progress && progress.total > 0 && (
               <>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-violet-500/20">
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-primary/20">
                   <div
-                    className="h-full rounded-full bg-violet-500 transition-all duration-300"
+                    className="h-full rounded-full bg-primary transition-all duration-300"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
@@ -164,7 +156,7 @@ export default function AIExtractionPanel({
     <div className="mb-6 rounded-lg border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="text-lg" role="img" aria-label="sparkles">
+          <span className="text-lg animate-pulse" role="img" aria-label="sparkles">
             ✨
           </span>
           <div>
@@ -195,8 +187,9 @@ export default function AIExtractionPanel({
           <button
             onClick={onExtract}
             disabled={proposalCount === 0}
-            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium text-foreground shadow-glow transition-colors hover:bg-card-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
           >
+            <span className="animate-pulse">✨</span>
             Extract Events
           </button>
         </div>
@@ -207,13 +200,13 @@ export default function AIExtractionPanel({
         </p>
       )}
       {proposalCount === 0 && (
-        <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+        <p className="mt-3 text-xs text-warning">
           No proposals in the selected time range
         </p>
       )}
       {error && (
-        <div className="mt-3 rounded-md bg-red-500/10 p-3">
-          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+        <div className="mt-3 rounded-md bg-danger/10 p-3">
+          <p className="text-sm text-danger">{error}</p>
         </div>
       )}
     </div>

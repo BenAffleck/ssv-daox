@@ -13,6 +13,10 @@
   --color-card-hover: #fafafa;
   --color-warning: #d97706;
   --color-danger: #dc2626;
+
+  /* Brand highlight shadow — use on buttons, cards, or any element to draw attention */
+  --shadow-glow: 0 0 8px 0 oklch(from #2DB1FF l c h / 0.25);
+  --shadow-glow-lg: 0 0 16px 2px oklch(from #2DB1FF l c h / 0.20), 0 0 6px 0 oklch(from #2DB1FF l c h / 0.30);
 }
 
 /* SSV Network dark theme */
@@ -28,6 +32,9 @@
   --color-card-hover: #1f1f1f;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
+
+  --shadow-glow: 0 0 10px 0 oklch(from #2DB1FF l c h / 0.35);
+  --shadow-glow-lg: 0 0 20px 2px oklch(from #2DB1FF l c h / 0.25), 0 0 8px 0 oklch(from #2DB1FF l c h / 0.40);
 }
 
 /* Smooth scroll */

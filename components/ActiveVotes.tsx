@@ -3,9 +3,10 @@ import ActiveVoteCard from './ActiveVoteCard';
 
 interface ActiveVotesProps {
   proposals: SnapshotActiveProposal[];
+  isAISummaryAvailable?: boolean;
 }
 
-export default function ActiveVotes({ proposals }: ActiveVotesProps) {
+export default function ActiveVotes({ proposals, isAISummaryAvailable = false }: ActiveVotesProps) {
   return (
     <section className="mb-12">
       <h2 className="mb-4 flex items-center gap-2 font-heading text-2xl font-semibold text-foreground">
@@ -17,7 +18,7 @@ export default function ActiveVotes({ proposals }: ActiveVotesProps) {
       </h2>
       <div className="flex flex-col gap-4">
         {proposals.map((proposal) => (
-          <ActiveVoteCard key={proposal.id} proposal={proposal} />
+          <ActiveVoteCard key={proposal.id} proposal={proposal} isAISummaryAvailable={isAISummaryAvailable} />
         ))}
       </div>
     </section>

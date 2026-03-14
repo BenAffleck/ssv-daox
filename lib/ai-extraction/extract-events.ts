@@ -2,18 +2,18 @@
  * AI-powered event extraction from governance proposals using Claude API
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import type Anthropic from '@anthropic-ai/sdk';
 import {
-  APIError,
-  AuthenticationError,
-  RateLimitError,
-  BadRequestError,
-} from '@anthropic-ai/sdk';
+  parseAPIError,
+  isCriticalAPIError,
+  getModelId,
+  truncateBody,
+  createClient,
+} from '@/lib/ai/client';
+import { isAIEnabled, getAnthropicApiKey } from '@/lib/ai/config';
 import {
   AI_EXTRACTION_CONFIG,
-  getAnthropicApiKey,
   getExtractionPrompt,
-  isAIExtractionEnabled,
 } from './config';
 import {
   getCachedExtractions,
@@ -28,70 +28,10 @@ import {
 } from './types';
 
 /**
- * Parse Anthropic API error into a user-friendly message
- */
-function parseAPIError(error: unknown): string {
-  if (error instanceof AuthenticationError) {
-    return 'Invalid API key. Please check your ANTHROPIC_API_KEY configuration.';
-  }
-
-  if (error instanceof RateLimitError) {
-    return 'Rate limit exceeded. Please try again in a few minutes.';
-  }
-
-  if (error instanceof BadRequestError) {
-    const message = error.message.toLowerCase();
-    if (message.includes('credit') || message.includes('balance') || message.includes('billing')) {
-      return 'Anthropic API credit balance is too low. Please add credits at console.anthropic.com/settings/billing';
-    }
-    return `API request error: ${error.message}`;
-  }
-
-  if (error instanceof APIError) {
-    const message = error.message.toLowerCase();
-    if (message.includes('credit') || message.includes('balance') || message.includes('billing')) {
-      return 'Anthropic API credit balance is too low. Please add credits at console.anthropic.com/settings/billing';
-    }
-    return `API error: ${error.message}`;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return 'Unknown error occurred during extraction';
-}
-
-/**
- * Get the model ID for API calls
- */
-function getModelId(): string {
-  const modelMap: Record<string, string> = {
-    haiku: 'claude-haiku-4-5-20251001',
-    sonnet: 'claude-sonnet-4-6',
-    opus: 'claude-opus-4-6',
-  };
-  return modelMap[AI_EXTRACTION_CONFIG.model] || modelMap.haiku;
-}
-
-/**
  * Format Unix timestamp as ISO date string
  */
 function formatProposalDate(timestamp: number): string {
   return new Date(timestamp * 1000).toISOString().split('T')[0];
-}
-
-/**
- * Truncate proposal body to maximum length
- */
-function truncateBody(body: string): string {
-  if (body.length <= AI_EXTRACTION_CONFIG.maxProposalBodyLength) {
-    return body;
-  }
-  return (
-    body.substring(0, AI_EXTRACTION_CONFIG.maxProposalBodyLength) +
-    '\n\n[...truncated]'
-  );
 }
 
 /**
@@ -123,7 +63,7 @@ async function extractFromProposal(
   proposal: ProposalForExtraction
 ): Promise<ProposalExtractionResult> {
   const proposalEndDate = formatProposalDate(proposal.end);
-  const truncatedBody = truncateBody(proposal.body);
+  const truncatedBody = truncateBody(proposal.body, AI_EXTRACTION_CONFIG.maxProposalBodyLength);
 
   const basePrompt = getExtractionPrompt(
     proposal.id,
@@ -181,14 +121,7 @@ If no events with specific dates are found, return: {"events": []}`;
     const errorMessage = parseAPIError(error);
 
     // Check if this is a critical error that should stop all processing
-    const isCriticalError =
-      error instanceof AuthenticationError ||
-      (error instanceof APIError &&
-        (error.message.toLowerCase().includes('credit') ||
-          error.message.toLowerCase().includes('balance') ||
-          error.message.toLowerCase().includes('billing')));
-
-    if (isCriticalError) {
+    if (isCriticalAPIError(error)) {
       // Throw to stop processing - this error affects all proposals
       throw new Error(errorMessage);
     }
@@ -257,7 +190,7 @@ export async function extractEventsFromProposals(
   };
 
   // Check if feature is enabled
-  if (!isAIExtractionEnabled()) {
+  if (!isAIEnabled()) {
     console.warn('AI extraction is disabled');
     return { events: [], stats };
   }
@@ -270,7 +203,7 @@ export async function extractEventsFromProposals(
   }
 
   // Initialize the client
-  const client = new Anthropic({ apiKey });
+  const client = createClient(apiKey);
 
   // Separate cached and uncached proposals
   const uncachedProposals: ProposalForExtraction[] = [];
@@ -360,5 +293,5 @@ export async function extractEventsFromProposals(
  * Check if AI extraction is available (enabled and configured)
  */
 export function isAIExtractionAvailable(): boolean {
-  return isAIExtractionEnabled() && getAnthropicApiKey() !== null;
+  return isAIEnabled() && getAnthropicApiKey() !== null;
 }

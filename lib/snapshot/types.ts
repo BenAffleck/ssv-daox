@@ -161,6 +161,7 @@ export type VoteParticipationMap = { [address: string]: number };
 export interface SnapshotActiveProposal {
   id: string;
   title: string;
+  body: string;
   start: number;
   end: number;
   state: string;
