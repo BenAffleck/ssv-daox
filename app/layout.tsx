@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins, Lora } from "next/font/google";
+import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
@@ -11,8 +11,7 @@ const poppins = Poppins({
   display: 'swap',
 });
 
-const lora = Lora({
-  weight: ['400', '500', '600', '700'],
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-body',
   display: 'swap',
@@ -29,15 +28,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable} ${lora.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${poppins.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  const theme = localStorage.getItem('theme') || 'ssvlight';
-                  document.documentElement.setAttribute('data-theme', theme);
+                  var theme = localStorage.getItem('theme');
+                  if (theme === 'ssvdark') {
+                    document.documentElement.setAttribute('data-theme', 'ssvdark');
+                  }
                 } catch (e) {}
               })();
             `,

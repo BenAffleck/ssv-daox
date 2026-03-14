@@ -8,6 +8,7 @@ describe('ModuleCard', () => {
     id: 'test-1',
     slug: 'test-active',
     name: 'Active Module',
+    description: 'An active test module.',
     status: ModuleStatus.ACTIVE,
     sortOrder: 1,
   };
@@ -16,6 +17,7 @@ describe('ModuleCard', () => {
     id: 'test-2',
     slug: 'test-coming',
     name: 'Coming Soon Module',
+    description: 'A coming soon test module.',
     status: ModuleStatus.COMING_SOON,
     sortOrder: 2,
   };
@@ -40,7 +42,6 @@ describe('ModuleCard', () => {
 
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/test-active');
-    expect(link).toHaveClass('cursor-pointer');
   });
 
   it('coming soon card does not render as a link', () => {

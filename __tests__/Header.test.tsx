@@ -11,7 +11,7 @@ describe('Header', () => {
       </ThemeProvider>
     );
 
-    expect(screen.getByText('Home')).toBeInTheDocument(); // No header title expected
+    expect(screen.getByText('DAOx')).toBeInTheDocument();
   });
 
   it('renders home link', () => {
@@ -21,7 +21,7 @@ describe('Header', () => {
       </ThemeProvider>
     );
 
-    const homeLinks = screen.getAllByRole('link', { name: /home/i });
+    const homeLinks = screen.getAllByRole('link', { name: /daox/i });
     expect(homeLinks.length).toBeGreaterThan(0);
   });
 
@@ -34,7 +34,7 @@ describe('Header', () => {
     const titleLink = container.querySelector('a[href="/"]');
 
     expect(titleLink).toBeInTheDocument();
-    expect(titleLink).toHaveTextContent('Home');
+    expect(titleLink).toHaveTextContent('DAOx');
   });
 
   it('header has sticky positioning', () => {

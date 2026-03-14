@@ -14,7 +14,7 @@ test.describe('Vote Participation', () => {
 
     // Assert "Votes" column header is visible
     await expect(
-      page.getByRole('columnheader', { name: 'Voting Participation' })
+      page.getByRole('columnheader', { name: /Vote Activity/ })
     ).toBeVisible();
 
     // Assert at least one percentage badge is visible (matches /^\d{1,3}%$/)
@@ -35,6 +35,6 @@ test.describe('Vote Participation', () => {
     await expect(percentageBadge).toBeVisible();
 
     const title = await percentageBadge.getAttribute('title');
-    expect(title).toMatch(/Voted on \d{1,3}% of the 5 most recent proposals/);
+    expect(title).toMatch(/Voted on \d{1,3}% of the 5 most recent (closed )?proposals/);
   });
 });

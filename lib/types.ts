@@ -7,6 +7,7 @@ export interface Module {
   id: string;
   slug: string;
   name: string;
+  description: string;
   status: ModuleStatus;
   sortOrder: number;
 }

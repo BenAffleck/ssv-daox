@@ -9,30 +9,30 @@ export default function ModuleCard({ module }: ModuleCardProps) {
   const isActive = module.status === ModuleStatus.ACTIVE;
   const isComingSoon = module.status === ModuleStatus.COMING_SOON;
 
-  const baseClasses = 'block rounded-lg border p-6 transition-all';
-  const activeClasses = isActive
-    ? 'cursor-pointer border-border bg-card hover:border-primary hover:shadow-lg'
-    : '';
-  const comingSoonClasses = isComingSoon
-    ? 'border-border bg-muted/40 opacity-70'
-    : '';
-
   const cardContent = (
-    <div className="flex items-center justify-between">
-      <h3 className="font-heading text-xl font-semibold text-foreground">{module.name}</h3>
-      {isComingSoon && (
-        <span className="rounded-full bg-muted/30 px-3 py-1 font-heading text-sm text-muted">
-          Coming Soon
-        </span>
-      )}
-    </div>
+    <>
+      <div className="flex items-center justify-between">
+        <h3 className="font-heading text-xl font-semibold text-foreground">{module.name}</h3>
+        {isComingSoon && (
+          <span className="rounded-full bg-muted/30 px-3 py-1 font-heading text-xs text-muted">
+            Coming Soon
+          </span>
+        )}
+        {isActive && (
+          <svg className="h-5 w-5 text-muted transition-colors group-hover:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        )}
+      </div>
+      <p className="mt-2 text-sm text-muted">{module.description}</p>
+    </>
   );
 
   if (isActive) {
     return (
       <Link
         href={`/${module.slug}`}
-        className={`${baseClasses} ${activeClasses}`}
+        className="group block rounded-lg border border-border bg-card p-6 transition-all hover:border-primary hover:shadow-lg"
       >
         {cardContent}
       </Link>
@@ -40,7 +40,7 @@ export default function ModuleCard({ module }: ModuleCardProps) {
   }
 
   return (
-    <div className={`${baseClasses} ${comingSoonClasses}`}>
+    <div className="block rounded-lg border border-border bg-muted/40 p-6 opacity-70">
       {cardContent}
     </div>
   );

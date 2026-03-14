@@ -9,8 +9,8 @@ test.describe('Landing Page', () => {
     await expect(page.getByRole('heading', { name: 'DAOx', level: 1 })).toBeVisible();
 
     // Check that modules are displayed
-    await expect(page.getByText('DAO Delegates')).toBeVisible();
-    await expect(page.getByText('Governance Proposals')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'DAO Delegates' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Governance Proposals' })).toBeVisible();
   });
 
   test('displays Featured DAO Community section', async ({ page }) => {
@@ -29,7 +29,7 @@ test.describe('Landing Page', () => {
     ).toBeVisible();
 
     // Check Community badge (the small badge inside the card)
-    const communityBadge = page.locator('span', { hasText: 'Community' });
+    const communityBadge = page.locator('span', { hasText: 'Community' }).first();
     await expect(communityBadge).toBeVisible();
   });
 

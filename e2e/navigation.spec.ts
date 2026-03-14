@@ -12,7 +12,7 @@ test.describe('Navigation', () => {
     await expect(page.getByRole('heading', { name: 'DAO Delegates' })).toBeVisible();
 
     // Use header to go back home
-    await page.getByRole('link', { name: 'Home' }).click();
+    await page.getByRole('link', { name: 'DAOx' }).click();
     await expect(page).toHaveURL('/');
   });
 });

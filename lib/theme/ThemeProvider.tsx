@@ -24,10 +24,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Apply theme to document
+  // Apply theme to document — only ssvdark needs the attribute; light is the CSS default
   useEffect(() => {
     if (mounted) {
-      document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'ssvdark') {
+        document.documentElement.setAttribute('data-theme', 'ssvdark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
       saveThemePreference(theme);
     }
   }, [theme, mounted]);

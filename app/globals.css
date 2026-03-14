@@ -1,54 +1,41 @@
 @import "tailwindcss";
 
-/* Default theme (ssv) - Semantic color tokens */
+/* SSV Network light theme (default) */
 @theme {
-  --color-background: #faf9f5;
-  --color-foreground: #141413;
-  --color-primary: #d97757;
-  --color-secondary: #6a9bcc;
-  --color-accent: #788c5d;
-  --color-muted: #b0aea5;
-  --color-border: #e8e6dc;
+  --color-background: #f7f7f7;
+  --color-foreground: #171717;
+  --color-primary: #2DB1FF;
+  --color-secondary: #6c588d;
+  --color-accent: #22c55e;
+  --color-muted: #737373;
+  --color-border: #e5e5e5;
   --color-card: #ffffff;
-  --color-card-hover: #f5f4f0;
-  --color-warning: #b8860b;
-  --color-danger: #c44536;
+  --color-card-hover: #fafafa;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
 }
 
-/* SSV Network dark theme (derived from ssvlight + SSV explorer dark mode) */
+/* SSV Network dark theme */
 :root[data-theme="ssvdark"] {
-  --color-background: #0f0f0f;      /* Very dark background */
-  --color-foreground: #f7f7f7;      /* Light text */
-  --color-primary: #2DD4E4;         /* Brighter teal for dark mode */
-  --color-secondary: #9B8BB8;       /* Lighter purple for contrast */
-  --color-accent: #4ADE80;          /* Brighter green for dark mode */
-  --color-muted: #a1a1a1;           /* Lighter gray for visibility */
-  --color-border: #2a2a2a;          /* Dark gray borders */
-  --color-card: #171717;            /* Dark card backgrounds */
-  --color-card-hover: #1f1f1f;      /* Subtle hover state */
-  --color-warning: #f59e0b;         /* Amber for warnings */
-  --color-danger: #ef4444;          /* Red for danger/low */
+  --color-background: #0f0f0f;
+  --color-foreground: #f7f7f7;
+  --color-primary: #2DB1FF;
+  --color-secondary: #9B8BB8;
+  --color-accent: #4ADE80;
+  --color-muted: #a1a1a1;
+  --color-border: #2a2a2a;
+  --color-card: #171717;
+  --color-card-hover: #1f1f1f;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
 }
 
-/* SSV Network theme (light mode - from Figma design) */
-:root[data-theme="ssvlight"] {
-  --color-background: #f7f7f7;      /* Light gray page background */
-  --color-foreground: #171717;      /* Dark text */
-  --color-primary: #1BA5C8;         /* SSV teal brand color */
-  --color-secondary: #6c588d;       /* Purple accent */
-  --color-accent: #22c55e;          /* Green for success/active */
-  --color-muted: #737373;           /* Gray secondary text */
-  --color-border: #e5e5e5;          /* Light gray borders */
-  --color-card: #ffffff;            /* White cards */
-  --color-card-hover: #fafafa;      /* Subtle hover state */
-  --color-warning: #d97706;         /* Amber for warnings */
-  --color-danger: #dc2626;          /* Red for danger/low */
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
 }
 
-/* Smooth theme transitions */
-* {
+/* Theme transitions for interactive elements */
+a, button, input, select, [class*="bg-card"], [class*="border-"] {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
-
-/* Typography - fonts loaded via next/font/google in layout.tsx */
-/* --font-heading and --font-body are set as CSS variables by Next.js */
