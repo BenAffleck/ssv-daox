@@ -38,10 +38,11 @@ Each feature is an isolated module with a plugin architecture:
 - `.spec/spec.md` - Complete technical specification
 - `.spec/techstack.md` - Technology stack rationale and architecture fit
 - `.spec/architecture.md` - Detailed architecture of the project
+- `.spec/design.md` - Design system specification (colors, typography, components, do's and don'ts)
 
 ## General Rules (IMPORTANT!)
 
-- Always read `.spec/spec.md`, `.spec/architecture.md` and `.spec/techstack.md` before writing any code.
+- Always read `.spec/spec.md`, `.spec/architecture.md`, `.spec/techstack.md` and `.spec/design.md` before writing any code.
 - Always implement and run unit tests for major features or completed milestones.
 - After adding a major feature or completing a milestone, ALWAYS update `.spec/architecture.md`. If new technology has been introduced, update `.spec/techstack.md`.
 
