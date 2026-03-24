@@ -34,7 +34,7 @@ export default function IncompleteProfileEmptyState({
         We found you, {delegate.displayName}!
       </h3>
 
-      <p className="mb-4 font-body text-sm text-muted">
+      <p className="mb-4 font-body text-muted">
         Your delegate profile is incomplete and hidden by default.
       </p>
 

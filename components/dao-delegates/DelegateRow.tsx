@@ -36,10 +36,10 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
 
   return (
     <tr className={`border-b border-border transition-colors hover:bg-card-hover ${isWithdrawn ? 'opacity-60' : ''}`}>
-      <td className="px-4 py-3 text-center text-sm font-medium tabular-nums text-foreground">
+      <td className="px-4 py-3 text-center font-medium tabular-nums text-foreground">
         {delegate.rank}
       </td>
-      <td className="px-4 py-3 text-center text-sm tabular-nums text-foreground">
+      <td className="px-4 py-3 text-center tabular-nums text-foreground">
         {delegate.karmaScore.toLocaleString()}
       </td>
       <td className="px-4 py-3">

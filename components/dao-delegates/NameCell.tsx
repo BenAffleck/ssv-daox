@@ -33,7 +33,7 @@ export default function NameCell({ displayName }: NameCellProps) {
         className="cursor-pointer transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 rounded text-left w-full"
         aria-label="Copy name to clipboard"
       >
-        <span className="text-sm text-foreground truncate block">
+        <span className="text-foreground truncate block">
           {displayName}
         </span>
       </button>

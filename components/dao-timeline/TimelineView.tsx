@@ -30,7 +30,7 @@ export default function TimelineView({
             />
           </svg>
         </div>
-        <p className="font-body text-lg text-muted">No upcoming events</p>
+        <p className="font-body text-muted">No upcoming events</p>
         <p className="mt-1 text-sm text-muted">
           Try adjusting your filters or check back later.
         </p>

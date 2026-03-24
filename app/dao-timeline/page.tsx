@@ -79,7 +79,7 @@ export default async function DaoTimelinePage() {
               />
             </svg>
           </div>
-          <p className="font-body text-lg text-muted">
+          <p className="font-body text-muted">
             No calendar sources configured
           </p>
           <p className="mt-2 text-sm text-muted">

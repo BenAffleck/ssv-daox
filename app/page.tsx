@@ -25,7 +25,7 @@ export default async function Home() {
           </svg>
           DAOx
         </h1>
-        <p className="font-body text-base text-muted">
+        <p className="font-body text-muted">
           Your governance toolkit for the SSV Network
         </p>
       </div>
