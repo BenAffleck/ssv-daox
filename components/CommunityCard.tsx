@@ -15,14 +15,15 @@ export default function CommunityCard({ tool }: CommunityCardProps) {
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="mb-2 flex items-center gap-2">
-            <h3 className="font-heading text-xl font-semibold text-foreground">
+            <h3 className="font-heading text-lg font-semibold tracking-tight text-foreground">
               {tool.name}
             </h3>
-            <span className="rounded-full bg-secondary/20 px-2 py-0.5 font-heading text-xs text-secondary">
+
+            <span className="badge-sm-secondary font-heading">
               Community
             </span>
           </div>
-          <p className="text-sm text-muted">{tool.description}</p>
+          <p className="text-[13px] leading-relaxed text-muted">{tool.description}</p>
         </div>
         <svg
           className="h-5 w-5 flex-shrink-0 text-muted transition-colors group-hover:text-secondary"

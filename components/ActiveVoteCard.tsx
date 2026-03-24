@@ -95,17 +95,17 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false 
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="mb-3 flex items-start justify-between gap-3">
+    <div className="card p-5">
+      <div className="mb-3 flex items-start justify-between gap-4">
         <a
           href={proposal.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-heading text-sm font-semibold text-foreground hover:text-primary"
+          className="font-heading text-[14px] font-semibold leading-snug tracking-tight text-foreground hover:text-primary"
         >
           {proposal.title}
         </a>
-        <span className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
+        <span className="shrink-0 badge-sm-primary">
           {timeRemaining}
         </span>
       </div>
@@ -136,7 +136,7 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false 
                 ? `${(choice.score / 1000).toFixed(1)}k`
                 : choice.score.toLocaleString(undefined, { maximumFractionDigits: 1 });
               return (
-                <span key={choice.label} className="flex items-center gap-1 text-[10px] text-muted">
+                <span key={choice.label} className="flex items-center gap-1 text-[11px] text-muted">
                   <span className={`inline-block h-1.5 w-1.5 rounded-full ${choice.color}`} />
                   {choice.label} {pct}% ({absolute})
                 </span>
@@ -178,7 +178,7 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false 
 
       {/* Stats + Actions */}
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 text-xs text-muted">
+        <div className="flex items-center gap-3 text-[12px] text-muted">
           <span>{proposal.votes} voter{proposal.votes !== 1 ? 's' : ''}</span>
           {proposal.quorum > 0 && (
             <span className={quorumReached ? 'text-accent' : 'text-warning'}>

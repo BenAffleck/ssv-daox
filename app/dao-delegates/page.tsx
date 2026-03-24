@@ -58,12 +58,12 @@ export default async function DaoDelegatesPage() {
   delegates = assignDelegationPrograms(delegates);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2 font-heading text-3xl font-semibold text-foreground">
+    <div className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mb-10">
+        <h1 className="mb-2">
           DAO Delegates
         </h1>
-        <p className="text-muted">
+        <p className="text-[15px] text-muted">
           Explore potential DAO delegates and delegation program assignments
         </p>
       </div>

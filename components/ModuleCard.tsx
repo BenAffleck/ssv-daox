@@ -12,9 +12,9 @@ export default function ModuleCard({ module }: ModuleCardProps) {
   const cardContent = (
     <>
       <div className="flex items-center justify-between">
-        <h3 className="font-heading text-xl font-semibold text-foreground">{module.name}</h3>
+        <h3>{module.name}</h3>
         {isComingSoon && (
-          <span className="rounded-full bg-muted/30 px-3 py-1 font-heading text-xs text-muted">
+          <span className="badge-sm-muted font-heading">
             Coming Soon
           </span>
         )}
@@ -24,7 +24,7 @@ export default function ModuleCard({ module }: ModuleCardProps) {
           </svg>
         )}
       </div>
-      <p className="mt-2 text-sm text-muted">{module.description}</p>
+      <p className="mt-2.5 text-[13px] leading-relaxed text-muted">{module.description}</p>
     </>
   );
 
@@ -32,7 +32,7 @@ export default function ModuleCard({ module }: ModuleCardProps) {
     return (
       <Link
         href={`/${module.slug}`}
-        className="group block rounded-lg border border-border bg-card p-6 transition-all hover:border-primary hover:shadow-lg"
+        className="group block card p-6 transition-all hover:border-primary hover:shadow-lg"
       >
         {cardContent}
       </Link>

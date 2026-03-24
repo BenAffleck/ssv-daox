@@ -27,10 +27,10 @@ export default function TableHeader({
     const alignClass = align === 'center' ? 'text-center' : 'text-left';
 
     return (
-      <th className={`p-4 ${alignClass}`}>
+      <th className={`px-4 py-3 ${alignClass}`}>
         <button
           onClick={() => onSort(field)}
-          className="inline-flex items-center gap-1 font-heading text-sm font-semibold text-foreground transition-colors hover:text-primary"
+          className="inline-flex items-center gap-1 table-col-header transition-colors hover:text-primary"
         >
           {children}
           {isActive && (
@@ -55,29 +55,29 @@ export default function TableHeader({
         <SortableHeader field="votingPower">
           Voting Power
         </SortableHeader>
-        <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
+        <th className="px-4 py-3 text-left table-col-header">
           Wallet Address
         </th>
-        <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
+        <th className="px-4 py-3 text-left table-col-header">
           Name/ENS
         </th>
-        <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
+        <th className="px-4 py-3 text-left table-col-header">
           Delegation Status
         </th>
-        <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
+        <th className="px-4 py-3 text-left table-col-header">
           Eligibility
         </th>
-        <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
+        <th className="px-4 py-3 text-left table-col-header">
           Programs
         </th>
-        <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
+        <th className="px-4 py-3 text-left table-col-header">
           Profile
         </th>
-        <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
+        <th className="px-4 py-3 text-left table-col-header">
           <div>Vote Activity</div>
-          <div className="text-[10px] font-normal text-muted">Last 5 closed</div>
+          <div className="text-[10px] font-normal normal-case tracking-normal text-muted/70">Last 5 closed</div>
         </th>
-        <th className="p-4 text-left font-heading text-sm font-semibold text-foreground">
+        <th className="px-4 py-3 text-left table-col-header">
           Next Round
         </th>
       </tr>

@@ -65,16 +65,16 @@ export default function EventCard({ event, sourceColor }: EventCardProps) {
       : displayDesc;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-card-hover">
+    <div className="card p-4 transition-colors hover:bg-card-hover">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           {/* Time */}
-          <div className="mb-1 text-sm font-medium text-primary">
+          <div className="mb-1 text-[13px] font-medium text-primary">
             {timeDisplay}
           </div>
 
           {/* Title */}
-          <h3 className="font-heading text-lg font-semibold text-foreground">
+          <h3 className="text-base">
             {event.sourceUrl ? (
               <a
                 href={event.sourceUrl}
@@ -91,7 +91,7 @@ export default function EventCard({ event, sourceColor }: EventCardProps) {
 
           {/* Description or Excerpt for AI events */}
           {truncatedDesc && (
-            <p className={`mt-1 text-sm ${isAIEvent ? 'italic text-muted/80' : 'text-muted'}`}>
+            <p className={`mt-1.5 text-[13px] leading-relaxed ${isAIEvent ? 'italic text-muted/80' : 'text-muted'}`}>
               {truncatedDesc}
             </p>
           )}

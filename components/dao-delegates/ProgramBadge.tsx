@@ -16,7 +16,7 @@ export default function ProgramBadge({ programs }: ProgramBadgeProps) {
       {programs.map((program) => (
         <span
           key={program}
-          className="inline-flex items-center rounded-full bg-primary/20 px-2.5 py-0.5 text-xs font-medium text-primary"
+          className="badge badge-primary"
         >
           {program}
         </span>

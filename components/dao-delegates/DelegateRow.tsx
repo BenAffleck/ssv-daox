@@ -23,40 +23,40 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
   if (hasPrograms && !delegate.isAlreadyDelegated) {
     // Should be added
     nextRoundAction = 'Delegate';
-    nextRoundBadgeClass = 'bg-accent/20 text-accent';
+    nextRoundBadgeClass = 'badge-accent';
   } else if (!hasPrograms && delegate.isAlreadyDelegated) {
     // Should be removed
     nextRoundAction = 'Undelegate';
-    nextRoundBadgeClass = 'bg-primary/20 text-primary';
+    nextRoundBadgeClass = 'badge-primary';
   } else if (hasPrograms && delegate.isAlreadyDelegated) {
     // Should be kept
     nextRoundAction = 'Keep';
-    nextRoundBadgeClass = 'bg-secondary/20 text-secondary';
+    nextRoundBadgeClass = 'badge-secondary';
   }
 
   return (
     <tr className={`border-b border-border transition-colors hover:bg-card-hover ${isWithdrawn ? 'opacity-60' : ''}`}>
-      <td className="p-4 text-center text-sm font-medium text-foreground">
+      <td className="px-4 py-3 text-center text-sm font-medium tabular-nums text-foreground">
         {delegate.rank}
       </td>
-      <td className="p-4 text-center text-sm text-foreground">
+      <td className="px-4 py-3 text-center text-sm tabular-nums text-foreground">
         {delegate.karmaScore.toLocaleString()}
       </td>
-      <td className="p-4">
+      <td className="px-4 py-3">
         <VotingPowerBadge
           votingPowerData={delegate.votingPowerData}
           address={delegate.publicAddress}
         />
       </td>
-      <td className="p-4">
+      <td className="px-4 py-3">
         <AddressCell address={delegate.publicAddress} />
       </td>
-      <td className="p-4">
+      <td className="px-4 py-3">
         <NameCell displayName={delegate.displayName} />
       </td>
-      <td className="p-4">
+      <td className="px-4 py-3">
         {isWithdrawn ? (
-          <span className="inline-flex items-center rounded-full bg-muted/30 px-2.5 py-0.5 text-xs font-medium text-muted">
+          <span className="badge badge-muted">
             Withdrawn
           </span>
         ) : (
@@ -65,33 +65,33 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
           />
         )}
       </td>
-      <td className="p-4">
+      <td className="px-4 py-3">
         <EligibilityBadge delegate={delegate} />
       </td>
-      <td className="p-4">
+      <td className="px-4 py-3">
         <ProgramBadge programs={delegate.delegationPrograms} />
       </td>
-      <td className="p-4">
+      <td className="px-4 py-3">
         {delegate.isProfileComplete ? (
-          <span className="inline-flex items-center rounded-full bg-accent/20 px-2.5 py-0.5 text-xs font-medium text-accent">
+          <span className="badge badge-accent">
             Complete
           </span>
         ) : (
-          <span className="inline-flex items-center rounded-full bg-muted/30 px-2.5 py-0.5 text-xs font-medium text-muted">
+          <span className="badge badge-muted">
             Incomplete
           </span>
         )}
       </td>
-      <td className="p-4">
+      <td className="px-4 py-3">
         <VoteParticipationCell
           participationRate={delegate.voteParticipationRate}
           proposalCount={SNAPSHOT_CONFIG.voteParticipation.proposalCount}
           activeVoteStatus={delegate.activeVoteStatus}
         />
       </td>
-      <td className="p-4">
+      <td className="px-4 py-3">
         {nextRoundAction ? (
-          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${nextRoundBadgeClass}`}>
+          <span className={`badge ${nextRoundBadgeClass}`}>
             {nextRoundAction}
           </span>
         ) : (

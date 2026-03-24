@@ -14,6 +14,10 @@
   --color-warning: #d97706;
   --color-danger: #dc2626;
 
+  /* Font families — maps to next/font CSS variables set in layout.tsx */
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+
   /* Brand highlight shadow — use on buttons, cards, or any element to draw attention */
   --shadow-glow: 0 0 8px 0 oklch(from #2DB1FF l c h / 0.25);
   --shadow-glow-lg: 0 0 16px 2px oklch(from #2DB1FF l c h / 0.20), 0 0 6px 0 oklch(from #2DB1FF l c h / 0.30);
@@ -37,12 +41,71 @@
   --shadow-glow-lg: 0 0 20px 2px oklch(from #2DB1FF l c h / 0.25), 0 0 8px 0 oklch(from #2DB1FF l c h / 0.40);
 }
 
-/* Smooth scroll */
+/* Smooth scroll & base typography */
 html {
   scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  color: var(--color-foreground);
+}
+
+/* Heading typography defaults */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+/* Tighten table text */
+table {
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 /* Theme transitions for interactive elements */
 a, button, input, select, [class*="bg-card"], [class*="border-"] {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+@layer base {
+  h1 { @apply font-heading text-3xl font-bold tracking-tight text-foreground; }
+  h2 { @apply font-heading text-2xl font-semibold tracking-tight text-foreground; }
+  h3 { @apply font-heading text-lg font-semibold tracking-tight text-foreground; }
+  h4 { @apply font-heading text-base font-semibold tracking-tight text-foreground; }
+  h5, h6 { @apply font-heading text-sm font-semibold tracking-tight text-foreground; }
+}
+
+@layer components {
+  /* Badges */
+  .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
+  .badge-primary   { @apply bg-primary/20 text-primary; }
+  .badge-accent    { @apply bg-accent/20 text-accent; }
+  .badge-secondary { @apply bg-secondary/20 text-secondary; }
+  .badge-muted     { @apply bg-muted/30 text-muted; }
+  .badge-warning   { @apply bg-warning/20 text-warning; }
+  .badge-danger    { @apply bg-danger/20 text-danger; }
+
+  /* Small badge (11px) — used in ModuleCard, CommunityCard, ActiveVoteCard */
+  .badge-sm-primary   { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-primary/20 text-primary; font-size: 11px; }
+  .badge-sm-secondary { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-secondary/20 text-secondary; font-size: 11px; }
+  .badge-sm-muted     { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-muted/30 text-muted; font-size: 11px; }
+
+  /* Cards */
+  .card       { @apply rounded-lg border border-border bg-card; }
+  .card-empty { @apply rounded-lg border border-border bg-card p-12 text-center; }
+
+  /* Filter controls */
+  .filter-label          { @apply flex items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 font-body text-foreground transition-colors hover:bg-card-hover cursor-pointer; font-size: 13px; }
+  .filter-label-disabled { @apply flex items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 font-body transition-colors opacity-60 cursor-not-allowed; font-size: 13px; }
+  .filter-btn            { @apply rounded-lg border border-border bg-card px-3 py-1.5 text-foreground transition-colors hover:bg-card-hover; font-size: 13px; }
+  .filter-btn-active     { @apply rounded-lg border border-primary bg-primary/10 px-3 py-1.5 text-primary transition-colors; font-size: 13px; }
+  .filter-input          { @apply w-full rounded-lg border border-border bg-card px-4 py-2.5 font-body text-foreground placeholder:text-muted/70 transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary; font-size: 13px; }
+
+  /* Table column header typography */
+  .table-col-header { @apply font-heading text-xs font-semibold uppercase tracking-wide text-muted; }
 }

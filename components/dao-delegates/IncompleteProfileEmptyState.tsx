@@ -30,7 +30,7 @@ export default function IncompleteProfileEmptyState({
         </svg>
       </div>
 
-      <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
+      <h3 className="mb-2 font-heading text-lg font-semibold tracking-tight text-foreground">
         We found you, {delegate.displayName}!
       </h3>
 

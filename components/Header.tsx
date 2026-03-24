@@ -6,11 +6,11 @@ import ThemeToggle from '@/lib/theme/ThemeToggle';
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-      <div className="flex items-center justify-between px-4 py-4">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <nav>
           <Link
             href="/"
-            className="flex items-center gap-2 font-heading text-sm font-medium text-foreground transition-colors hover:text-primary"
+            className="flex items-center gap-2 font-heading text-[15px] font-semibold tracking-tight text-foreground transition-colors hover:text-primary"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="100 60 300 340" fill="none" className="flex-shrink-0">
               <path fill="#2DB1FF" d="m204.141 337.252 37.927-46.64c3.96-4.869 11.415-4.869 15.375 0l37.928 46.64a9.856 9.856 0 0 1 0 12.445l-37.928 46.64c-3.96 4.87-11.415 4.87-15.375 0l-37.927-46.64a9.856 9.856 0 0 1 0-12.445Z" opacity=".62"/>

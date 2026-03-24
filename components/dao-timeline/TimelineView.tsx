@@ -14,7 +14,7 @@ export default function TimelineView({
 }: TimelineViewProps) {
   if (groups.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-card p-12 text-center">
+      <div className="card-empty">
         <div className="mb-4">
           <svg
             className="mx-auto h-12 w-12 text-muted"
@@ -44,7 +44,7 @@ export default function TimelineView({
         <div key={group.date.toISOString()}>
           {/* Day header */}
           <div className="mb-4 flex items-center gap-4">
-            <h2 className="font-heading text-xl font-semibold text-foreground">
+            <h2 className="text-lg">
               {group.label}
             </h2>
             <div className="h-px flex-1 bg-border" />

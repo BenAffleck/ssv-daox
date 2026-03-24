@@ -213,8 +213,8 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
             onShowIncompleteProfiles={() => setShowIncompleteProfile(true)}
           />
         ) : (
-          <div className="rounded-lg border border-border bg-card p-12 text-center">
-            <p className="font-body text-muted">
+          <div className="card p-14 text-center">
+            <p className="font-body text-[15px] text-muted">
               {searchQuery
                 ? 'No delegates match your search'
                 : showEligibleOnly
@@ -224,7 +224,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
           </div>
         )
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border bg-card">
+        <div className="overflow-x-auto card">
           <table className="w-full">
             <TableHeader
               sortField={sortField}
@@ -240,7 +240,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
         </div>
       )}
 
-      <div className="mt-4 text-center text-sm text-muted">
+      <div className="mt-5 text-center text-[13px] text-muted">
         Showing {filteredDelegates.length} of {delegates.length} delegates
       </div>
     </div>

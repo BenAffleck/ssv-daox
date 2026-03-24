@@ -24,11 +24,11 @@ export default function VoteParticipationCell({
   // Color coding for participation rate
   let colorClass: string;
   if (participationRate >= 90) {
-    colorClass = 'bg-accent/20 text-accent';
+    colorClass = 'badge badge-accent';
   } else if (participationRate >= 80) {
-    colorClass = 'bg-warning/20 text-warning';
+    colorClass = 'badge badge-warning';
   } else {
-    colorClass = 'bg-danger/20 text-danger';
+    colorClass = 'badge badge-danger';
   }
 
   const maxDots = 3;
@@ -40,7 +40,7 @@ export default function VoteParticipationCell({
       {/* Historical participation */}
       <div className="flex items-center gap-1.5">
         <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${colorClass}`}
+          className={colorClass}
           title={`Voted on ${participationRate}% of the ${proposalCount} most recent closed proposals`}
         >
           {participationRate}%

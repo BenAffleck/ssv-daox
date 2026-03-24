@@ -37,18 +37,18 @@ export default function TimelineFilterControls({
   };
 
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-4">
+    <div className="mb-8 flex flex-wrap items-center gap-3">
       {/* Source filters */}
       {sources.length > 1 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-muted">Sources:</span>
+          <span className="text-[13px] font-medium text-muted">Sources:</span>
           <button
             onClick={handleSelectAll}
-            className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+            className={
               selectedSources.length === 0 || selectedSources.length === sources.length
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border bg-card text-foreground hover:bg-card-hover'
-            }`}
+                ? 'filter-btn-active'
+                : 'filter-btn'
+            }
           >
             All
           </button>
@@ -56,11 +56,7 @@ export default function TimelineFilterControls({
             <button
               key={source.id}
               onClick={() => handleSourceToggle(source.id)}
-              className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
-                selectedSources.includes(source.id)
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-card text-foreground hover:bg-card-hover'
-              }`}
+              className={selectedSources.includes(source.id) ? 'filter-btn-active' : 'filter-btn'}
             >
               {source.name}
             </button>
@@ -72,12 +68,12 @@ export default function TimelineFilterControls({
       <div className="flex-1" />
 
       {/* Show past events toggle */}
-      <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm transition-colors hover:bg-card-hover">
+      <label className="filter-label">
         <input
           type="checkbox"
           checked={showPastEvents}
           onChange={(e) => onShowPastEventsChange(e.target.checked)}
-          className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+          className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
         />
         <span className="text-foreground">Show Past Events</span>
       </label>

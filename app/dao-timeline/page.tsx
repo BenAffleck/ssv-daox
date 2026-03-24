@@ -52,18 +52,18 @@ export default async function DaoTimelinePage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2 font-heading text-3xl font-semibold text-foreground">
+    <div className="mx-auto max-w-4xl px-6 py-10">
+      <div className="mb-10">
+        <h1 className="mb-2">
           DAO Timeline
         </h1>
-        <p className="text-muted">
+        <p className="text-[15px] text-muted">
           Upcoming events and important dates for the DAO community
         </p>
       </div>
 
       {sources.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card p-12 text-center">
+        <div className="card-empty">
           <div className="mb-4">
             <svg
               className="mx-auto h-12 w-12 text-muted"

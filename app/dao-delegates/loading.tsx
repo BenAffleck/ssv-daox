@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-8">
+    <div className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mb-10">
         <div className="mb-2 h-8 w-64 animate-pulse rounded bg-muted/30" />
         <div className="h-4 w-96 animate-pulse rounded bg-muted/20" />
       </div>
@@ -14,7 +14,7 @@ export default function Loading() {
       </div>
 
       {/* Table skeleton */}
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="overflow-hidden card">
         <div className="grid grid-cols-6 gap-4 border-b border-border p-4">
           {[...Array(6)].map((_, i) => (
             <div
