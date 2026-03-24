@@ -32,7 +32,7 @@ ssv-daox/
 │       └── page.tsx          # Server component (event aggregation)
 │
 ├── components/               # Shared components
-│   ├── Header.tsx            # App header
+│   ├── Header.tsx            # App header (full nav bar with active route detection)
 │   ├── ModuleCard.tsx        # Landing page cards
 │   ├── dao-delegates/        # DAO Delegates components
 │   │   ├── DelegatesTable.tsx    # Client: filter/sort state
@@ -131,7 +131,26 @@ Uses CSS variables + `data-theme` attribute on `<html>`.
 
 **Always use semantic tokens:** `bg-background`, `text-foreground`, `border-border`, `text-primary`, etc.
 
-### 3. External Data Integration
+### 3. Header Navigation
+
+The header (`components/Header.tsx`) is a `'use client'` component providing a three-zone navigation bar:
+
+**Layout:** `[Logo Container] — [Home | Module Nav Items | More ▾] — [ThemeToggle | Guest Pill]`
+
+**Features:**
+- Logo in bordered container linking to `/`
+- Nav items for each active module with Lucide React icons, active route detection via `usePathname()`
+- "More" dropdown listing coming-soon modules (dimmed, with badge)
+- Guest user profile pill (placeholder for future auth)
+- Responsive: hamburger menu on mobile with slide-down panel
+
+**CSS classes:** `.nav-item` / `.nav-item-active` in `@layer components` (follows `.filter-btn` pattern)
+
+**Icon mapping:** Slug-to-icon map in Header component (`dao-delegates` → `Users`, `dao-timeline` → `Calendar`)
+
+**Dependencies:** `lucide-react` (tree-shakeable icon library, ~1KB per icon)
+
+### 4. External Data Integration
 
 All external data uses dependency injection for testability.
 

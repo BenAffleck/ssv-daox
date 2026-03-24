@@ -19,7 +19,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "DAOx - SSV Network DAO Hub",
-  description: "Modular hub for SSV Network DAO members providing governance tools and insights",
+  description: "Your governance toolkit for the SSV Network — delegate insights, timelines, and more",
 };
 
 export default function RootLayout({

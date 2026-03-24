@@ -26,7 +26,7 @@ export default async function Home() {
           DAOx
         </h1>
         <p className="font-body text-base text-muted">
-          Modular hub for SSV Network DAO members
+          Your governance toolkit for the SSV Network
         </p>
       </div>
 

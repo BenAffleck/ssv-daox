@@ -1,7 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import Header from '@/components/Header';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
+
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
+}));
 
 describe('Header', () => {
   it('renders DAOx title', () => {
@@ -47,5 +52,38 @@ describe('Header', () => {
 
     expect(header).toHaveClass('sticky');
     expect(header).toHaveClass('top-0');
+  });
+
+  it('renders navigation items for active modules', () => {
+    render(
+      <ThemeProvider>
+        <Header />
+      </ThemeProvider>
+    );
+
+    expect(screen.getByText('Home')).toBeInTheDocument();
+    expect(screen.getByText('DAO Delegates')).toBeInTheDocument();
+    expect(screen.getByText('DAO Timeline')).toBeInTheDocument();
+  });
+
+  it('renders Guest user pill', () => {
+    render(
+      <ThemeProvider>
+        <Header />
+      </ThemeProvider>
+    );
+
+    const guestElements = screen.getAllByText('Guest');
+    expect(guestElements.length).toBeGreaterThan(0);
+  });
+
+  it('renders More button for coming-soon modules', () => {
+    render(
+      <ThemeProvider>
+        <Header />
+      </ThemeProvider>
+    );
+
+    expect(screen.getByText('More')).toBeInTheDocument();
   });
 });

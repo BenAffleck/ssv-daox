@@ -34,3 +34,11 @@ export function getModulesSorted(): Module[] {
 export function getModuleBySlug(slug: string): Module | undefined {
   return modules.find((module) => module.slug === slug);
 }
+
+export function getActiveModules(): Module[] {
+  return getModulesSorted().filter(m => m.status === ModuleStatus.ACTIVE);
+}
+
+export function getComingSoonModules(): Module[] {
+  return getModulesSorted().filter(m => m.status === ModuleStatus.COMING_SOON);
+}
