@@ -154,45 +154,41 @@ export default function AIExtractionPanel({
   // Show initial state with extract button and time window selector
   return (
     <div className="mb-6 rounded-lg border border-border bg-card p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-lg animate-pulse" role="img" aria-label="sparkles">
-            ✨
-          </span>
-          <div>
-            <h3 className="font-medium text-foreground">Extract AI Insights</h3>
-            <p className="text-sm text-muted">
-              Analyze proposals to find milestones and deadlines
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-2">
-            <label htmlFor="time-window" className="text-sm text-muted">
-              Time range:
-            </label>
-            <select
-              id="time-window"
-              value={timeWindow}
-              onChange={(e) => onTimeWindowChange(e.target.value as TimeWindow)}
-              className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              {TIME_WINDOWS.map((window) => (
-                <option key={window.id} value={window.id}>
-                  {window.label} ({proposalCounts[window.id]})
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            onClick={onExtract}
-            disabled={proposalCount === 0}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium text-foreground shadow-glow transition-colors hover:bg-card-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+      <div className="flex items-center gap-3">
+        <span className="text-lg animate-pulse" role="img" aria-label="sparkles">
+          ✨
+        </span>
+        <h3 className="font-medium text-foreground">Extract AI Insights</h3>
+      </div>
+      <p className="mt-1 text-sm text-muted">
+        Analyze proposals to find milestones and deadlines
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
+          <label htmlFor="time-window" className="sr-only">
+            Time range
+          </label>
+          <select
+            id="time-window"
+            value={timeWindow}
+            onChange={(e) => onTimeWindowChange(e.target.value as TimeWindow)}
+            className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
-            <span className="animate-pulse">✨</span>
-            Extract Events
-          </button>
+            {TIME_WINDOWS.map((window) => (
+              <option key={window.id} value={window.id}>
+                {window.label} ({proposalCounts[window.id]})
+              </option>
+            ))}
+          </select>
         </div>
+        <button
+          onClick={onExtract}
+          disabled={proposalCount === 0}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium text-foreground shadow-glow transition-colors hover:bg-card-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+        >
+          <span className="animate-pulse">✨</span>
+          Extract Events
+        </button>
       </div>
       {proposalCount > 0 && (
         <p className="mt-3 text-xs text-muted/70">
