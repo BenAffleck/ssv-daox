@@ -3,7 +3,9 @@ import { getCommunityToolsSorted } from '@/lib/data/community-tools';
 import ModuleCard from '@/components/ModuleCard';
 import CommunityCard from '@/components/CommunityCard';
 import ActiveVotes from '@/components/ActiveVotes';
+import PendingVotes from '@/components/PendingVotes';
 import { fetchActiveProposals } from '@/lib/snapshot/api/fetch-active-proposals';
+import { fetchPendingProposals } from '@/lib/snapshot/api/fetch-pending-proposals';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 import { isAISummaryAvailable } from '@/lib/ai-summary';
 
@@ -12,7 +14,9 @@ export default async function Home() {
   const communityTools = getCommunityToolsSorted();
 
   const spaceId = SNAPSHOT_CONFIG.delegation.spaceFilter;
-  const activeProposals = spaceId ? await fetchActiveProposals(spaceId) : [];
+  const [activeProposals, pendingProposals] = spaceId
+    ? await Promise.all([fetchActiveProposals(spaceId), fetchPendingProposals(spaceId)])
+    : [[], []];
   const aiSummaryAvailable = isAISummaryAvailable();
 
   return (
@@ -31,6 +35,7 @@ export default async function Home() {
       </div>
 
       {activeProposals.length > 0 && <ActiveVotes proposals={activeProposals} isAISummaryAvailable={aiSummaryAvailable} />}
+      {pendingProposals.length > 0 && <PendingVotes proposals={pendingProposals} isAISummaryAvailable={aiSummaryAvailable} />}
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {modules.map((module) => (

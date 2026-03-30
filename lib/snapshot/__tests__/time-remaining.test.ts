@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { formatTimeRemaining } from '../utils/time-remaining';
+import { formatTimeRemaining, formatTimeUntilStart } from '../utils/time-remaining';
 
 describe('formatTimeRemaining', () => {
   afterEach(() => {
@@ -39,5 +39,45 @@ describe('formatTimeRemaining', () => {
   it('should return "Ended" for current timestamp', () => {
     const now = Math.floor(Date.now() / 1000);
     expect(formatTimeRemaining(now)).toBe('Ended');
+  });
+});
+
+describe('formatTimeUntilStart', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('should return "Starting soon" for past timestamps', () => {
+    const pastTimestamp = Math.floor(Date.now() / 1000) - 3600;
+    expect(formatTimeUntilStart(pastTimestamp)).toBe('Starting soon');
+  });
+
+  it('should return days and hours for multi-day until start', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const future = now + 2 * 86400 + 5 * 3600;
+    expect(formatTimeUntilStart(future)).toBe('Starts in 2d 5h');
+  });
+
+  it('should return hours only when less than a day', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const future = now + 12 * 3600;
+    expect(formatTimeUntilStart(future)).toBe('Starts in 12h');
+  });
+
+  it('should return "Starts in < 1h" when less than an hour remains', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const future = now + 1800;
+    expect(formatTimeUntilStart(future)).toBe('Starts in < 1h');
+  });
+
+  it('should return "Starts in 1d 0h" for exactly 1 day', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const future = now + 86400;
+    expect(formatTimeUntilStart(future)).toBe('Starts in 1d 0h');
+  });
+
+  it('should return "Starting soon" for current timestamp', () => {
+    const now = Math.floor(Date.now() / 1000);
+    expect(formatTimeUntilStart(now)).toBe('Starting soon');
   });
 });
