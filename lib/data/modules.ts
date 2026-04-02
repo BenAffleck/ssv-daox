@@ -3,7 +3,7 @@ import { Module, ModuleStatus } from '@/lib/types';
 export const modules: Module[] = [
   {
     id: 'dao-delegates',
-    slug: 'dao-delegates',
+    slug: 'delegates',
     name: 'DAO Delegates',
     description: 'Ranked leaderboard of active delegates with voting power, eligibility, and delegation program tracking.',
     status: ModuleStatus.ACTIVE,
@@ -11,7 +11,7 @@ export const modules: Module[] = [
   },
   {
     id: 'dao-timeline',
-    slug: 'dao-timeline',
+    slug: 'timeline',
     name: 'DAO Timeline',
     description: 'Visual timeline of governance events, proposals, and key DAO milestones.',
     status: ModuleStatus.ACTIVE,

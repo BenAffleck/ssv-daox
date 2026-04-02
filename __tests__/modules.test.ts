@@ -16,10 +16,10 @@ describe('Module Data', () => {
   });
 
   it('should find module by slug', () => {
-    const module = getModuleBySlug('dao-delegates');
+    const module = getModuleBySlug('delegates');
 
     expect(module).toBeDefined();
-    expect(module?.slug).toBe('dao-delegates');
+    expect(module?.slug).toBe('delegates');
     expect(module?.status).toBe(ModuleStatus.ACTIVE);
   });
 
@@ -30,7 +30,7 @@ describe('Module Data', () => {
   });
 
   it('should have dao-delegates as first active module', () => {
-    const daoModule = modules.find(m => m.slug === 'dao-delegates');
+    const daoModule = modules.find(m => m.slug === 'delegates');
 
     expect(daoModule?.status).toBe(ModuleStatus.ACTIVE);
     expect(daoModule?.sortOrder).toBe(1);

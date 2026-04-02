@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { Delegate } from '@/lib/dao-delegates/types';
+import { useDelegateFilters } from '@/lib/hooks/useDelegateFilters';
 import FilterControls from './FilterControls';
 import TableHeader, { SortField, SortDirection } from './TableHeader';
 import DelegateRow from './DelegateRow';
@@ -12,14 +13,42 @@ interface DelegatesTableProps {
 }
 
 export default function DelegatesTable({ delegates }: DelegatesTableProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showEligibleOnly, setShowEligibleOnly] = useState(false);
-  const [showWithdrawn, setShowWithdrawn] = useState(false);
-  const [showChangesOnly, setShowChangesOnly] = useState(false);
-  const [showIncompleteProfile, setShowIncompleteProfile] = useState(false);
-  const [showCurrentOnly, setShowCurrentOnly] = useState(false);
-  const [sortField, setSortField] = useState<SortField>('rank');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [filters, setFilter, setMultiple] = useDelegateFilters();
+  const {
+    searchQuery,
+    showEligibleOnly,
+    showWithdrawn,
+    showChangesOnly,
+    showIncompleteProfile,
+    showCurrentOnly,
+    sortField,
+    sortDirection,
+  } = filters;
+
+  // Debounced search: local state for input, synced to URL after delay
+  const [searchInput, setSearchInput] = useState(searchQuery);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Sync local input when URL param changes externally (e.g., browser navigation)
+  useEffect(() => {
+    setSearchInput(searchQuery);
+  }, [searchQuery]);
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchInput(value);
+      clearTimeout(searchTimerRef.current);
+      searchTimerRef.current = setTimeout(() => {
+        setFilter.searchQuery(value);
+      }, 300);
+    },
+    [setFilter]
+  );
+
+  // Cleanup debounce timer
+  useEffect(() => {
+    return () => clearTimeout(searchTimerRef.current);
+  }, []);
 
   // Store previous state of dependent filters before "Changes Only" or "Current Only" is enabled
   const previousFiltersRef = useRef<{
@@ -40,12 +69,13 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
         showIncompleteProfile,
         source: showChangesOnly ? 'changesOnly' : 'currentOnly',
       };
-      setShowWithdrawn(true);
-      setShowIncompleteProfile(true);
+      setMultiple({ showWithdrawn: true, showIncompleteProfile: true });
     } else if (!forcingFilter && previousFiltersRef.current !== null) {
       // Restore previous state when both forcing filters are unchecked
-      setShowWithdrawn(previousFiltersRef.current.showWithdrawn);
-      setShowIncompleteProfile(previousFiltersRef.current.showIncompleteProfile);
+      setMultiple({
+        showWithdrawn: previousFiltersRef.current.showWithdrawn,
+        showIncompleteProfile: previousFiltersRef.current.showIncompleteProfile,
+      });
       previousFiltersRef.current = null;
     }
   }, [showChangesOnly, showCurrentOnly]);
@@ -54,11 +84,10 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       // Toggle direction if same field
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setFilter.sortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       // Set new field with default direction
-      setSortField(field);
-      setSortDirection(field === 'rank' ? 'asc' : 'desc');
+      setMultiple({ sortField: field, sortDirection: field === 'rank' ? 'asc' : 'desc' });
     }
   };
 
@@ -189,18 +218,18 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
   return (
     <div>
       <FilterControls
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        searchQuery={searchInput}
+        onSearchChange={handleSearchChange}
         showEligibleOnly={showEligibleOnly}
-        onEligibleOnlyChange={setShowEligibleOnly}
+        onEligibleOnlyChange={setFilter.showEligibleOnly}
         showWithdrawn={showWithdrawn}
-        onShowWithdrawnChange={setShowWithdrawn}
+        onShowWithdrawnChange={setFilter.showWithdrawn}
         showChangesOnly={showChangesOnly}
-        onShowChangesOnlyChange={setShowChangesOnly}
+        onShowChangesOnlyChange={setFilter.showChangesOnly}
         showIncompleteProfile={showIncompleteProfile}
-        onShowIncompleteProfileChange={setShowIncompleteProfile}
+        onShowIncompleteProfileChange={setFilter.showIncompleteProfile}
         showCurrentOnly={showCurrentOnly}
-        onShowCurrentOnlyChange={setShowCurrentOnly}
+        onShowCurrentOnlyChange={setFilter.showCurrentOnly}
         disableDependentFilters={showChangesOnly || showCurrentOnly}
         forumHandles={forumHandles}
         discordHandles={discordHandles}
@@ -210,7 +239,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
         hiddenIncompleteDelegate ? (
           <IncompleteProfileEmptyState
             delegate={hiddenIncompleteDelegate}
-            onShowIncompleteProfiles={() => setShowIncompleteProfile(true)}
+            onShowIncompleteProfiles={() => setFilter.showIncompleteProfile(true)}
           />
         ) : (
           <div className="card p-14 text-center">

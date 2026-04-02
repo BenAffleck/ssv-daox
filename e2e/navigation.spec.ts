@@ -8,7 +8,7 @@ test.describe('Navigation', () => {
     await page.getByRole('link', { name: /DAO Delegates/i }).click();
 
     // Should navigate to module page
-    await expect(page).toHaveURL('/dao-delegates');
+    await expect(page).toHaveURL('/delegates');
     await expect(page.getByRole('heading', { name: 'DAO Delegates' })).toBeVisible();
 
     // Use header to go back home

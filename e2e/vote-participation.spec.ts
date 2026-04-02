@@ -5,7 +5,7 @@ test.describe('Vote Participation', () => {
     page,
   }) => {
     // Navigate to dao-delegates page
-    await page.goto('/dao-delegates');
+    await page.goto('/delegates');
 
     // Wait for the table to load
     await expect(
@@ -23,7 +23,7 @@ test.describe('Vote Participation', () => {
   });
 
   test('percentage badge has correct tooltip', async ({ page }) => {
-    await page.goto('/dao-delegates');
+    await page.goto('/delegates');
 
     // Wait for the table to load
     await expect(

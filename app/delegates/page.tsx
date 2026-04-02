@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { fetchDelegatesCSV } from '@/lib/dao-delegates/api/fetch-delegates';
 import { parseCSV } from '@/lib/dao-delegates/api/parse-csv';
 import { buildEligibilityLists } from '@/lib/dao-delegates/eligibility/checker';
@@ -68,7 +69,9 @@ export default async function DaoDelegatesPage() {
         </p>
       </div>
 
-      <DelegatesTable delegates={delegates} />
+      <Suspense>
+        <DelegatesTable delegates={delegates} />
+      </Suspense>
     </div>
   );
 }

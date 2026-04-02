@@ -9,8 +9,8 @@ import { getActiveModules, getComingSoonModules } from '@/lib/data/modules';
 import type { Module } from '@/lib/types';
 
 const slugIconMap: Record<string, React.ComponentType<{ size?: number }>> = {
-  'dao-delegates': Users,
-  'dao-timeline': Calendar,
+  'delegates': Users,
+  'timeline': Calendar,
   'governance-proposals': FileText,
 };
 
