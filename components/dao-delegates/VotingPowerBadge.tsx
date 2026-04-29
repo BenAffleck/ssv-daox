@@ -232,13 +232,16 @@ export default function VotingPowerBadge({
               <h4 className="font-heading text-sm font-semibold text-foreground">
                 Voting Power Breakdown
               </h4>
+              <p className="text-[11px] text-muted">
+                Values shown in SSV + cSSV.
+              </p>
 
               <div className="space-y-1.5 text-xs">
                 {/* Total voting power */}
                 <div className="flex justify-between items-center">
                   <span className="text-muted">Total Voting Power</span>
                   <span className="font-medium text-foreground">
-                    {formatDetailedNumber(votingPower)} SSV
+                    {formatDetailedNumber(votingPower)}
                   </span>
                 </div>
 
@@ -246,7 +249,7 @@ export default function VotingPowerBadge({
                 <div className="flex justify-between items-center">
                   <span className="text-muted">Incoming Delegations</span>
                   <span className="font-medium text-accent">
-                    +{formatDetailedNumber(incomingPower)} SSV
+                    +{formatDetailedNumber(incomingPower)}
                   </span>
                 </div>
 
@@ -254,7 +257,7 @@ export default function VotingPowerBadge({
                 <div className="flex justify-between items-center">
                   <span className="text-muted">Outgoing Delegations</span>
                   <span className="font-medium text-danger">
-                    -{formatDetailedNumber(outgoingPower)} SSV
+                    -{formatDetailedNumber(outgoingPower)}
                   </span>
                 </div>
 
@@ -268,7 +271,7 @@ export default function VotingPowerBadge({
                     className={`font-medium ${netDelegatedPower >= 0 ? 'text-accent' : 'text-danger'}`}
                   >
                     {netDelegatedPower >= 0 ? '+' : ''}
-                    {formatDetailedNumber(netDelegatedPower)} SSV
+                    {formatDetailedNumber(netDelegatedPower)}
                   </span>
                 </div>
 

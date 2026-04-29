@@ -72,6 +72,15 @@ export const SSV_STRATEGY_PAYLOAD = {
             decimals: 18,
           },
         },
+        {
+          name: 'erc20-balance-of',
+          params: {
+            symbol: 'cSSV',
+            address: '0xe018D31F120A637828F46aFD6c64EC099d960546',
+            decimals: 18,
+          },
+          network: '1',
+        },
       ],
     },
   },
