@@ -12,11 +12,22 @@ export interface Module {
   sortOrder: number;
 }
 
-export interface CommunityTool {
+export enum ExternalToolCategory {
+  SIMULATOR = 'Simulator',
+  CALCULATOR = 'Calculator',
+  DASHBOARD = 'Dashboard',
+  EXPLORER = 'Explorer',
+}
+
+export interface ExternalTool {
   id: string;
   name: string;
   description: string;
+  categories: ExternalToolCategory[];
+  inputs: string;
+  outputs: string;
+  host: string;
   url: string;
-  iconUrl?: string;
+  featured?: boolean;
   sortOrder: number;
 }

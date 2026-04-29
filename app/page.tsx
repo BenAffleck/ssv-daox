@@ -1,7 +1,7 @@
 import { getModulesSorted } from '@/lib/data/modules';
-import { getCommunityToolsSorted } from '@/lib/data/community-tools';
+import { getExternalToolsSorted } from '@/lib/data/external-tools';
 import ModuleCard from '@/components/ModuleCard';
-import CommunityCard from '@/components/CommunityCard';
+import ExternalToolsSection from '@/components/ExternalToolsSection';
 import ActiveVotes from '@/components/ActiveVotes';
 import PendingVotes from '@/components/PendingVotes';
 import { fetchActiveProposals } from '@/lib/snapshot/api/fetch-active-proposals';
@@ -11,7 +11,7 @@ import { isAISummaryAvailable } from '@/lib/ai-summary';
 
 export default async function Home() {
   const modules = getModulesSorted();
-  const communityTools = getCommunityToolsSorted();
+  const externalTools = getExternalToolsSorted();
 
   const spaceId = SNAPSHOT_CONFIG.delegation.spaceFilter;
   const [activeProposals, pendingProposals] = spaceId
@@ -43,22 +43,8 @@ export default async function Home() {
         ))}
       </div>
 
-      {communityTools.length > 0 && (
-        <section className="mt-20">
-          <div className="mb-8 text-center">
-            <h2 className="mb-1.5 font-heading text-2xl font-semibold tracking-tight text-foreground">
-              Featured DAO Community
-            </h2>
-            <p className="text-sm text-muted">
-              Tools built by the SSV community
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {communityTools.map((tool) => (
-              <CommunityCard key={tool.id} tool={tool} />
-            ))}
-          </div>
-        </section>
+      {externalTools.length > 0 && (
+        <ExternalToolsSection tools={externalTools} />
       )}
     </div>
   );

@@ -176,27 +176,32 @@ Modules are registered in `lib/data/modules.ts` with status (ACTIVE/COMING_SOON)
 3. Module-specific components go in `components/[module-slug]/`
 4. Module-specific logic goes in `lib/[module-slug]/`
 
-### 5. Community Tools
+### 5. External Tools
 
-External community-built tools are displayed in a "Featured DAO Community" section on the landing page. These are distinct from internal modules - they link externally and have a different visual treatment.
+External community-built tools (calculators, simulators, dashboards, explorers) displayed in a list-style section on the landing page below the modules grid. This is the only home for external tools — there is no separate "Featured DAO Community" section; featured items are pinned to the top of this list via the `featured` flag.
 
-**Data model:** `CommunityTool` interface in `lib/types.ts` with:
-- `id`, `name`, `description`, `url`, `sortOrder`
-- Optional `iconUrl` for favicon/logo
+**Data model:** `ExternalTool` interface in `lib/types.ts`:
+- `id`, `name`, `description`, `host`, `url`, `sortOrder`
+- `categories`: `ExternalToolCategory[]` — a tool can belong to more than one category (e.g. `[CALCULATOR, DASHBOARD]`); the filter matches when any category is selected
+- `inputs`, `outputs`: short formula-style strings (e.g. `Validators · Fee % · APR` → `Net SSV · USD/yr`)
+- `featured?`: when `true`, the tool is pinned to the top of the list and rendered with a solid-primary "Featured" pill
 
 **Files:**
-- `lib/data/community-tools.ts` - Tool registry and `getCommunityToolsSorted()`
-- `components/CommunityCard.tsx` - Card with gradient background, colored border, "Community" badge
+- `lib/data/external-tools.ts` — tool registry and `getExternalToolsSorted()` (featured-first, then `sortOrder` ascending)
+- `components/ExternalToolsSection.tsx` — client component with filter state, list rows, submit footer
 
-**Visual treatment:**
-- Gradient background: `from-secondary/10 to-accent/10`
-- Colored border: `border-secondary/40`, hover `border-secondary`
-- Colored shadow: `hover:shadow-secondary/20`
-- External link icon (top-right)
+**Category → badge mapping (semantic tonal tints, no new colors):**
+- `Simulator` → `badge-sm-secondary` (purple)
+- `Calculator` → `badge-sm-primary` (blue)
+- `Dashboard` → `badge-sm-accent` (green)
+- `Explorer` → `badge-sm-warning` (orange)
 
-**Adding a community tool:**
-1. Add entry to `lib/data/community-tools.ts`
-2. Provide `id`, `name`, `description`, `url`, and `sortOrder`
+The "Featured" pill uses solid `bg-primary text-white` to read as a callout rather than a category.
+
+**Adding an external tool:**
+1. Add entry to `lib/data/external-tools.ts`
+2. Provide all required fields including `categories` (one or more), `inputs`, `outputs`, `host`, and `sortOrder`
+3. Set `featured: true` to pin the tool to the top of the list
 
 ---
 
@@ -488,4 +493,4 @@ npm run type-check # TypeScript check
 
 ---
 
-*Last Updated: 2026-03-14*
+*Last Updated: 2026-04-29*
