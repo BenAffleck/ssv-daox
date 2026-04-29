@@ -101,6 +101,18 @@ export const externalTools: ExternalTool[] = [
     url: 'https://dune.com/ssv_network/ssvnetworktoken',
     sortOrder: 9,
   },
+  {
+    id: 'ssv-eth-accrual-token',
+    name: 'SSV - ETH Accrual Token',
+    description: 'Calculator modelling how SSV could become an ETH-accruing token — see how network activity compounds into ETH yield for stakers (pending DAO approval).',
+    categories: [ExternalToolCategory.CALCULATOR, ExternalToolCategory.SIMULATOR],
+    inputs: 'SSV holdings · Network assumptions',
+    outputs: 'Projected ETH yield · APR',
+    host: 'ethaccrualtoken.com',
+    url: 'https://ethaccrualtoken.com',
+    featured: true,
+    sortOrder: 10,
+  },
 ];
 
 /**
