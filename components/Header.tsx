@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Users, Calendar, FileText, Menu, X, User, ChevronDown } from 'lucide-react';
 import ThemeToggle from '@/lib/theme/ThemeToggle';
-import { getActiveModules, getComingSoonModules } from '@/lib/data/modules';
+import { getActiveModules, getComingSoonModules, getModulesSorted } from '@/lib/data/modules';
+import { getExternalToolsSorted } from '@/lib/data/external-tools';
+import SearchPalette, { SearchTrigger } from '@/components/SearchPalette';
 import type { Module } from '@/lib/types';
 
 const slugIconMap: Record<string, React.ComponentType<{ size?: number }>> = {
@@ -30,6 +32,8 @@ export default function Header() {
 
   const activeModules = getActiveModules();
   const comingSoonModules = getComingSoonModules();
+  const allModules = getModulesSorted();
+  const externalTools = getExternalToolsSorted();
 
   // Close "More" dropdown on outside click
   useEffect(() => {
@@ -125,6 +129,7 @@ export default function Header() {
 
         {/* Right section */}
         <div className="hidden items-center gap-2 md:flex">
+          <SearchTrigger />
           <ThemeToggle />
           <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted">
             <User size={14} />
@@ -185,15 +190,20 @@ export default function Header() {
             })}
           </nav>
 
-          <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
-            <ThemeToggle />
-            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted">
-              <User size={14} />
-              Guest
+          <div className="mt-3 border-t border-border pt-3">
+            <SearchTrigger variant="mobile" />
+            <div className="mt-3 flex items-center gap-2">
+              <ThemeToggle />
+              <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted">
+                <User size={14} />
+                Guest
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      <SearchPalette modules={allModules} tools={externalTools} />
     </header>
   );
 }

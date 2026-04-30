@@ -115,3 +115,9 @@ a, button, input, select, [class*="bg-card"], [class*="border-"] {
   /* Table column header typography */
   .table-col-header { @apply font-heading text-xs font-semibold uppercase tracking-wide text-muted; }
 }
+
+/* Search palette open animation */
+@keyframes palette-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

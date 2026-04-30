@@ -32,7 +32,8 @@ ssv-daox/
 │       └── page.tsx          # Server component (event aggregation)
 │
 ├── components/               # Shared components
-│   ├── Header.tsx            # App header (full nav bar with active route detection)
+│   ├── Header.tsx            # App header (full nav bar + global search trigger)
+│   ├── SearchPalette.tsx     # Global Ctrl+K command palette + trigger button
 │   ├── ModuleCard.tsx        # Landing page cards
 │   ├── dao-delegates/        # DAO Delegates components
 │   │   ├── DelegatesTable.tsx    # Client: filter/sort state
@@ -52,6 +53,7 @@ ssv-daox/
 ├── lib/                      # Business logic
 │   ├── types.ts              # Core types (Module, ModuleStatus)
 │   ├── data/modules.ts       # Module registry
+│   ├── search/index.ts       # Unified module + tool search index & scoring
 │   ├── theme/                # Theme system
 │   │   ├── types.ts          # Theme type definitions
 │   │   ├── ThemeProvider.tsx # React Context
@@ -202,6 +204,25 @@ The "Featured" pill uses solid `bg-primary text-white` to read as a callout rath
 1. Add entry to `lib/data/external-tools.ts`
 2. Provide all required fields including `categories` (one or more), `inputs`, `outputs`, `host`, and `sortOrder`
 3. Set `featured: true` to pin the tool to the top of the list
+
+### 6. Global Search (Ctrl+K)
+
+A global search palette indexes all modules and external tools and is reachable from anywhere on the page via `Ctrl+K` / `Cmd+K`. The trigger button lives in the header (desktop right section + mobile menu).
+
+**Files:**
+- `lib/search/index.ts` — `buildSearchIndex(modules, tools)`, `searchItems(index, q)`, and `scoreSearchItem`. Pure functions, no React. Searches across name, description, host, and category strings; ranks direct name hits highest, then any direct substring, then subsequence matches.
+- `components/SearchPalette.tsx` — client component exporting:
+  - default `SearchPalette` — modal + global keyboard listener; mounted once inside `Header`.
+  - `SearchTrigger` — pill button with `⌘K` / `Ctrl K` kbd hint (desktop and mobile variants).
+  - `openSearchPalette()` — helper that dispatches the `daox:open-search` window event so any caller can open the modal.
+
+**Behavior:**
+- `Ctrl+K` / `Cmd+K` toggles the palette; `Esc` closes it; `↑` / `↓` move the active row; `Enter` opens it.
+- Active modules navigate via `next/navigation` `router.push`; coming-soon modules are listed but not navigable. External tools open in a new tab with `noopener,noreferrer`.
+- Results are grouped by **Modules** and **External tools**. Featured tools render with the same solid-primary "Featured" pill used in `ExternalToolsSection`.
+- Empty state shows a "No matches for …" message; footer shows kbd legend and live result count.
+
+**Visuals:** Glassmorphic scrim (`bg-black/45 backdrop-blur-sm`), centered modal at `12vh` from the top, brand glow shadow (`var(--shadow-glow-lg)`), `palette-in` keyframe defined in `globals.css`.
 
 ---
 
@@ -493,4 +514,4 @@ npm run type-check # TypeScript check
 
 ---
 
-*Last Updated: 2026-04-29*
+*Last Updated: 2026-04-30*

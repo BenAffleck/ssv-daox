@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/lib/theme/ThemeProvider';
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
 }));
 
 describe('Header', () => {
