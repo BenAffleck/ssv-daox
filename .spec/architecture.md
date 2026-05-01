@@ -180,7 +180,7 @@ Modules are registered in `lib/data/modules.ts` with status (ACTIVE/COMING_SOON)
 
 ### 5. External Tools
 
-External community-built tools (calculators, simulators, dashboards, explorers) displayed in a list-style section on the landing page below the modules grid. This is the only home for external tools — there is no separate "Featured DAO Community" section; featured items are pinned to the top of this list via the `featured` flag.
+External community-built tools (calculators, simulators, dashboards, explorers, claim UIs) displayed in a list-style section on the landing page below the modules grid. This is the only home for external tools — there is no separate "Featured DAO Community" section; featured items are pinned to the top of this list via the `featured` flag.
 
 **Data model:** `ExternalTool` interface in `lib/types.ts`:
 - `id`, `name`, `description`, `host`, `url`, `sortOrder`
@@ -197,6 +197,7 @@ External community-built tools (calculators, simulators, dashboards, explorers) 
 - `Calculator` → `badge-sm-primary` (blue)
 - `Dashboard` → `badge-sm-accent` (green)
 - `Explorer` → `badge-sm-warning` (orange)
+- `Claim` → `badge-sm-danger` (red)
 
 The "Featured" pill uses solid `bg-primary text-white` to read as a callout rather than a category.
 

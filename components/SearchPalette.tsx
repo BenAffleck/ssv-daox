@@ -9,6 +9,7 @@ import {
   CornerDownLeft,
   ExternalLink,
   Gauge,
+  HandCoins,
   LayoutGrid,
   Search,
   SearchX,
@@ -42,6 +43,7 @@ const CATEGORY_BADGE: Record<string, string> = {
   [ExternalToolCategory.CALCULATOR]: 'badge-sm-primary',
   [ExternalToolCategory.DASHBOARD]: 'badge-sm-accent',
   [ExternalToolCategory.EXPLORER]: 'badge-sm-warning',
+  [ExternalToolCategory.CLAIM]: 'badge-sm-danger',
 };
 
 function ItemIcon({ item, active }: { item: SearchItem; active: boolean }) {
@@ -51,6 +53,7 @@ function ItemIcon({ item, active }: { item: SearchItem; active: boolean }) {
   if (cat === ExternalToolCategory.DASHBOARD) return <Gauge size={16} className={cls} />;
   if (cat === ExternalToolCategory.SIMULATOR) return <Activity size={16} className={cls} />;
   if (cat === ExternalToolCategory.EXPLORER) return <Telescope size={16} className={cls} />;
+  if (cat === ExternalToolCategory.CLAIM) return <HandCoins size={16} className={cls} />;
   return <Calculator size={16} className={cls} />;
 }
 

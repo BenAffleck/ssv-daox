@@ -95,6 +95,7 @@ a, button, input, select, [class*="bg-card"], [class*="border-"] {
   .badge-sm-secondary { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-secondary/20 text-secondary; font-size: 11px; }
   .badge-sm-accent    { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-accent/30 text-accent; font-size: 11px; }
   .badge-sm-warning   { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-warning/30 text-warning; font-size: 11px; }
+  .badge-sm-danger    { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-danger/20 text-danger; font-size: 11px; }
   .badge-sm-muted     { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-muted/30 text-muted; font-size: 11px; }
 
   /* Cards */

@@ -15,6 +15,7 @@ const FILTERS: Filter[] = [
   ExternalToolCategory.CALCULATOR,
   ExternalToolCategory.DASHBOARD,
   ExternalToolCategory.EXPLORER,
+  ExternalToolCategory.CLAIM,
 ];
 
 const CATEGORY_BADGE: Record<ExternalToolCategory, string> = {
@@ -22,6 +23,7 @@ const CATEGORY_BADGE: Record<ExternalToolCategory, string> = {
   [ExternalToolCategory.CALCULATOR]: 'badge-sm-primary',
   [ExternalToolCategory.DASHBOARD]: 'badge-sm-accent',
   [ExternalToolCategory.EXPLORER]: 'badge-sm-warning',
+  [ExternalToolCategory.CLAIM]: 'badge-sm-danger',
 };
 
 const ExternalLinkIcon = ({ className }: { className?: string }) => (

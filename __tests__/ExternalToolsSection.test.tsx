@@ -72,6 +72,17 @@ const tools: ExternalTool[] = [
     featured: true,
     sortOrder: 99,
   },
+  {
+    id: 'claim-g',
+    name: 'Claim G',
+    description: 'Claim G description',
+    categories: [ExternalToolCategory.CLAIM],
+    inputs: 'wallet',
+    outputs: 'tokens',
+    host: 'claim-g.xyz',
+    url: 'https://claim-g.xyz',
+    sortOrder: 6,
+  },
 ];
 
 describe('ExternalToolsSection', () => {
@@ -84,14 +95,16 @@ describe('ExternalToolsSection', () => {
     expect(screen.getByText('Expl D')).toBeInTheDocument();
     expect(screen.getByText('Multi E')).toBeInTheDocument();
     expect(screen.getByText('Feat F')).toBeInTheDocument();
+    expect(screen.getByText('Claim G')).toBeInTheDocument();
   });
 
-  it('exposes all four category filters', () => {
+  it('exposes every category filter', () => {
     render(<ExternalToolsSection tools={tools} />);
     expect(screen.getByRole('button', { name: 'Simulator' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Calculator' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Explorer' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Claim' })).toBeInTheDocument();
   });
 
   it('renders one badge per assigned category', () => {
@@ -132,6 +145,17 @@ describe('ExternalToolsSection', () => {
     expect(screen.getByText('Feat F')).toBeInTheDocument();
     expect(screen.queryByText('Sim A')).not.toBeInTheDocument();
     expect(screen.queryByText('Calc B')).not.toBeInTheDocument();
+  });
+
+  it('narrows rows by Claim filter', async () => {
+    const user = userEvent.setup();
+    render(<ExternalToolsSection tools={tools} />);
+    await user.click(screen.getByRole('button', { name: 'Claim' }));
+
+    expect(screen.getByText('Claim G')).toBeInTheDocument();
+    expect(screen.queryByText('Sim A')).not.toBeInTheDocument();
+    expect(screen.queryByText('Calc B')).not.toBeInTheDocument();
+    expect(screen.queryByText('Expl D')).not.toBeInTheDocument();
   });
 
   it('shows a multi-category tool under each of its category filters', async () => {

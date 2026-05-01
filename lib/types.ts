@@ -17,6 +17,7 @@ export enum ExternalToolCategory {
   CALCULATOR = 'Calculator',
   DASHBOARD = 'Dashboard',
   EXPLORER = 'Explorer',
+  CLAIM = 'Claim',
 }
 
 export interface ExternalTool {
