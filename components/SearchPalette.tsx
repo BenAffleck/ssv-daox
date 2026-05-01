@@ -128,16 +128,29 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
   const index = useMemo(() => buildSearchIndex(modules, tools), [modules, tools]);
   const results: ScoredItem[] = useMemo(() => searchItems(index, q), [index, q]);
 
-  const grouped = useMemo(() => {
-    const out: {
-      Modules: Array<ScoredItem & { _idx: number }>;
-      'External tools': Array<ScoredItem & { _idx: number }>;
-    } = { Modules: [], 'External tools': [] };
+  // Group label → items (with the row's global active-index preserved for
+  // keyboard nav). Order the groups by their best-scoring item so the most
+  // relevant bucket leads — typing "claim" floats the External tools group
+  // above Modules; an empty query falls back to the Modules-first default.
+  const groupedEntries = useMemo<
+    Array<[string, Array<ScoredItem & { _idx: number }>]>
+  >(() => {
+    const modules: Array<ScoredItem & { _idx: number }> = [];
+    const tools: Array<ScoredItem & { _idx: number }> = [];
     results.forEach((r, idx) => {
-      const bucket = r.item.kind === 'module' ? 'Modules' : 'External tools';
-      out[bucket].push({ ...r, _idx: idx });
+      (r.item.kind === 'module' ? modules : tools).push({ ...r, _idx: idx });
     });
-    return out;
+    const modulesTop = modules[0]?.score ?? -1;
+    const toolsTop = tools[0]?.score ?? -1;
+    return toolsTop > modulesTop
+      ? [
+          ['External tools', tools],
+          ['Modules', modules],
+        ]
+      : [
+          ['Modules', modules],
+          ['External tools', tools],
+        ];
   }, [results]);
 
   useEffect(() => {
@@ -237,7 +250,7 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onInputKey}
-            placeholder="Search modules, simulators, calculators, dashboards…"
+            placeholder="Search modules and external tools…"
             aria-label="Search query"
             className="flex-1 border-none bg-transparent font-body text-[15px] text-foreground placeholder:text-muted/70 focus:outline-none"
           />
@@ -258,7 +271,7 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
               </div>
             </div>
           ) : (
-            Object.entries(grouped).map(([group, items]) =>
+            groupedEntries.map(([group, items]) =>
               items.length === 0 ? null : (
                 <div key={group}>
                   <div className="px-2.5 pb-1 pt-2 font-heading text-[10px] font-semibold uppercase tracking-wider text-muted">
@@ -306,7 +319,7 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
 }
 
 interface SearchTriggerProps {
-  variant?: 'desktop' | 'mobile';
+  variant?: 'desktop' | 'mobile' | 'icon';
   className?: string;
 }
 
@@ -318,6 +331,20 @@ export function SearchTrigger({ variant = 'desktop', className = '' }: SearchTri
       setShortcutLabel('⌘ K');
     }
   }, []);
+
+  if (variant === 'icon') {
+    return (
+      <button
+        type="button"
+        onClick={openSearchPalette}
+        aria-label="Open search"
+        data-testid="search-trigger-icon"
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary ${className}`}
+      >
+        <Search size={18} />
+      </button>
+    );
+  }
 
   if (variant === 'mobile') {
     return (

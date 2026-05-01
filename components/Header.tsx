@@ -137,14 +137,17 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile hamburger */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="nav-item md:hidden"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-        >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        {/* Mobile right cluster: search icon + hamburger */}
+        <div className="flex items-center gap-2 md:hidden">
+          <SearchTrigger variant="icon" />
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="nav-item"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          >
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
@@ -190,14 +193,11 @@ export default function Header() {
             })}
           </nav>
 
-          <div className="mt-3 border-t border-border pt-3">
-            <SearchTrigger variant="mobile" />
-            <div className="mt-3 flex items-center gap-2">
-              <ThemeToggle />
-              <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted">
-                <User size={14} />
-                Guest
-              </div>
+          <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
+            <ThemeToggle />
+            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted">
+              <User size={14} />
+              Guest
             </div>
           </div>
         </div>

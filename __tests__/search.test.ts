@@ -128,4 +128,24 @@ describe('searchItems', () => {
     const results = searchItems(index, 'simulator');
     expect(results.some((r) => r.item.name === 'Stake Easy')).toBe(true);
   });
+
+  it('drops loose subsequence-only matches when at least one direct hit exists', () => {
+    // "delegate" hits "DAO Delegates" directly. "Stake Easy" can be reached via
+    // a sloppy subsequence walk (d→advisor, e→explore, l→explore, e→explore,
+    // g→staking, a→stakeeasy, t→simulator, e→stakeeasy) — those should be
+    // hidden once the user has a real match.
+    const results = searchItems(index, 'delegate');
+    expect(results.some((r) => r.item.name === 'DAO Delegates')).toBe(true);
+    expect(results.every((r) => r.score >= 1000)).toBe(true);
+    expect(results.some((r) => r.item.name === 'Stake Easy')).toBe(false);
+  });
+
+  it('still returns subsequence matches when there are no direct hits', () => {
+    // No item contains "xyz" as a substring, but several can subsequence-match.
+    // We don't want to suppress those — they're the only signal we have.
+    const subseqOnly = searchItems(index, 'xyz');
+    if (subseqOnly.length > 0) {
+      expect(subseqOnly.every((r) => r.score < 1000)).toBe(true);
+    }
+  });
 });

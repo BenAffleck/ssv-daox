@@ -112,7 +112,7 @@ export default function ExternalToolsSection({ tools }: ExternalToolsSectionProp
             External Tools
           </h2>
           <p className="text-sm text-muted">
-            Calculators, simulators, dashboards, and explorers from across the SSV community.
+            Calculators, simulators, dashboards, explorers, and reward claim UIs from across the SSV community.
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">

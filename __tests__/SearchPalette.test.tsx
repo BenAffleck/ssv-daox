@@ -144,4 +144,17 @@ describe('SearchTrigger', () => {
     expect(handler).toHaveBeenCalled();
     window.removeEventListener('daox:open-search', handler);
   });
+
+  it('renders an icon-only button in the icon variant and dispatches open on click', async () => {
+    const user = userEvent.setup();
+    const handler = vi.fn();
+    window.addEventListener('daox:open-search', handler);
+    render(<SearchTrigger variant="icon" />);
+    const btn = screen.getByTestId('search-trigger-icon');
+    expect(btn).toHaveAttribute('aria-label', 'Open search');
+    expect(btn.textContent).toBe('');
+    await user.click(btn);
+    expect(handler).toHaveBeenCalled();
+    window.removeEventListener('daox:open-search', handler);
+  });
 });

@@ -91,8 +91,13 @@ export interface ScoredItem {
 export function searchItems(index: SearchItem[], query: string): ScoredItem[] {
   const trimmed = query.trim();
   if (!trimmed) return index.map((item) => ({ item, score: 0 }));
-  return index
+  const scored = index
     .map((item) => ({ item, score: scoreSearchItem(item, trimmed) }))
     .filter((r) => r.score >= 0)
     .sort((a, b) => b.score - a.score);
+  // If at least one item has a direct substring hit (score >= 1000), drop the
+  // loose subsequence-only matches (score 100) — they make unrelated items look
+  // relevant when the user already has stronger candidates.
+  const hasDirectHit = scored.length > 0 && scored[0].score >= 1000;
+  return hasDirectHit ? scored.filter((r) => r.score >= 1000) : scored;
 }
