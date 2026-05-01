@@ -43,6 +43,8 @@ Provide:
 1. A TL;DR: 2-3 concise sentences explaining what this proposal does and why it matters.
 2. For each voting choice, a brief explanation of what choosing it means.
 
+Considerations: Abstain from a vote counts towards quorum but not towards any choice. If the proposal is complex, focus on the key points.
+
 Keep language simple and neutral. Focus on the practical impact.
 
 Proposal Title: ${title}
