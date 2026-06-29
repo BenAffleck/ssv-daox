@@ -112,6 +112,18 @@ export const externalTools: ExternalTool[] = [
     sortOrder: 10,
   },
   {
+    id: "ssv-eth-migration-forecast",
+    name: "ETH Migration Forecast",
+    description: "Informational estimator for the SSV mainnet migration — calculates the ETH a cluster owner needs to deposit to cover runway and collateral, using live cluster and operator data. No wallet connection or transactions.",
+    categories: [ExternalToolCategory.CALCULATOR, ExternalToolCategory.SIMULATOR],
+    inputs: "Cluster address · Runway days",
+    outputs: "Required ETH · Breakdown",
+    host: "ssv-eth-forecasting.vercel.app",
+    url: "https://ssv-eth-forecasting.vercel.app",
+    featured: false,
+    sortOrder: 1009,
+  },
+  {
     id: "ssv-rewards-claim",
     name: "SSV Rewards Claim",
     description: "Standalone claim UI for the Incentivized Mainnet Program — connect a wallet (or look up any address) and claim eligible SSV from the on-chain Merkle distributor including Lido SDVT/CSM rewards.",
