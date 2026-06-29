@@ -1,0 +1,12 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "ssv-rewards-claim",
+  "name": "SSV Rewards Claim",
+  "description": "Standalone claim UI for the Incentivized Mainnet Program — connect a wallet (or look up any address) and claim eligible SSV from the on-chain Merkle distributor including Lido SDVT/CSM rewards.",
+  "categories": ["Claim"],
+  "inputs": "Wallet · Address",
+  "outputs": "Claimable SSV · Tx",
+  "host": "ssvrewards.com",
+  "url": "https://www.ssvrewards.com/",
+  "sortOrder": 11
+}

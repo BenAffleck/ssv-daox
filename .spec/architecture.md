@@ -191,8 +191,30 @@ External community-built tools (calculators, simulators, dashboards, explorers, 
 - `inputs`, `outputs`: short formula-style strings (e.g. `Validators · Fee % · APR` → `Net SSV · USD/yr`)
 - `featured?`: when `true`, the tool is pinned to the top of the list and rendered with a solid-primary "Featured" pill
 
+**Data pipeline (community-contributable):** each tool is one JSON file in
+`data/external-tools/<id>.json`, validated by a Zod schema and assembled at build
+time into a generated TypeScript array. This lets non-developers add a tool via a
+single-file PR while keeping all existing import sites unchanged.
+
+```
+data/external-tools/*.json
+  → scripts/gen-external-tools.ts   (validate w/ Zod, derive host, fail on bad input)
+  → lib/data/external-tools.generated.ts   (generated ExternalTool[])
+  → lib/data/external-tools.ts      (re-export + getExternalToolsSorted())
+  → components / search index
+```
+
+The generator runs on `predev` / `prebuild` and via `npm run gen:tools`; CI checks
+the committed generated file is in sync. See `CONTRIBUTING.md` and the
+`.github/` scaffolding (CI, Claude review workflows, CODEOWNERS, PR/issue templates).
+
 **Files:**
-- `lib/data/external-tools.ts` — tool registry and `getExternalToolsSorted()` (featured-first, then `sortOrder` ascending)
+- `data/external-tools/<id>.json` — one file per tool (the contribution surface)
+- `lib/external-tool.schema.ts` — Zod schema + `parseExternalTool()` (single source of truth)
+- `data/external-tool.schema.json` — JSON Schema mirror for editor autocomplete
+- `scripts/gen-external-tools.ts` — build-time validator/generator
+- `lib/data/external-tools.generated.ts` — generated array (do not hand-edit)
+- `lib/data/external-tools.ts` — re-export + `getExternalToolsSorted()` (featured-first, then `sortOrder`, then name)
 - `components/ExternalToolsSection.tsx` — client component with filter state, list rows, submit footer
 
 **Category → badge mapping (semantic tonal tints, no new colors):**
@@ -205,9 +227,10 @@ External community-built tools (calculators, simulators, dashboards, explorers, 
 The "Featured" pill uses solid `bg-primary text-white` to read as a callout rather than a category.
 
 **Adding an external tool:**
-1. Add entry to `lib/data/external-tools.ts`
-2. Provide all required fields including `categories` (one or more), `inputs`, `outputs`, `host`, and `sortOrder`
-3. Set `featured: true` to pin the tool to the top of the list
+1. Create `data/external-tools/<id>.json` (copy an existing file as a template)
+2. Fill the required fields: `id`, `name`, `description`, `categories` (one or more), `inputs`, `outputs`, `url` (`host` is derived from `url`)
+3. Run `npm run gen:tools` (validates + regenerates) and commit the generated file, then `npm test`
+4. `featured` is maintainer-only; community PRs leave it unset
 
 ### 6. Global Search (Ctrl+K)
 

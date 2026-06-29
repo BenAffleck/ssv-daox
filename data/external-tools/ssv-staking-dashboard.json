@@ -1,0 +1,12 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "ssv-staking-dashboard",
+  "name": "SSV Staking Dashboard",
+  "description": "Cluster migration, operator performance, cSSV yields, and fee-market metrics across SSV Network.",
+  "categories": ["Dashboard"],
+  "inputs": "Live on-chain feed",
+  "outputs": "Migration · APR · Fees",
+  "host": "yutingzhang.workers.dev",
+  "url": "https://ssv-dashboard.yutingzhang.workers.dev",
+  "sortOrder": 5
+}

@@ -1,6 +1,43 @@
 import { describe, it, expect } from 'vitest';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { externalTools, getExternalToolsSorted } from '@/lib/data/external-tools';
 import { ExternalToolCategory } from '@/lib/types';
+import { externalToolSchema, parseExternalTool } from '@/lib/external-tool.schema';
+
+const DATA_DIR = join(process.cwd(), 'data', 'external-tools');
+const toolFiles = readdirSync(DATA_DIR)
+  .filter((f) => f.endsWith('.json'))
+  .sort();
+
+describe('external-tools JSON sources', () => {
+  it('has at least one tool JSON file', () => {
+    expect(toolFiles.length).toBeGreaterThan(0);
+  });
+
+  it('every JSON file passes the zod schema', () => {
+    toolFiles.forEach((file) => {
+      const raw = JSON.parse(readFileSync(join(DATA_DIR, file), 'utf8'));
+      const result = externalToolSchema.safeParse(raw);
+      expect(result.success, `${file}: ${result.error?.toString()}`).toBe(true);
+    });
+  });
+
+  it('every filename matches its id', () => {
+    toolFiles.forEach((file) => {
+      const raw = JSON.parse(readFileSync(join(DATA_DIR, file), 'utf8'));
+      expect(file).toBe(`${raw.id}.json`);
+    });
+  });
+
+  it('the generated catalog is in sync with the JSON sources (run `npm run gen:tools`)', () => {
+    const fromJson = toolFiles.map((file, index) =>
+      parseExternalTool(JSON.parse(readFileSync(join(DATA_DIR, file), 'utf8')), index),
+    );
+    const byId = (a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id);
+    expect([...externalTools].sort(byId)).toEqual([...fromJson].sort(byId));
+  });
+});
 
 describe('external-tools data', () => {
   describe('externalTools array', () => {

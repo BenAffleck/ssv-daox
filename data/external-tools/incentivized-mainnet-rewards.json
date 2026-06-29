@@ -1,0 +1,11 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "incentivized-mainnet-rewards",
+  "name": "Incentivized Mainnet Rewards",
+  "description": "Estimate yearly SSV rewards based on staked ETH and the current Incentivized Mainnet tier boost.",
+  "categories": ["Calculator"],
+  "inputs": "Staked ETH · Tier",
+  "outputs": "SSV/yr · USD · Tier APY",
+  "url": "https://ssv.network/incentivized-mainnet",
+  "sortOrder": 3
+}

@@ -1,0 +1,56 @@
+name: Claude tool review
+
+# Automatically reviews pull requests that add or change an external tool entry
+# (data/external-tools/**). Claude checks the submission for the things humans
+# most often get wrong, then posts a single review comment. Human maintainer
+# approval is still required to merge (see CODEOWNERS + branch protection).
+#
+# Requirements: same as claude.yml (Claude GitHub App installed + ANTHROPIC_API_KEY).
+#
+# Fork-secret note: GitHub does NOT expose repository secrets to `pull_request`
+# runs originating from forks, so this auto-review only runs for branches pushed
+# to this repository. For a fork PR, a maintainer can trigger a review by
+# commenting "@claude please review" (handled by claude.yml). We intentionally
+# avoid `pull_request_target` here, which would expose secrets to untrusted PRs.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'data/external-tools/**'
+      - 'data/external-tool.schema.json'
+
+jobs:
+  review:
+    # Skip forks, where the secret is unavailable (the job would just fail).
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Review external tool submission
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are reviewing a pull request to the DAOx external-tools catalog.
+            Each tool is a JSON file under data/external-tools/<id>.json, validated
+            by data/external-tool.schema.json and lib/external-tool.schema.ts.
+
+            Review ONLY the added/changed tool JSON file(s) in this PR and post a
+            concise PR review comment covering:
+              - id is kebab-case and the filename matches "<id>.json"
+              - name, description, inputs, outputs are clear, accurate and free of typos
+              - categories are appropriate (Simulator | Calculator | Dashboard | Explorer | Claim)
+              - url is the tool's real, official destination (flag look-alike / unofficial domains)
+              - the tool is genuinely SSV-related and not spam, a scam, or a duplicate of an existing entry
+              - "featured": true is NOT set by a community contributor (maintainer-only)
+
+            Be friendly and specific. If everything looks good, say so briefly.
+            Do not modify files; only leave review feedback.

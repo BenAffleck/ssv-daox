@@ -1,0 +1,11 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "governance-parameter-calculator",
+  "name": "Governance Parameter Calculator",
+  "description": "Explore and tune SSV DAO governance parameters to see how proposed values affect protocol behaviour.",
+  "categories": ["Simulator"],
+  "inputs": "Parameter values",
+  "outputs": "Resulting config",
+  "url": "https://ssv-params.vercel.app",
+  "sortOrder": 4
+}

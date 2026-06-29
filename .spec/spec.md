@@ -35,6 +35,26 @@
 | status      | Enum     | `active`, `coming_soon`      |
 | sortOrder   | Integer  | Display order                |
 
+#### ExternalTool
+
+Community-contributed tools shown on the landing page and in the search palette.
+Each tool is authored as one JSON file in `data/external-tools/<id>.json`,
+validated by a Zod schema (`lib/external-tool.schema.ts`), and assembled at build
+time into `lib/data/external-tools.generated.ts` by `scripts/gen-external-tools.ts`.
+
+| Field       | Type     | Description                                            |
+|-------------|----------|--------------------------------------------------------|
+| id          | String   | Unique kebab-case id; matches the filename             |
+| name        | String   | Display name                                           |
+| description | String   | One/two-sentence summary                               |
+| categories  | Enum[]   | `Simulator`, `Calculator`, `Dashboard`, `Explorer`, `Claim` |
+| inputs      | String   | Short formula-style inputs (`A · B`)                   |
+| outputs     | String   | Short formula-style outputs                            |
+| url         | String   | Official destination URL                               |
+| host        | String   | Display host (derived from `url` when omitted)         |
+| featured    | Boolean  | Maintainer-only; pins to top with a "Featured" pill    |
+| sortOrder   | Number   | Optional ordering hint (featured-first, then sortOrder, then name) |
+
 ---
 
 ## 4. Core Features
@@ -88,3 +108,25 @@ committees) are surfaced at the top of the landing page with space badges
 **Configuration:** the five spaces live in one list (`getGovernanceSpaces()` in
 `lib/snapshot/config.ts`) sourced from env vars. Adding/removing a space is a
 config-only change. Member counts and notifications remain deferred (P1/P2).
+
+### 4.4 External Tools & Community Contributions
+
+A data-driven catalog of community-built tools (calculators, simulators,
+dashboards, explorers, claim UIs), rendered in a filterable list on the landing
+page and indexed in the global `Ctrl/⌘+K` search palette. Icons and badges are
+auto-selected from each tool's categories — no per-tool UI code.
+
+**Contribution model:** the community grows the catalog via GitHub PRs. Adding a
+tool is a single JSON file in `data/external-tools/` — no TypeScript required.
+See `CONTRIBUTING.md`.
+
+**Safety & review pipeline:**
+- A Zod schema (`lib/external-tool.schema.ts`) + JSON Schema
+  (`data/external-tool.schema.json`) validate every entry; the generator
+  (`npm run gen:tools`) fails fast on an invalid file.
+- CI (`.github/workflows/ci.yml`) checks the generated catalog is in sync, then
+  runs lint + unit tests (schema validation, unique ids, valid URLs).
+- The Claude GitHub Action auto-reviews tool PRs and answers `@claude` mentions
+  (`.github/workflows/claude*.yml`).
+- `CODEOWNERS` + branch protection require a passing CI run and maintainer
+  approval before merge; `featured` is maintainer-only.

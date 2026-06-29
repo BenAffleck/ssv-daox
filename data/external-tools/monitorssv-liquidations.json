@@ -1,0 +1,11 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "monitorssv-liquidations",
+  "name": "MonitorSSV Liquidations",
+  "description": "Real-time view of SSV operator clusters at risk of liquidation due to insufficient SSV balance.",
+  "categories": ["Simulator"],
+  "inputs": "Live on-chain feed",
+  "outputs": "At-risk clusters · Runway",
+  "url": "https://monitorssv.xyz/liquidation",
+  "sortOrder": 6
+}

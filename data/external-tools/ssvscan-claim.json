@@ -1,0 +1,11 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "ssvscan-claim",
+  "name": "SSVScan Claim",
+  "description": "Per-address rewards lookup and claim flow built into the SSVScan explorer — connect a wallet to claim from the SSV Rewards Merkle distributor.",
+  "categories": ["Claim"],
+  "inputs": "Wallet · Address",
+  "outputs": "Claimable SSV · Tx",
+  "url": "https://ssvscan.io/claim",
+  "sortOrder": 13
+}

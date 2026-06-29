@@ -1,0 +1,11 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "cssv-reward-calculator",
+  "name": "cSSV Reward Calculator",
+  "description": "Mint cSSV by staking SSV — estimate APR and ETH-fee rewards from running the validator infra.",
+  "categories": ["Calculator"],
+  "inputs": "ETH APR · Prices · Staked SSV",
+  "outputs": "SSV APR · Annual fees",
+  "url": "https://ssv.network/cssv",
+  "sortOrder": 2
+}

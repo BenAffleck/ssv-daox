@@ -1,0 +1,49 @@
+name: Claude
+
+# Responds when someone writes "@claude ..." in an issue, PR, or review comment.
+# Useful for asking Claude to review a tool submission, explain a check failure,
+# or make a small follow-up change on a PR.
+#
+# Requirements (one-time, by a repo admin):
+#   1. Install the Claude GitHub App: https://github.com/apps/claude
+#   2. Add an ANTHROPIC_API_KEY repository secret
+#      (Settings -> Secrets and variables -> Actions).
+#
+# Security note: comment events on this repo run with repo secrets available.
+# The job only acts on an explicit "@claude" trigger phrase, and the `if`
+# below restricts it to comments that actually contain it.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+  issues:
+    types: [opened, assigned]
+
+jobs:
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # `@claude` is the default trigger phrase; set explicitly for clarity.
+          trigger_phrase: '@claude'

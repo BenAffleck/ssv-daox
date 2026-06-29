@@ -1,0 +1,11 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "dune-ssv-imp",
+  "name": "Incentivized Mainnet Stats",
+  "description": "Track participation, distributed rewards, and tier progression across the Incentivized Mainnet program.",
+  "categories": ["Dashboard"],
+  "inputs": "Live on-chain feed",
+  "outputs": "Rewards · Tiers · Participation",
+  "url": "https://dune.com/ssv_network/ssv-imp",
+  "sortOrder": 8
+}

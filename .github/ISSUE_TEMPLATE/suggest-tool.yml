@@ -1,0 +1,70 @@
+name: Suggest an external tool
+description: Suggest a community tool to add to the DAOx hub (no coding required).
+title: '[Tool] <tool name>'
+labels: ['external-tool']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a tool! Prefer to open the PR yourself? See
+        [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md) — it's a single JSON file.
+        Otherwise fill this in and a maintainer (or the bot) can turn it into a PR.
+  - type: input
+    id: name
+    attributes:
+      label: Tool name
+      placeholder: Stake Easy
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL
+      description: The tool's real, official destination.
+      placeholder: https://stakeeasy.xyz
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: One or two sentences on what it does and for whom.
+    validations:
+      required: true
+  - type: dropdown
+    id: categories
+    attributes:
+      label: Categories
+      description: Pick one or more.
+      multiple: true
+      options:
+        - Simulator
+        - Calculator
+        - Dashboard
+        - Explorer
+        - Claim
+    validations:
+      required: true
+  - type: input
+    id: inputs
+    attributes:
+      label: Inputs (short)
+      description: Formula-style, segments separated by " · ".
+      placeholder: ETH amount · Tier
+  - type: input
+    id: outputs
+    attributes:
+      label: Outputs (short)
+      placeholder: SSV/yr · USD
+  - type: input
+    id: relationship
+    attributes:
+      label: Your relationship to the tool
+      description: e.g. "I built it", "I'm a user". Helps us verify.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmation
+      options:
+        - label: This tool is related to the SSV Network and is not spam.
+          required: true
