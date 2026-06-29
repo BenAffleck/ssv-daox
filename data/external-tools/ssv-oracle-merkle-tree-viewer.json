@@ -1,0 +1,10 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "ssv-oracle-merkle-tree-viewer",
+  "name": "SSV Oracle Merkle Tree Viewer",
+  "description": "View and verify the Merkle tree structure used by the SSV oracle.",
+  "categories": ["Explorer"],
+  "inputs": "Merkle root",
+  "outputs": "Merkle tree",
+  "url": "https://ssv-oracle.ssv.network"
+}
