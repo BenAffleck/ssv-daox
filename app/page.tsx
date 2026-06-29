@@ -4,19 +4,18 @@ import ModuleCard from '@/components/ModuleCard';
 import ExternalToolsSection from '@/components/ExternalToolsSection';
 import ActiveVotes from '@/components/ActiveVotes';
 import PendingVotes from '@/components/PendingVotes';
-import { fetchActiveProposals } from '@/lib/snapshot/api/fetch-active-proposals';
-import { fetchPendingProposals } from '@/lib/snapshot/api/fetch-pending-proposals';
-import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
+import { fetchGovernanceProposals } from '@/lib/snapshot/api/fetch-governance-proposals';
 import { isAISummaryAvailable } from '@/lib/ai-summary';
 
 export default async function Home() {
   const modules = getModulesSorted();
   const externalTools = getExternalToolsSorted();
 
-  const spaceId = SNAPSHOT_CONFIG.delegation.spaceFilter;
-  const [activeProposals, pendingProposals] = spaceId
-    ? await Promise.all([fetchActiveProposals(spaceId), fetchPendingProposals(spaceId)])
-    : [[], []];
+  // Surface live + upcoming votes across all SSV governance spaces (main +
+  // committees). Closed proposals are only shown on the dedicated /governance view.
+  const { proposals } = await fetchGovernanceProposals(undefined, { includeClosed: false });
+  const activeProposals = proposals.filter((p) => p.state === 'active');
+  const pendingProposals = proposals.filter((p) => p.state === 'pending');
   const aiSummaryAvailable = isAISummaryAvailable();
 
   return (

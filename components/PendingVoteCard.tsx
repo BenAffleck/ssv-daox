@@ -1,17 +1,22 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { SnapshotActiveProposal } from '@/lib/snapshot/types';
+import type { SnapshotActiveProposal, GovernanceSpace } from '@/lib/snapshot/types';
 import type { ProposalSummary } from '@/lib/ai-summary/types';
 import { formatTimeUntilStart } from '@/lib/snapshot/utils/time-remaining';
+import { getSpaceStyle } from '@/lib/dao-governance/space-style';
+import SpaceBadge from './dao-governance/SpaceBadge';
 
 interface PendingVoteCardProps {
   proposal: SnapshotActiveProposal;
   isAISummaryAvailable?: boolean;
+  /** When set, renders a space badge identifying the proposal's space. */
+  space?: GovernanceSpace;
 }
 
-export default function PendingVoteCard({ proposal, isAISummaryAvailable = false }: PendingVoteCardProps) {
+export default function PendingVoteCard({ proposal, isAISummaryAvailable = false, space }: PendingVoteCardProps) {
   const timeUntilStart = formatTimeUntilStart(proposal.start);
+  const accentClass = space ? `border-l-4 ${getSpaceStyle(space.key).accentClass}` : '';
 
   const [showSummary, setShowSummary] = useState(false);
   const [summary, setSummary] = useState<ProposalSummary | null>(null);
@@ -57,7 +62,7 @@ export default function PendingVoteCard({ proposal, isAISummaryAvailable = false
   }, [summary, proposal.id, proposal.title, proposal.body, proposal.choices]);
 
   return (
-    <div className="card p-5 opacity-90">
+    <div className={`card p-5 opacity-90 ${accentClass}`}>
       <div className="mb-3 flex items-start justify-between gap-4">
         <a
           href={proposal.link}
@@ -67,9 +72,12 @@ export default function PendingVoteCard({ proposal, isAISummaryAvailable = false
         >
           {proposal.title}
         </a>
-        <span className="shrink-0 badge-sm-muted">
-          {timeUntilStart}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          {space && <SpaceBadge space={space} />}
+          <span className="badge-sm-muted">
+            {timeUntilStart}
+          </span>
+        </div>
       </div>
 
       {/* Voting choices preview */}

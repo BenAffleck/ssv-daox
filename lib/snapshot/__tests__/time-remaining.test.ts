@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { formatTimeRemaining, formatTimeUntilStart } from '../utils/time-remaining';
+import { formatTimeRemaining, formatTimeUntilStart, formatTimeAgo } from '../utils/time-remaining';
 
 describe('formatTimeRemaining', () => {
   afterEach(() => {
@@ -79,5 +79,34 @@ describe('formatTimeUntilStart', () => {
   it('should return "Starting soon" for current timestamp', () => {
     const now = Math.floor(Date.now() / 1000);
     expect(formatTimeUntilStart(now)).toBe('Starting soon');
+  });
+});
+
+describe('formatTimeAgo', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('should return days ago for multi-day-old timestamps', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const past = now - (2 * 86400 + 5 * 3600);
+    expect(formatTimeAgo(past)).toBe('Ended 2d ago');
+  });
+
+  it('should return hours ago when less than a day old', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const past = now - 12 * 3600;
+    expect(formatTimeAgo(past)).toBe('Ended 12h ago');
+  });
+
+  it('should return "Ended just now" when less than an hour old', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const past = now - 600; // 10 minutes
+    expect(formatTimeAgo(past)).toBe('Ended just now');
+  });
+
+  it('should return "Ended just now" for future timestamps', () => {
+    const now = Math.floor(Date.now() / 1000);
+    expect(formatTimeAgo(now + 3600)).toBe('Ended just now');
   });
 });

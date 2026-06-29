@@ -3,36 +3,40 @@
 import { useState, useCallback } from 'react';
 import type { SnapshotActiveProposal, GovernanceSpace } from '@/lib/snapshot/types';
 import type { ProposalSummary } from '@/lib/ai-summary/types';
-import { formatTimeRemaining } from '@/lib/snapshot/utils/time-remaining';
+import { formatTimeAgo } from '@/lib/snapshot/utils/time-remaining';
+import { getProposalOutcome, type OutcomeVariant } from '@/lib/dao-governance/outcome';
 import { getSpaceStyle } from '@/lib/dao-governance/space-style';
-import SpaceBadge from './dao-governance/SpaceBadge';
+import SpaceBadge from './SpaceBadge';
 
-interface ActiveVoteCardProps {
+interface ClosedVoteCardProps {
   proposal: SnapshotActiveProposal;
   isAISummaryAvailable?: boolean;
-  /** When set, renders a space badge and switches quorum display by vote type. */
   space?: GovernanceSpace;
 }
 
-/**
- * Maps standard vote choices to semantic colors
- */
+/** Maps standard vote choices to semantic colors (matches ActiveVoteCard). */
 function getChoiceColor(choice: string, index: number): string {
   const normalized = choice.toLowerCase();
   if (normalized === 'for' || normalized === 'yes') return 'bg-accent';
   if (normalized === 'against' || normalized === 'no') return 'bg-danger';
   if (normalized === 'abstain') return 'bg-muted';
 
-  // Cycle through colors for non-standard choices
   const colors = ['bg-primary', 'bg-warning', 'bg-accent', 'bg-danger'];
   return colors[index % colors.length];
 }
 
-export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false, space }: ActiveVoteCardProps) {
-  const timeRemaining = formatTimeRemaining(proposal.end);
+const OUTCOME_BADGE_CLASS: Record<OutcomeVariant, string> = {
+  passed: 'badge-sm-accent',
+  failed: 'badge-sm-danger',
+  'quorum-not-met': 'badge-sm-warning',
+  neutral: 'badge-sm-muted',
+};
+
+export default function ClosedVoteCard({ proposal, isAISummaryAvailable = false, space }: ClosedVoteCardProps) {
+  const endedAgo = formatTimeAgo(proposal.end);
   const isMemberVote = space?.voteType === 'member';
   const accentClass = space ? `border-l-4 ${getSpaceStyle(space.key).accentClass}` : '';
-  const quorumReached = proposal.quorum > 0 && proposal.scores_total >= proposal.quorum;
+  const outcome = getProposalOutcome(proposal, isMemberVote);
 
   const [showSummary, setShowSummary] = useState(false);
   const [summary, setSummary] = useState<ProposalSummary | null>(null);
@@ -77,7 +81,7 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
     }
   }, [summary, proposal.id, proposal.title, proposal.body, proposal.choices]);
 
-  // Build choice entries, collapsing into "Other" if > 3
+  // Build choice entries, collapsing into "Other" if > 3 (matches ActiveVoteCard).
   const maxChoices = 3;
   let displayChoices: { label: string; score: number; color: string }[];
 
@@ -101,7 +105,7 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
   }
 
   return (
-    <div className={`card p-5 ${accentClass}`}>
+    <div className={`card p-5 opacity-90 ${accentClass}`}>
       <div className="mb-3 flex items-start justify-between gap-4">
         <a
           href={proposal.link}
@@ -113,13 +117,11 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
         </a>
         <div className="flex shrink-0 items-center gap-2">
           {space && <SpaceBadge space={space} />}
-          <span className="badge-sm-primary">
-            {timeRemaining}
-          </span>
+          <span className={OUTCOME_BADGE_CLASS[outcome.variant]}>{outcome.label}</span>
         </div>
       </div>
 
-      {/* Progress bar */}
+      {/* Final results bar */}
       {proposal.scores_total > 0 && (
         <div className="mb-2">
           <div className="flex h-2 overflow-hidden rounded-full bg-muted/20">
@@ -189,13 +191,7 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 text-[12px] text-muted">
           <span>{proposal.votes} voter{proposal.votes !== 1 ? 's' : ''}</span>
-          {isMemberVote ? (
-            <span>No quorum</span>
-          ) : proposal.quorum > 0 ? (
-            <span className={quorumReached ? 'text-accent' : 'text-warning'}>
-              Quorum {quorumReached ? 'reached' : 'not reached'}
-            </span>
-          ) : null}
+          <span>{endedAgo}</span>
         </div>
         <div className="flex items-center gap-2">
           {isAISummaryAvailable && (
@@ -213,27 +209,14 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
               {showSummary && summary ? 'Hide' : 'TL;DR'}
             </button>
           )}
-          {isMemberVote ? (
-            // Committee spaces are whitelist-only voters — link out, don't imply
-            // the viewer can cast a vote.
-            <a
-              href={proposal.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-card-hover"
-            >
-              View Proposal
-            </a>
-          ) : (
-            <a
-              href={proposal.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-primary/80"
-            >
-              Vote Now
-            </a>
-          )}
+          <a
+            href={proposal.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-card-hover"
+          >
+            View Proposal
+          </a>
         </div>
       </div>
     </div>

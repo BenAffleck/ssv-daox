@@ -180,3 +180,41 @@ export interface SnapshotActiveProposal {
 export interface ActiveProposalsQueryResponse {
   proposals: SnapshotActiveProposal[];
 }
+
+/**
+ * Voting model of a governance space.
+ * - `token`: token-weighted vote with quorum (the main space)
+ * - `member`: committee member vote via whitelist strategy, no quorum
+ */
+export type GovernanceVoteType = 'token' | 'member';
+
+/**
+ * A configured SSV governance Snapshot space for the "Votes at a glance" view.
+ */
+export interface GovernanceSpace {
+  /** Stable key used in URLs and filter state (e.g. 'main', 'oc') */
+  key: string;
+  /** Short label shown on badges/chips (e.g. 'Main', 'OC') */
+  label: string;
+  /** Snapshot space id (e.g. 'mainnet.ssvnetwork.eth') */
+  spaceId: string;
+  /** Voting model — drives quorum vs. "No quorum" display */
+  voteType: GovernanceVoteType;
+}
+
+/**
+ * An active/pending proposal tagged with the space it belongs to.
+ */
+export interface GovernanceProposal extends SnapshotActiveProposal {
+  space: GovernanceSpace;
+}
+
+/**
+ * Result of aggregating governance proposals across all configured spaces.
+ * `failedSpaces` holds the labels of spaces whose fetch failed, so the UI can
+ * distinguish an outage from a genuinely empty space.
+ */
+export interface GovernanceProposalsResult {
+  proposals: GovernanceProposal[];
+  failedSpaces: string[];
+}

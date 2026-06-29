@@ -1,8 +1,8 @@
-import type { SnapshotActiveProposal } from '@/lib/snapshot/types';
+import type { SnapshotActiveProposal, GovernanceSpace } from '@/lib/snapshot/types';
 import PendingVoteCard from './PendingVoteCard';
 
 interface PendingVotesProps {
-  proposals: SnapshotActiveProposal[];
+  proposals: (SnapshotActiveProposal & { space?: GovernanceSpace })[];
   isAISummaryAvailable?: boolean;
 }
 
@@ -15,7 +15,7 @@ export default function PendingVotes({ proposals, isAISummaryAvailable = false }
       </h2>
       <div className="flex flex-col gap-4">
         {proposals.map((proposal) => (
-          <PendingVoteCard key={proposal.id} proposal={proposal} isAISummaryAvailable={isAISummaryAvailable} />
+          <PendingVoteCard key={proposal.id} proposal={proposal} space={proposal.space} isAISummaryAvailable={isAISummaryAvailable} />
         ))}
       </div>
     </section>

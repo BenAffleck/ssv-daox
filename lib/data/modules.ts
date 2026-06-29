@@ -18,11 +18,11 @@ export const modules: Module[] = [
     sortOrder: 2,
   },
   {
-    id: 'governance-proposals',
-    slug: 'governance-proposals',
-    name: 'Governance Proposals',
-    description: 'Browse and track governance proposals with voting status and outcomes.',
-    status: ModuleStatus.COMING_SOON,
+    id: 'dao-governance',
+    slug: 'governance',
+    name: 'Governance Votes',
+    description: 'All active and upcoming SSV votes across every Snapshot space in one place, with participation, quorum, and AI summaries.',
+    status: ModuleStatus.ACTIVE,
     sortOrder: 3,
   },
 ];

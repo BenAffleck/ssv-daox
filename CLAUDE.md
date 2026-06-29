@@ -44,5 +44,5 @@ Each feature is an isolated module with a plugin architecture:
 
 - Always read `.spec/spec.md`, `.spec/architecture.md`, `.spec/techstack.md` and `.spec/design.md` before writing any code.
 - Always implement and run unit tests for major features or completed milestones.
-- After adding a major feature or completing a milestone, ALWAYS update `.spec/architecture.md`. If new technology has been introduced, update `.spec/techstack.md`.
+- After adding a major feature or completing a milestone, ALWAYS update `.spec/architecture.md` and `.spec/spec.md`. If new technology has been introduced, update `.spec/techstack.md`.
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Calendar, FileText, Menu, X, User, ChevronDown } from 'lucide-react';
+import { Home, Users, Calendar, FileText, Vote, Menu, X, User, ChevronDown } from 'lucide-react';
 import ThemeToggle from '@/lib/theme/ThemeToggle';
 import { getActiveModules, getComingSoonModules, getModulesSorted } from '@/lib/data/modules';
 import { getExternalToolsSorted } from '@/lib/data/external-tools';
@@ -13,7 +13,7 @@ import type { Module } from '@/lib/types';
 const slugIconMap: Record<string, React.ComponentType<{ size?: number }>> = {
   'delegates': Users,
   'timeline': Calendar,
-  'governance-proposals': FileText,
+  'governance': Vote,
 };
 
 function getIconForSlug(slug: string) {

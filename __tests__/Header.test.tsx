@@ -9,6 +9,24 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
 }));
 
+// Mock the module registry so this Header unit test is independent of the live
+// registry contents (which modules are active vs. coming-soon can change).
+vi.mock('@/lib/data/modules', () => {
+  const ACTIVE = 'active';
+  const COMING_SOON = 'coming_soon';
+  const all = [
+    { id: 'dao-delegates', slug: 'delegates', name: 'DAO Delegates', description: '', status: ACTIVE, sortOrder: 1 },
+    { id: 'dao-timeline', slug: 'timeline', name: 'DAO Timeline', description: '', status: ACTIVE, sortOrder: 2 },
+    { id: 'placeholder', slug: 'placeholder', name: 'Placeholder', description: '', status: COMING_SOON, sortOrder: 9 },
+  ];
+  return {
+    getModulesSorted: () => all,
+    getActiveModules: () => all.filter((m) => m.status === ACTIVE),
+    getComingSoonModules: () => all.filter((m) => m.status === COMING_SOON),
+    getModuleBySlug: (slug: string) => all.find((m) => m.slug === slug),
+  };
+});
+
 describe('Header', () => {
   it('renders DAOx title', () => {
     render(

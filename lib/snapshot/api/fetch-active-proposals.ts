@@ -1,14 +1,10 @@
-import { SNAPSHOT_CONFIG } from '../config';
-import type {
-  SnapshotGraphQLResponse,
-  ActiveProposalsQueryResponse,
-  SnapshotActiveProposal,
-} from '../types';
+import type { SnapshotActiveProposal } from '../types';
+import { executeProposalsQuery } from './execute-proposals-query';
 
 /**
  * GraphQL query to fetch active proposals with voting data
  */
-const ACTIVE_PROPOSALS_QUERY = `
+export const ACTIVE_PROPOSALS_QUERY = `
   query GetActiveProposals($spaceId: String!) {
     proposals(
       first: 10
@@ -44,32 +40,7 @@ export async function fetchActiveProposals(
   spaceId: string
 ): Promise<SnapshotActiveProposal[]> {
   try {
-    const response = await fetch(SNAPSHOT_CONFIG.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: ACTIVE_PROPOSALS_QUERY,
-        variables: { spaceId },
-      }),
-      next: { revalidate: SNAPSHOT_CONFIG.cacheSeconds },
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `Snapshot API error: ${response.status} ${response.statusText}`
-      );
-    }
-
-    const result: SnapshotGraphQLResponse<ActiveProposalsQueryResponse> =
-      await response.json();
-
-    if (result.errors?.length) {
-      throw new Error(`GraphQL error: ${result.errors[0].message}`);
-    }
-
-    return result.data?.proposals ?? [];
+    return await executeProposalsQuery(ACTIVE_PROPOSALS_QUERY, { spaceId });
   } catch (error) {
     console.error(
       `Failed to fetch active proposals for space ${spaceId}:`,

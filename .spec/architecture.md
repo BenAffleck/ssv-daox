@@ -28,8 +28,11 @@ ssv-daox/
 │   │       └── route.ts      # POST /api/ai-summary
 │   ├── dao-delegates/        # DAO Delegates module
 │   │   └── page.tsx          # Server component (data orchestration)
-│   └── dao-timeline/         # DAO Timeline module
-│       └── page.tsx          # Server component (event aggregation)
+│   ├── dao-timeline/         # DAO Timeline module
+│   │   └── page.tsx          # Server component (event aggregation)
+│   └── governance/           # Governance Votes module
+│       ├── page.tsx          # Server component (cross-space aggregation)
+│       └── loading.tsx       # Loading skeleton
 │
 ├── components/               # Shared components
 │   ├── Header.tsx            # App header (full nav bar + global search trigger)
@@ -482,6 +485,99 @@ AI_EXTRACTION_MODEL=haiku              # Model: haiku, sonnet, or opus
 
 ---
 
+## Governance Votes Module ("Votes at a Glance")
+
+A consolidated, read-only view of every active and upcoming SSV governance vote
+across all five Snapshot spaces. Route: `/governance` (module `dao-governance`).
+
+### Data Pipeline
+
+```
+1. getGovernanceSpaces() → the five configured spaces (env-driven, single list)
+2. fetchGovernanceProposals(spaces, { includeClosed }):
+   - per space, in parallel: active + pending (+ 20 recent closed) (Promise.allSettled)
+   - tag each proposal with its space; a failing space → failedSpaces[]
+   - sort active → pending → closed (soonest end / start; closed newest first)
+3. Pass { proposals, failedSpaces } + spaces + AI flag to GovernanceView (client)
+4. Client: multi-select space + status filters (URL-synced), group + render cards
+```
+
+The home page (`app/page.tsx`) reuses `fetchGovernanceProposals(undefined,
+{ includeClosed: false })` to surface active + pending votes across all spaces
+(incl. committees) at the top of the landing page; closed votes are exclusive to
+`/governance`.
+
+### Filtering, States & Outcomes
+
+Two **single-select**, URL-synced filters:
+- **Status** — `StatusFilter` segmented control (All / Active / Upcoming / Past), `?status=`.
+- **Space** — `FilterChips` single-select chips with color dots (All spaces, or one
+  of DAO / Leads / Operators / Grants / Multisig), `?space=`.
+
+Both default to "all" and omit their param at that default for clean links.
+Closed proposals render via `ClosedVoteCard` with an outcome badge derived by
+`getProposalOutcome()` (`lib/dao-governance/outcome.ts`): Passed / Failed /
+Quorum not met, or the winning option for non-binary ballots. The **"Vote Now"**
+CTA shows only for the token-weighted DAO space; member-vote committee spaces
+show **"View Proposal"** (whitelist-only voters).
+
+### Per-Space Visual Language
+
+`getSpaceStyle()` (`lib/dao-governance/space-style.ts`) maps each space key to one
+semantic color, applied consistently as the card **badge**, the card **left
+accent stripe** (`border-l-4`), and the filter **chip dot** — so a space is
+recognizable at a glance. Uses existing tokens only (DAO=primary, Leads=secondary,
+Operators=accent, Grants=warning, Multisig=muted). The Main space is labelled **"DAO"**.
+
+### Cross-Space Fetch & Error Granularity
+
+The per-feature fetchers (`fetchActiveProposals` / `fetchPendingProposals`)
+swallow errors and return `[]` for graceful degradation. To distinguish an
+outage from an empty space (PRD P0-7), both now delegate to a shared
+`executeProposalsQuery()` helper (`lib/snapshot/api/execute-proposals-query.ts`)
+that **throws** on failure. The governance orchestrator calls that helper per
+space via `Promise.allSettled`, so one bad space is reported in `failedSpaces`
+while the others still render. The existing fetchers keep their graceful
+behavior and tests unchanged.
+
+### Vote-Type Distinction
+
+`GovernanceSpace.voteType` (`token` | `member`) drives display: the Main space
+shows quorum progress (token-weighted); committee spaces show **"No quorum"**.
+`SpaceBadge` maps each space to a distinct semantic badge color (no new colors).
+
+### Files
+
+- `lib/snapshot/config.ts` — `getGovernanceSpaces()` (single source of truth)
+- `lib/snapshot/types.ts` — `GovernanceSpace`, `GovernanceProposal`, `GovernanceProposalsResult`
+- `lib/snapshot/api/execute-proposals-query.ts` — throwing query executor (shared)
+- `lib/snapshot/api/fetch-closed-proposals.ts` — full-field closed proposals fetcher
+- `lib/snapshot/api/fetch-governance-proposals.ts` — cross-space orchestrator (`includeClosed` option)
+- `lib/snapshot/utils/time-remaining.ts` — `formatTimeAgo()` for closed cards
+- `lib/dao-governance/outcome.ts` — `getProposalOutcome()` (Passed/Failed/Quorum-not-met)
+- `lib/dao-governance/space-style.ts` — `getSpaceStyle()` (per-space badge/stripe/dot color)
+- `app/governance/page.tsx` + `loading.tsx` — route + skeleton
+- `components/dao-governance/GovernanceView.tsx` — client view (space + status filters, grouping, states)
+- `components/dao-governance/StatusFilter.tsx` — status segmented control
+- `components/dao-governance/FilterChips.tsx` — single-select space chips, `SpaceBadge.tsx`, `ClosedVoteCard.tsx`
+- `components/ActiveVoteCard.tsx` / `PendingVoteCard.tsx` — optional `space` prop (badge + quorum + Vote Now gating)
+- `app/page.tsx`, `components/ActiveVotes.tsx` / `PendingVotes.tsx` — home page aggregates all spaces
+
+### Environment Variables
+
+```bash
+# Reuses the main + committee space env vars; adds the Leads committee space:
+SNAPSHOT_DELEGATION_SPACE_FILTER=mainnet.ssvnetwork.eth  # Main (token-weighted)
+SNAPSHOT_LEADS_SPACE_ID=                                 # Leads committee (new)
+SNAPSHOT_OPERATOR_SPACE_ID=                              # OC
+SNAPSHOT_GRANTS_SPACE_ID=                                # GC
+SNAPSHOT_MULTISIG_SPACE_ID=                              # MSIG
+```
+
+Reuses the existing AI TL;dr service (`/api/ai-summary`) for per-proposal summaries.
+
+---
+
 ## Testing Strategy
 
 - **Unit tests** (`__tests__/`): Pure functions, business logic
@@ -515,4 +611,4 @@ npm run type-check # TypeScript check
 
 ---
 
-*Last Updated: 2026-04-30*
+*Last Updated: 2026-06-29*

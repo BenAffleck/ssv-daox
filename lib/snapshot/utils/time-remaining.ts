@@ -27,6 +27,34 @@ export function formatTimeRemaining(endTimestamp: number): string {
 }
 
 /**
+ * Formats a past timestamp into a human-readable "time ago" string
+ *
+ * @param timestamp - Unix timestamp in seconds (e.g. a proposal's end time)
+ * @returns Formatted string like "Ended 2d ago", "Ended 5h ago", "Ended just now"
+ */
+export function formatTimeAgo(timestamp: number): string {
+  const now = Math.floor(Date.now() / 1000);
+  const elapsed = now - timestamp;
+
+  if (elapsed <= 0) {
+    return 'Ended just now';
+  }
+
+  const days = Math.floor(elapsed / 86400);
+  const hours = Math.floor((elapsed % 86400) / 3600);
+
+  if (days > 0) {
+    return `Ended ${days}d ago`;
+  }
+
+  if (hours > 0) {
+    return `Ended ${hours}h ago`;
+  }
+
+  return 'Ended just now';
+}
+
+/**
  * Formats a future start timestamp into a human-readable "time until start" string
  *
  * @param startTimestamp - Unix timestamp in seconds
