@@ -124,6 +124,18 @@ export const externalTools: ExternalTool[] = [
     sortOrder: 1009,
   },
   {
+    id: "ssv-oracle-merkle-tree-viewer",
+    name: "SSV Oracle Merkle Tree Viewer",
+    description: "View and verify the Merkle tree structure used by the SSV oracle.",
+    categories: [ExternalToolCategory.EXPLORER],
+    inputs: "Merkle root",
+    outputs: "Merkle tree",
+    host: "ssv-oracle.ssv.network",
+    url: "https://ssv-oracle.ssv.network",
+    featured: false,
+    sortOrder: 1010,
+  },
+  {
     id: "ssv-rewards-claim",
     name: "SSV Rewards Claim",
     description: "Standalone claim UI for the Incentivized Mainnet Program — connect a wallet (or look up any address) and claim eligible SSV from the on-chain Merkle distributor including Lido SDVT/CSM rewards.",
