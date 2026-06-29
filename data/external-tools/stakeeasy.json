@@ -1,0 +1,12 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "stakeeasy",
+  "name": "Stake Easy",
+  "description": "SSV cluster advisor — explore operator clusters and find the best match for staking your ETH.",
+  "categories": ["Explorer", "Simulator"],
+  "inputs": "ETH amount · Preferences",
+  "outputs": "Cluster recommendations",
+  "url": "https://stakeeasy.xyz",
+  "featured": true,
+  "sortOrder": 1
+}

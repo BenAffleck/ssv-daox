@@ -1,0 +1,11 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "dune-ssv-token",
+  "name": "SSV Token Analytics",
+  "description": "Token supply, holder distribution, transfers, and DEX activity for the SSV ERC-20 token.",
+  "categories": ["Dashboard"],
+  "inputs": "Live on-chain feed",
+  "outputs": "Supply · Holders · Volume",
+  "url": "https://dune.com/ssv_network/ssvnetworktoken",
+  "sortOrder": 9
+}

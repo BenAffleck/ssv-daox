@@ -1,0 +1,11 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "dune-ssv-overview",
+  "name": "SSV Network Overview",
+  "description": "Protocol-wide on-chain analytics: validators, clusters, operators, and network growth on Dune.",
+  "categories": ["Dashboard"],
+  "inputs": "Live on-chain feed",
+  "outputs": "Validators · Clusters · Growth",
+  "url": "https://dune.com/ssv_network/ssv",
+  "sortOrder": 7
+}

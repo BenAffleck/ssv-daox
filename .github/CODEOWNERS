@@ -1,0 +1,20 @@
+# Code owners for DAOx.
+#
+# Replace @BenAffleck below with your maintainers GitHub team (e.g. @ssvlabs/daox-maintainers)
+# once one exists. Owners are auto-requested for review on matching paths, and —
+# with branch protection's "Require review from Code Owners" enabled — must approve
+# before a PR can merge.
+
+# Default owner for everything not matched more specifically below.
+*                                   @BenAffleck
+
+# Community-contributed tool entries: every tool PR needs a maintainer review.
+/data/external-tools/               @BenAffleck
+
+# Guardrails that contributors must not change unreviewed: the schema (what a
+# tool may contain), shared types, the generator, CI, and ownership itself.
+/data/external-tool.schema.json     @BenAffleck
+/lib/external-tool.schema.ts        @BenAffleck
+/lib/types.ts                       @BenAffleck
+/scripts/                           @BenAffleck
+/.github/                           @BenAffleck

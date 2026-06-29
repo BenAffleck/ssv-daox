@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Contribute the tool directly (PR)
+    url: https://github.com/BenAffleck/ssv-daox/blob/main/CONTRIBUTING.md
+    about: Adding a tool is a single JSON file — see the step-by-step guide.

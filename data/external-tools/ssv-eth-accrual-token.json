@@ -1,0 +1,12 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "ssv-eth-accrual-token",
+  "name": "SSV - ETH Accrual Token",
+  "description": "Calculator modelling how SSV could become an ETH-accruing token — see how network activity compounds into ETH yield for stakers (pending DAO approval).",
+  "categories": ["Calculator", "Simulator"],
+  "inputs": "SSV holdings · Network assumptions",
+  "outputs": "Projected ETH yield · APR",
+  "url": "https://ethaccrualtoken.com",
+  "featured": true,
+  "sortOrder": 10
+}

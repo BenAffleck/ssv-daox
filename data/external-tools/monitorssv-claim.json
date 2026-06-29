@@ -1,0 +1,11 @@
+{
+  "$schema": "../external-tool.schema.json",
+  "id": "monitorssv-claim",
+  "name": "MonitorSSV Claim",
+  "description": "Claim Incentivized Mainnet rewards from inside the MonitorSSV explorer — view eligibility and submit the on-chain claim alongside cluster monitoring.",
+  "categories": ["Claim"],
+  "inputs": "Wallet · Address",
+  "outputs": "Claimable SSV · Tx",
+  "url": "https://monitorssv.xyz/claim",
+  "sortOrder": 12
+}

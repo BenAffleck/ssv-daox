@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "gen:tools": "tsx scripts/gen-external-tools.ts",
+    "predev": "npm run gen:tools",
     "dev": "next dev",
+    "prebuild": "npm run gen:tools",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "vitest",
     "test:e2e": "playwright test"
@@ -36,6 +39,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
     "jsdom": "^27.4.0",
+    "tsx": "^4.22.4",
     "vitest": "^4.0.16"
   }
 }
