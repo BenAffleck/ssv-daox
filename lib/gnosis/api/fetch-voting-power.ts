@@ -3,6 +3,7 @@
  */
 
 import { GNOSIS_CONFIG } from '../config';
+import { toVotingPowerData } from '../logic/transform-voting-power';
 import type {
   GnosisDelegationResponse,
   VotingPowerData,
@@ -38,15 +39,7 @@ async function fetchSingleVotingPower(
 
     const data: GnosisDelegationResponse = await response.json();
 
-    return {
-      votingPower: parseFloat(data.votingPower) || 0,
-      incomingPower: parseFloat(data.incomingPower) || 0,
-      outgoingPower: parseFloat(data.outgoingPower) || 0,
-      delegatorCount: data.delegators?.length || 0,
-      delegators: data.delegators || [],
-      percentOfVotingPower: parseFloat(data.percentOfVotingPower) || 0,
-      blockNumber: data.blockNumber,
-    };
+    return toVotingPowerData(data);
   } catch (error) {
     console.error(`[Gnosis API] Error fetching voting power for ${address}:`, error);
     return null;

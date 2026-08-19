@@ -72,6 +72,8 @@ DAO Delegates — a leaderboard displaying active delegates and rotation metrics
 **Filters:**
 1. **Rotation Filter** — Visualization of delegation changes over time
 
+**Voting power breakdown:** Each row's voting power opens a popover detailing total, incoming, outgoing and net delegated power (SSV + cSSV, sourced from the Gnosis Guild Delegation API). It lists the delegating addresses in both directions with the absolute amount each edge carries, and offers a per-list copy icon that copies only the addresses.
+
 ### 4.3 Governance Votes Module ("Votes at a Glance")
 
 Consolidates every active and upcoming SSV governance vote across all five

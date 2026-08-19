@@ -319,6 +319,16 @@ All proposal queries use `flagged: false` to exclude moderator-deleted spam prop
 
 Uses the same space ID as delegation (`SNAPSHOT_DELEGATION_SPACE_FILTER`).
 
+### Voting Power Breakdown
+
+The Voting Power column shows a compact total plus an info icon that opens a portal-rendered breakdown popover (`components/dao-delegates/VotingPowerBadge.tsx`). Rows without pre-fetched data render a fetch icon that loads on demand from `/api/voting-power/[address]`.
+
+**Data source:** Gnosis Guild Delegation API `pin` endpoint (`lib/gnosis/`), posted with the SSV split-delegation strategy payload. Values are SSV + cSSV.
+
+The pin response carries both flat address lists (`delegators`, `delegates`) and weighted trees (`delegatorTree`, `delegateTree`) that pair each counterparty with its `delegatedPower`. `toVotingPowerData()` (`lib/gnosis/logic/transform-voting-power.ts`) is the single transform shared by the server-side batch fetcher and the on-demand API route; it flattens both trees into `incomingDelegations` / `outgoingDelegations` (`DelegationEntry[]`, sorted by power descending). When a response omits the tree, incoming entries fall back to the flat `delegators` list with `power: null`, rendered as an em dash.
+
+**Popover contents:** total / incoming / outgoing / net delegated / delegator count, then a "Delegating in" and a "Delegating out" list. Each list row shows the full counterparty address with its signed absolute amount (`accent` for in, `danger` for out), and each list header carries a copy icon that copies only that list's addresses (newline separated). Empty lists are omitted entirely.
+
 ### Active Votes on Home Page
 
 The landing page displays currently active governance proposals when any exist (renders nothing when none).

@@ -4,8 +4,10 @@
  */
 
 export { fetchVotingPower } from './api/fetch-voting-power';
+export { toVotingPowerData } from './logic/transform-voting-power';
 export { GNOSIS_CONFIG } from './config';
 export type {
+  DelegationEntry,
   GnosisDelegationResponse,
   VotingPowerData,
   VotingPowerMap,

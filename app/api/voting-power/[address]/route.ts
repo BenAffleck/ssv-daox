@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GNOSIS_CONFIG } from '@/lib/gnosis/config';
+import { toVotingPowerData } from '@/lib/gnosis/logic/transform-voting-power';
 import type { GnosisDelegationResponse, VotingPowerData } from '@/lib/gnosis/types';
 
 export async function GET(
@@ -32,15 +33,7 @@ export async function GET(
 
     const data: GnosisDelegationResponse = await response.json();
 
-    const votingPowerData: VotingPowerData = {
-      votingPower: parseFloat(data.votingPower) || 0,
-      incomingPower: parseFloat(data.incomingPower) || 0,
-      outgoingPower: parseFloat(data.outgoingPower) || 0,
-      delegatorCount: data.delegators?.length || 0,
-      delegators: data.delegators || [],
-      percentOfVotingPower: parseFloat(data.percentOfVotingPower) || 0,
-      blockNumber: data.blockNumber,
-    };
+    const votingPowerData: VotingPowerData = toVotingPowerData(data);
 
     return NextResponse.json(votingPowerData);
   } catch (error) {

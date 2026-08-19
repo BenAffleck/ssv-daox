@@ -10,6 +10,25 @@ const SAMPLE_RESPONSE = {
   incomingPower: '100.25',
   outgoingPower: '50.75',
   delegators: ['0xaaa1111111111111111111111111111111111111'],
+  delegates: ['0xccc3333333333333333333333333333333333333'],
+  delegatorTree: [
+    {
+      delegator: '0xaaa1111111111111111111111111111111111111',
+      expiration: 0,
+      weight: 10000,
+      delegatedPower: 100.25,
+      parents: [],
+    },
+  ],
+  delegateTree: [
+    {
+      delegate: '0xccc3333333333333333333333333333333333333',
+      expiration: 0,
+      weight: 10000,
+      delegatedPower: 50.75,
+      children: [],
+    },
+  ],
   percentOfVotingPower: '0.42',
   blockNumber: '20000000',
 };
@@ -55,6 +74,12 @@ describe('fetchVotingPower', () => {
       outgoingPower: 50.75,
       delegatorCount: 1,
       delegators: SAMPLE_RESPONSE.delegators,
+      incomingDelegations: [
+        { address: '0xaaa1111111111111111111111111111111111111', power: 100.25 },
+      ],
+      outgoingDelegations: [
+        { address: '0xccc3333333333333333333333333333333333333', power: 50.75 },
+      ],
       percentOfVotingPower: 0.42,
       blockNumber: '20000000',
     });

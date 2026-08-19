@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import type { VotingPowerData } from '@/lib/gnosis/types';
+import type { DelegationEntry, VotingPowerData } from '@/lib/gnosis/types';
 
 interface VotingPowerBadgeProps {
   votingPowerData: VotingPowerData | null;
@@ -32,6 +32,112 @@ function formatDetailedNumber(value: number): string {
   return value.toLocaleString(undefined, {
     maximumFractionDigits: 2,
   });
+}
+
+/**
+ * Copies a list of addresses (newline separated) to the clipboard
+ */
+function CopyAddressesButton({
+  addresses,
+  label,
+}: {
+  addresses: string[];
+  label: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(addresses.join('\n'));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy addresses:', err);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="inline-flex items-center justify-center w-4 h-4 rounded text-muted hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+      title={copied ? 'Copied' : label}
+      aria-label={label}
+    >
+      {copied ? (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className="w-3.5 h-3.5 text-accent"
+        >
+          <path
+            fillRule="evenodd"
+            d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+            clipRule="evenodd"
+          />
+        </svg>
+      ) : (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className="w-3.5 h-3.5"
+        >
+          <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z" />
+          <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.439A1.5 1.5 0 008.378 6H4.5z" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+/**
+ * Lists delegating addresses with the absolute power moved across each edge
+ */
+function DelegationList({
+  title,
+  entries,
+  sign,
+  amountClassName,
+  copyLabel,
+}: {
+  title: string;
+  entries: DelegationEntry[];
+  sign: '+' | '-';
+  amountClassName: string;
+  copyLabel: string;
+}) {
+  if (entries.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2 pt-2 border-t border-border">
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <span className="text-muted">{title}</span>
+        <CopyAddressesButton
+          addresses={entries.map((entry) => entry.address)}
+          label={copyLabel}
+        />
+      </div>
+      <ul className="space-y-0.5 max-h-32 overflow-y-auto">
+        {entries.map((entry) => (
+          <li key={entry.address} className="flex items-baseline justify-between gap-2">
+            <code className="text-foreground font-mono text-[10px] break-all">
+              {entry.address}
+            </code>
+            <span
+              className={`shrink-0 font-medium tabular-nums text-[10px] ${amountClassName}`}
+            >
+              {entry.power === null
+                ? '\u2014'
+                : `${sign}${formatDetailedNumber(entry.power)}`}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 /**
@@ -181,8 +287,14 @@ export default function VotingPowerBadge({
     );
   }
 
-  const { votingPower, incomingPower, outgoingPower, delegatorCount, delegators } =
-    votingPowerData;
+  const {
+    votingPower,
+    incomingPower,
+    outgoingPower,
+    delegatorCount,
+    incomingDelegations,
+    outgoingDelegations,
+  } = votingPowerData;
 
   // Calculate net delegated power (incoming - outgoing)
   const netDelegatedPower = incomingPower - outgoingPower;
@@ -281,21 +393,21 @@ export default function VotingPowerBadge({
                   <span className="font-medium text-foreground">{delegatorCount}</span>
                 </div>
 
-                {/* Delegator addresses list */}
-                {delegators.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-border">
-                    <div className="text-muted mb-1">Delegating addresses:</div>
-                    <ul className="space-y-0.5 max-h-32 overflow-y-auto">
-                      {delegators.map((addr) => (
-                        <li key={addr}>
-                          <code className="text-foreground font-mono text-[10px] break-all">
-                            {addr}
-                          </code>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {/* Delegating addresses with absolute amounts */}
+                <DelegationList
+                  title="Delegating in"
+                  entries={incomingDelegations}
+                  sign="+"
+                  amountClassName="text-accent"
+                  copyLabel="Copy incoming delegator addresses"
+                />
+                <DelegationList
+                  title="Delegating out"
+                  entries={outgoingDelegations}
+                  sign="-"
+                  amountClassName="text-danger"
+                  copyLabel="Copy outgoing delegate addresses"
+                />
               </div>
             </div>
           </div>,
