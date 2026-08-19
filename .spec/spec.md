@@ -130,3 +130,42 @@ See `CONTRIBUTING.md`.
   (`.github/workflows/claude*.yml`).
 - `CODEOWNERS` + branch protection require a passing CI run and maintainer
   approval before merge; `featured` is maintainer-only.
+### 4.5 DAO Timeline Module
+
+A chronological view of DAO events drawn from multiple sources — the DAO's ICS
+calendar, Snapshot governance proposals, and optional AI-extracted milestones —
+grouped by day. Route: `/timeline` (module `dao-timeline`).
+
+**Date range filter ("range brush"):**
+
+The timeline's primary control is a two-handle brush over an event-density
+histogram. It replaced an earlier "Show Past Events" checkbox — the past is now
+a direction on the axis rather than an on/off toggle, so members can look back
+over a chosen window instead of all-or-nothing.
+
+- **Axis** — spans every loaded event, never narrower than 30 days back / 90
+  days forward, snapped to whole months. Derived from all events rather than
+  the source-filtered set, so toggling a source never moves the axis. Month
+  labels thin to quarters, half-years or years on a long calendar rather than
+  colliding.
+- **Histogram** — event density per bucket behind the brush, in three tones:
+  in range, upcoming but outside the range, and past. It tracks the source
+  filter, so the bars answer "where are this source's events?".
+- **Selection** — drag an edge to resize, drag the middle to pan, arrow keys to
+  nudge (shift steps a week). Presets: Past 14d / Next 30d / Next 180d /
+  Next 12 months / All, each clamped to the axis. The
+  header states the range and counts (`"6 upcoming · 3 past"`).
+- **Opening range** — the near-term window (-14…+30 days), falling back to the
+  whole axis when that window holds no events, so the view never opens empty
+  with no hint of where the events are.
+
+**Making upcoming events stand out:**
+- Events today or tomorrow carry an emphasised countdown badge; those further
+  out carry a muted relative label ("in 9 days").
+- Past events keep their content but lose the card surface and the "Add to
+  calendar" action, and their day headers mute — so upcoming events read as the
+  foreground of the list.
+
+**Accessibility:** both brush edges are `role="slider"` with `aria-valuemin`,
+`aria-valuemax`, `aria-valuenow` and an `aria-valuetext` carrying the readable
+date, fully operable from the keyboard.

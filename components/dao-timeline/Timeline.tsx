@@ -4,10 +4,16 @@ import { useCallback, useMemo, useState } from 'react';
 import { EventGroup, SerializedEvent } from '@/lib/dao-timeline/types';
 import {
   getDateLabel,
-  isPastDate,
   isSameDay,
   startOfDay,
 } from '@/lib/dao-timeline/utils/date-utils';
+import {
+  DayRange,
+  clampRange,
+  computeDomain,
+  filterByDayRange,
+  resolveInitialRange,
+} from '@/lib/dao-timeline/logic/range-brush';
 import {
   ExtractionStats,
   ProposalForExtraction,
@@ -20,6 +26,7 @@ import {
   AI_EXTRACTION_SOURCE_NAME,
 } from '@/lib/ai-extraction/transform';
 import TimelineFilterControls from './TimelineFilterControls';
+import TimelineRangeBrush from './TimelineRangeBrush';
 import TimelineView from './TimelineView';
 import AIExtractionPanel from './AIExtractionPanel';
 
@@ -45,7 +52,9 @@ export default function Timeline({
   aiExtractionAvailable = false,
 }: TimelineProps) {
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
-  const [showPastEvents, setShowPastEvents] = useState(false);
+
+  // Pinned for the lifetime of the view so the axis cannot shift mid-session.
+  const today = useMemo(() => startOfDay(new Date()), []);
 
   // AI extraction state
   const [aiEvents, setAiEvents] = useState<SerializedEvent[]>([]);
@@ -232,24 +241,36 @@ export default function Timeline({
     setSkipCache(true);
   }, []);
 
+  // Events narrowed by source only. The range brush summarises these, so its
+  // histogram tracks the source filter while its axis does not.
+  const sourceFilteredEvents = useMemo(() => {
+    if (selectedSources.length === 0) return allEvents;
+    return allEvents.filter((event) =>
+      selectedSources.includes(event.sourceId)
+    );
+  }, [allEvents, selectedSources]);
+
+  // The axis spans every event, so toggling a source never moves it.
+  const domain = useMemo(
+    () => computeDomain(allEvents, today),
+    [allEvents, today]
+  );
+
+  // Resolved once: the near-term window, or the whole domain when that window
+  // is empty. Later AI-extracted events must not move a range the user set.
+  const [range, setRange] = useState<DayRange>(() =>
+    resolveInitialRange(domain, allEvents, today)
+  );
+
+  // A stored range can fall outside the domain once new events arrive.
+  const activeRange = useMemo(
+    () => clampRange(range, domain),
+    [range, domain]
+  );
+
   // Filter and group events
   const groupedEvents = useMemo(() => {
-    let filtered = [...allEvents];
-
-    // Filter by source
-    if (selectedSources.length > 0) {
-      filtered = filtered.filter((event) =>
-        selectedSources.includes(event.sourceId)
-      );
-    }
-
-    // Filter past events
-    if (!showPastEvents) {
-      filtered = filtered.filter((event) => {
-        const eventDate = new Date(event.startDate);
-        return !isPastDate(eventDate);
-      });
-    }
+    const filtered = filterByDayRange(sourceFilteredEvents, activeRange, today);
 
     // Sort by start date
     filtered.sort(
@@ -278,7 +299,7 @@ export default function Timeline({
     }
 
     return groups;
-  }, [allEvents, selectedSources, showPastEvents]);
+  }, [sourceFilteredEvents, activeRange, today]);
 
   return (
     <div>
@@ -300,11 +321,21 @@ export default function Timeline({
         sources={allSources}
         selectedSources={selectedSources}
         onSourcesChange={setSelectedSources}
-        showPastEvents={showPastEvents}
-        onShowPastEventsChange={setShowPastEvents}
       />
 
-      <TimelineView groups={groupedEvents} sourceColors={sourceColors} />
+      <TimelineRangeBrush
+        events={sourceFilteredEvents}
+        today={today}
+        domain={domain}
+        range={activeRange}
+        onRangeChange={setRange}
+      />
+
+      <TimelineView
+        groups={groupedEvents}
+        sourceColors={sourceColors}
+        today={today}
+      />
 
       <div className="mt-6 text-center text-sm text-muted">
         Showing {groupedEvents.reduce((acc, g) => acc + g.events.length, 0)} of{' '}

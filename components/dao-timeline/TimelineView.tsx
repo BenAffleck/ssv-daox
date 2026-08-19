@@ -1,16 +1,23 @@
 'use client';
 
 import { EventGroup } from '@/lib/dao-timeline/types';
+import {
+  isPastOffset,
+  toDayOffset,
+} from '@/lib/dao-timeline/logic/range-brush';
 import EventCard from './EventCard';
 
 interface TimelineViewProps {
   groups: EventGroup[];
   sourceColors: Record<string, string | undefined>;
+  /** Reference day for the countdowns and the past/upcoming split. */
+  today: Date;
 }
 
 export default function TimelineView({
   groups,
   sourceColors,
+  today,
 }: TimelineViewProps) {
   if (groups.length === 0) {
     return (
@@ -30,9 +37,9 @@ export default function TimelineView({
             />
           </svg>
         </div>
-        <p className="font-body text-muted">No upcoming events</p>
+        <p className="font-body text-muted">No events in this range</p>
         <p className="mt-1 text-sm text-muted">
-          Try adjusting your filters or check back later.
+          Try widening the date range or selecting more sources.
         </p>
       </div>
     );
@@ -40,31 +47,36 @@ export default function TimelineView({
 
   return (
     <div className="space-y-8">
-      {groups.map((group) => (
-        <div key={group.date.toISOString()}>
-          {/* Day header */}
-          <div className="mb-4 flex items-center gap-4">
-            <h2 className="text-lg">
-              {group.label}
-            </h2>
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-sm text-muted">
-              {group.events.length} event{group.events.length !== 1 ? 's' : ''}
-            </span>
-          </div>
+      {groups.map((group) => {
+        const dayOffset = toDayOffset(group.date, today);
 
-          {/* Events for this day */}
-          <div className="space-y-3">
-            {group.events.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                sourceColor={sourceColors[event.sourceId]}
-              />
-            ))}
+        return (
+          <div key={group.date.toISOString()}>
+            {/* Day header */}
+            <div className="mb-4 flex items-center gap-4">
+              <h2 className={`text-lg ${isPastOffset(dayOffset) ? 'text-muted' : ''}`}>
+                {group.label}
+              </h2>
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-sm text-muted">
+                {group.events.length} event{group.events.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            {/* Events for this day */}
+            <div className="space-y-3">
+              {group.events.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  sourceColor={sourceColors[event.sourceId]}
+                  dayOffset={dayOffset}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

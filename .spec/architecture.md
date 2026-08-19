@@ -47,6 +47,7 @@ ssv-daox/
 │   └── dao-timeline/         # DAO Timeline components
 │       ├── Timeline.tsx          # Client: main container + AI state
 │       ├── TimelineFilterControls.tsx
+│       ├── TimelineRangeBrush.tsx # Client: date range brush
 │       ├── TimelineView.tsx      # Client: grouped display
 │       ├── EventCard.tsx         # Event display + AI metadata
 │       ├── SourceBadge.tsx       # Source indicator
@@ -368,7 +369,7 @@ Displays events from multiple calendar sources in a chronological timeline view.
    - ICS: Fetch → Parse → Transform → Expand recurrence
    - Snapshot: Fetch proposals → Transform to events
 3. Merge all events
-4. Client-side: Filter by source, toggle past events
+4. Client-side: Filter by source, then by the brushed date range
 5. Group by day for display
 ```
 
@@ -448,7 +449,8 @@ lib/dao-timeline/
 ├── logic/
 │   ├── event-transformer.ts    # Raw → UnifiedEvent
 │   ├── recurrence-expander.ts  # RRULE expansion
-│   └── event-aggregator.ts     # Filter, sort, group
+│   ├── event-aggregator.ts     # Filter, sort, group
+│   └── range-brush.ts          # Date-range brush domain/histogram/labels
 └── utils/
     ├── date-utils.ts           # Date helpers
     └── ics-utils.ts            # ICS parsing utilities
@@ -499,12 +501,51 @@ AI_EXTRACTION_MODEL=haiku              # Model: haiku, sonnet, or opus
 ### UI Components
 
 - **Timeline.tsx** (client) - Filter state, event grouping, AI extraction state
-- **TimelineFilterControls.tsx** (client) - Source filter, past events toggle
+- **TimelineFilterControls.tsx** (client) - Source filter
+- **TimelineRangeBrush.tsx** (client) - Two-handle date range brush over an event histogram
 - **TimelineView.tsx** (client) - Day groups with headers
-- **EventCard.tsx** - Event display with time, title, description, badges, AI source info
+- **EventCard.tsx** - Event display with time, countdown, title, description, badges, AI source info
 - **SourceBadge.tsx** - Color-coded source indicator
 - **AIExtractionPanel.tsx** (client) - AI extraction button, progress, stats
 - **AISourceBadge.tsx** - Specialized badge with sparkle icon for AI events
+
+### Date Range Brush
+
+The timeline's date filter is a two-handle brush over an event-density
+histogram (`TimelineRangeBrush.tsx`, backed by `logic/range-brush.ts`). It
+replaced the earlier "Show Past Events" checkbox: the past is a direction on
+the axis rather than an on/off toggle.
+
+**Day offsets, not dates.** All brush maths runs in whole-day offsets from
+today (`0` = today, negative = past). The control is anchored at "now", so
+offsets keep the geometry integer-safe and let presets ("Next 30") be plain
+numbers. Conversion happens only at the edges (`toDayOffset` / `fromDayOffset`).
+
+**Domain.** `computeDomain` spans every event, never narrower than 30 days back
+and 90 days forward, snapped to whole months. It is derived from *all* events,
+not the source-filtered set, so toggling a source never moves the axis; the
+histogram behind the brush does track the source filter.
+
+**Adaptive ticks.** A calendar with years of history would collide dozens of
+month labels, so `buildMonthTicks` widens the step to quarters, half-years or
+years (aligned to natural boundaries) to stay within `MAX_MONTH_TICKS`.
+Year-stepped ticks render as bare years; January carries its year otherwise.
+
+**Initial range.** `resolveInitialRange` prefers the near-term window
+(-14…+30). If that window is empty — the live DAO calendar is historical, with
+its most recent event weeks in the past — it falls back to the whole domain so
+the view never opens on an empty list with no hint of where the events are.
+
+**Emphasis.** Upcoming events carry the card surface; events within
+`IMMINENT_DAYS` get a `badge-sm-primary` countdown, others a muted relative
+label. Past events keep their content but lose the card surface (transparent
+border, 55% opacity) and their "Add to calendar" action, so upcoming events
+read as the foreground of the list.
+
+**Interaction.** Drag an edge to resize, drag the middle to pan, arrow keys to
+nudge (shift steps a week). Both handles are `role="slider"` with
+`aria-valuetext` carrying the readable date. Pointer drag uses pointer capture
+on the strip, so a drag that leaves the element still tracks.
 
 ---
 

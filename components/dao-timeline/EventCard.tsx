@@ -1,4 +1,9 @@
 import { EventSource, SerializedEvent } from '@/lib/dao-timeline/types';
+import {
+  formatRelativeLabel,
+  isImminentOffset,
+  isPastOffset,
+} from '@/lib/dao-timeline/logic/range-brush';
 import { formatDateRange } from '@/lib/dao-timeline/utils/date-utils';
 import { downloadICS } from '@/lib/dao-timeline/utils/calendar-export';
 import SourceBadge from './SourceBadge';
@@ -8,6 +13,11 @@ import AISourceBadge from './AISourceBadge';
 interface EventCardProps {
   event: SerializedEvent;
   sourceColor?: string;
+  /**
+   * Whole days from today to this event's day. Drives the countdown and the
+   * demoted styling for past events; omit to render the card undated.
+   */
+  dayOffset?: number;
 }
 
 /**
@@ -42,7 +52,11 @@ function getAIMetadata(event: SerializedEvent): {
   };
 }
 
-export default function EventCard({ event, sourceColor }: EventCardProps) {
+export default function EventCard({
+  event,
+  sourceColor,
+  dayOffset,
+}: EventCardProps) {
   const startDate = new Date(event.startDate);
   const endDate = event.endDate ? new Date(event.endDate) : null;
   const timeDisplay = formatDateRange(startDate, endDate, event.isAllDay);
@@ -64,13 +78,40 @@ export default function EventCard({ event, sourceColor }: EventCardProps) {
       ? displayDesc.substring(0, maxDescLength) + '...'
       : displayDesc;
 
+  // Past events keep their content but lose the card surface, so upcoming
+  // events read as the foreground of the list.
+  const isPast = dayOffset !== undefined && isPastOffset(dayOffset);
+  const isImminent = dayOffset !== undefined && isImminentOffset(dayOffset);
+  const relativeLabel =
+    dayOffset === undefined ? null : formatRelativeLabel(dayOffset);
+
   return (
-    <div className="card p-4 transition-colors hover:bg-card-hover">
+    <div
+      className={
+        isPast
+          ? 'rounded-lg border border-transparent p-4 opacity-55'
+          : 'card p-4 transition-colors hover:bg-card-hover'
+      }
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          {/* Time */}
-          <div className="mb-1 text-[13px] font-medium text-primary">
-            {timeDisplay}
+          {/* Time, with a countdown that sharpens as the event approaches */}
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <span
+              className={`text-[13px] font-medium ${
+                isPast ? 'text-muted' : 'text-primary'
+              }`}
+            >
+              {timeDisplay}
+            </span>
+            {relativeLabel &&
+              (isImminent ? (
+                <span className="badge-sm-primary uppercase tracking-wide">
+                  {relativeLabel}
+                </span>
+              ) : (
+                <span className="text-xs text-muted">&middot; {relativeLabel}</span>
+              ))}
           </div>
 
           {/* Title */}
@@ -162,6 +203,7 @@ export default function EventCard({ event, sourceColor }: EventCardProps) {
             <SourceBadge name={event.sourceName} color={sourceColor} />
           )}
           {event.isRecurring && <RecurringBadge />}
+          {!isPast && (
           <button
             type="button"
             onClick={() => downloadICS(event)}
@@ -187,6 +229,7 @@ export default function EventCard({ event, sourceColor }: EventCardProps) {
             </svg>
             Add to calendar
           </button>
+          )}
         </div>
       </div>
     </div>
