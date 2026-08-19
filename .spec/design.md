@@ -141,6 +141,34 @@ Small variant (11px): `.badge-sm-primary`, `.badge-sm-secondary`, `.badge-sm-mut
 - **Label-style toggle:** `.filter-label` — `rounded-lg border border-border bg-card px-3.5 py-2 hover:bg-card-hover cursor-pointer` (13px)
 - **Button-style:** `.filter-btn` (resting) / `.filter-btn-active` (selected with primary color)
 
+### Range Brush (Timeline Date Filter)
+
+A two-handle brush over an event-density histogram, used as the DAO Timeline's
+date filter. Lives in a standard `.card` with `p-5`.
+
+- **Track surface:** the strip is `h-16`; the region before "now" sits on
+  `bg-muted/5`, with a baseline `h-px bg-border` and a dashed
+  `border-l border-dashed border-foreground/60` marking now.
+- **Histogram bars:** three semantic tones carry the whole encoding —
+  `bg-primary` (in range), `bg-primary/35` (upcoming, outside range),
+  `bg-muted/40` (past); empty buckets are a 2px `bg-border` stub. Never add a
+  fourth tone without adding it to the legend.
+- **Selection:** `bg-primary/10` with `border-y border-primary`.
+- **Handles:** `bg-primary` with `shadow-glow`, rising to `shadow-glow-lg`
+  while dragged — the same glow-for-interactivity rule as buttons and featured
+  cards. Grips are `bg-foreground/50` so they read on brand blue in both
+  themes.
+- **Presets:** reuse `.filter-btn` / `.filter-btn-active`; never a bespoke
+  button style.
+- **Axis labels:** `text-xs text-muted` with a `border-l border-border` tick.
+
+**Emphasis rule (upcoming vs past).** Where a list mixes past and upcoming
+items, the past keeps its content but gives up its surface: swap `.card` for
+`rounded-lg border border-transparent p-4 opacity-55`, mute the timestamp, and
+drop that row's actions. Imminent items (today/tomorrow) take a
+`badge-sm-primary` countdown; later items take a muted relative label. Tonal
+demotion — not a coloured left border — is how this system separates them.
+
 ### Header
 
 Sticky, glassmorphic: `sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md`. Contains the SSV diamond logo SVG (`fill="#2DB1FF"`) and DAOx wordmark in `font-heading`.
