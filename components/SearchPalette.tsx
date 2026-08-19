@@ -14,6 +14,7 @@ import {
   Search,
   SearchX,
   Telescope,
+  Vote,
 } from 'lucide-react';
 import { ExternalToolCategory, type ExternalTool, type Module } from '@/lib/types';
 import {
@@ -22,6 +23,10 @@ import {
   type ScoredItem,
   type SearchItem,
 } from '@/lib/search';
+import {
+  buildVoteSearchIndex,
+  type VoteIndexEntry,
+} from '@/lib/dao-governance/vote-search';
 
 const OPEN_EVENT = 'daox:open-search';
 
@@ -39,6 +44,10 @@ interface SearchPaletteProps {
 const CATEGORY_BADGE: Record<string, string> = {
   Module: 'badge-sm-primary',
   'Coming Soon': 'badge-sm-muted',
+  // Vote lifecycle states
+  Active: 'badge-sm-accent',
+  Upcoming: 'badge-sm-warning',
+  Past: 'badge-sm-muted',
   [ExternalToolCategory.SIMULATOR]: 'badge-sm-secondary',
   [ExternalToolCategory.CALCULATOR]: 'badge-sm-primary',
   [ExternalToolCategory.DASHBOARD]: 'badge-sm-accent',
@@ -49,6 +58,7 @@ const CATEGORY_BADGE: Record<string, string> = {
 function ItemIcon({ item, active }: { item: SearchItem; active: boolean }) {
   const cls = active ? 'text-primary' : 'text-muted';
   if (item.kind === 'module') return <LayoutGrid size={16} className={cls} />;
+  if (item.kind === 'vote') return <Vote size={16} className={cls} />;
   const cat = item.category;
   if (cat === ExternalToolCategory.DASHBOARD) return <Gauge size={16} className={cls} />;
   if (cat === ExternalToolCategory.SIMULATOR) return <Activity size={16} className={cls} />;
@@ -125,32 +135,63 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const index = useMemo(() => buildSearchIndex(modules, tools), [modules, tools]);
+  // Votes are loaded lazily on first open: the palette lives in the client-side
+  // Header, and awaiting the proposal aggregator in the root layout would put a
+  // cache-miss on the critical path of every page.
+  const [votes, setVotes] = useState<VoteIndexEntry[]>([]);
+  const votesRequested = useRef(false);
+
+  useEffect(() => {
+    if (!open || votesRequested.current) return;
+    votesRequested.current = true;
+    let cancelled = false;
+
+    fetch('/api/vote-index')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && Array.isArray(data?.votes)) setVotes(data.votes);
+      })
+      .catch(() => {
+        // Degrade to modules + tools rather than breaking the palette.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  const index = useMemo(
+    () => [...buildSearchIndex(modules, tools), ...buildVoteSearchIndex(votes)],
+    [modules, tools, votes],
+  );
   const results: ScoredItem[] = useMemo(() => searchItems(index, q), [index, q]);
 
-  // Group label → items (with the row's global active-index preserved for
-  // keyboard nav). Order the groups by their best-scoring item so the most
-  // relevant bucket leads — typing "claim" floats the External tools group
-  // above Modules; an empty query falls back to the Modules-first default.
+  // Group label → items, with each row's global active-index preserved for
+  // keyboard nav.
   const groupedEntries = useMemo<
     Array<[string, Array<ScoredItem & { _idx: number }>]>
   >(() => {
-    const modules: Array<ScoredItem & { _idx: number }> = [];
-    const tools: Array<ScoredItem & { _idx: number }> = [];
+    const buckets: Record<SearchItem['kind'], Array<ScoredItem & { _idx: number }>> = {
+      module: [],
+      tool: [],
+      vote: [],
+    };
     results.forEach((r, idx) => {
-      (r.item.kind === 'module' ? modules : tools).push({ ...r, _idx: idx });
+      buckets[r.item.kind].push({ ...r, _idx: idx });
     });
-    const modulesTop = modules[0]?.score ?? -1;
-    const toolsTop = tools[0]?.score ?? -1;
-    return toolsTop > modulesTop
-      ? [
-          ['External tools', tools],
-          ['Modules', modules],
-        ]
-      : [
-          ['Modules', modules],
-          ['External tools', tools],
-        ];
+
+    // Order groups by their best-scoring item so the most relevant bucket leads
+    // — typing a proposal title floats Votes above Modules. Ties fall back to
+    // the declared order, giving the empty query a stable Modules-first default.
+    const declared: Array<[string, Array<ScoredItem & { _idx: number }>]> = [
+      ['Modules', buckets.module],
+      ['External tools', buckets.tool],
+      ['Votes', buckets.vote],
+    ];
+    return declared
+      .map((entry, order) => ({ entry, order, top: entry[1][0]?.score ?? -1 }))
+      .sort((a, b) => b.top - a.top || a.order - b.order)
+      .map((e) => e.entry);
   }, [results]);
 
   useEffect(() => {
@@ -235,7 +276,7 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
     >
       <div
         role="dialog"
-        aria-label="Search tools and modules"
+        aria-label="Search votes, modules and tools"
         onClick={(e) => e.stopPropagation()}
         className="flex max-h-[70vh] w-full max-w-[640px] flex-col overflow-hidden rounded-xl border border-border bg-card"
         style={{
@@ -250,7 +291,7 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onInputKey}
-            placeholder="Search modules and external tools…"
+            placeholder="Search votes, modules and tools…"
             aria-label="Search query"
             className="flex-1 border-none bg-transparent font-body text-[15px] text-foreground placeholder:text-muted/70 focus:outline-none"
           />
@@ -356,7 +397,7 @@ export function SearchTrigger({ variant = 'desktop', className = '' }: SearchTri
         className={`flex w-full items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 font-body text-[13px] text-muted transition-colors hover:border-primary ${className}`}
       >
         <Search size={14} />
-        <span className="flex-1 text-left">Search modules & tools…</span>
+        <span className="flex-1 text-left">Search votes, modules & tools…</span>
         <span className="inline-flex items-center rounded border border-border bg-background px-1.5 py-0.5 font-heading text-[11px] font-semibold text-muted">
           {shortcutLabel}
         </span>

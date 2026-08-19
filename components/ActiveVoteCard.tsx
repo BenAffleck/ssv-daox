@@ -6,10 +6,12 @@ import type { ProposalSummary } from '@/lib/ai-summary/types';
 import { formatTimeRemaining } from '@/lib/snapshot/utils/time-remaining';
 import { getSpaceStyle } from '@/lib/dao-governance/space-style';
 import SpaceBadge from './dao-governance/SpaceBadge';
+import AskButton from './dao-governance/AskButton';
 
 interface ActiveVoteCardProps {
   proposal: SnapshotActiveProposal;
   isAISummaryAvailable?: boolean;
+  isQnaAvailable?: boolean;
   /** When set, renders a space badge and switches quorum display by vote type. */
   space?: GovernanceSpace;
 }
@@ -28,7 +30,7 @@ function getChoiceColor(choice: string, index: number): string {
   return colors[index % colors.length];
 }
 
-export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false, space }: ActiveVoteCardProps) {
+export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false, isQnaAvailable = false, space }: ActiveVoteCardProps) {
   const timeRemaining = formatTimeRemaining(proposal.end);
   const isMemberVote = space?.voteType === 'member';
   const accentClass = space ? `border-l-4 ${getSpaceStyle(space.key).accentClass}` : '';
@@ -213,6 +215,7 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
               {showSummary && summary ? 'Hide' : 'TL;DR'}
             </button>
           )}
+          {isQnaAvailable && <AskButton proposal={proposal} />}
           {isMemberVote ? (
             // Committee spaces are whitelist-only voters — link out, don't imply
             // the viewer can cast a vote.

@@ -7,10 +7,12 @@ import { formatTimeAgo } from '@/lib/snapshot/utils/time-remaining';
 import { getProposalOutcome, type OutcomeVariant } from '@/lib/dao-governance/outcome';
 import { getSpaceStyle } from '@/lib/dao-governance/space-style';
 import SpaceBadge from './SpaceBadge';
+import AskButton from './AskButton';
 
 interface ClosedVoteCardProps {
   proposal: SnapshotActiveProposal;
   isAISummaryAvailable?: boolean;
+  isQnaAvailable?: boolean;
   space?: GovernanceSpace;
 }
 
@@ -32,7 +34,7 @@ const OUTCOME_BADGE_CLASS: Record<OutcomeVariant, string> = {
   neutral: 'badge-sm-muted',
 };
 
-export default function ClosedVoteCard({ proposal, isAISummaryAvailable = false, space }: ClosedVoteCardProps) {
+export default function ClosedVoteCard({ proposal, isAISummaryAvailable = false, isQnaAvailable = false, space }: ClosedVoteCardProps) {
   const endedAgo = formatTimeAgo(proposal.end);
   const isMemberVote = space?.voteType === 'member';
   const accentClass = space ? `border-l-4 ${getSpaceStyle(space.key).accentClass}` : '';
@@ -209,6 +211,7 @@ export default function ClosedVoteCard({ proposal, isAISummaryAvailable = false,
               {showSummary && summary ? 'Hide' : 'TL;DR'}
             </button>
           )}
+          {isQnaAvailable && <AskButton proposal={proposal} />}
           <a
             href={proposal.link}
             target="_blank"

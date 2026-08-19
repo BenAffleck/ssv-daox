@@ -1,6 +1,6 @@
 import { ExternalTool, Module, ModuleStatus } from '@/lib/types';
 
-export type SearchItemKind = 'module' | 'tool';
+export type SearchItemKind = 'module' | 'tool' | 'vote';
 
 export interface SearchItem {
   kind: SearchItemKind;
@@ -48,6 +48,12 @@ export function buildSearchIndex(modules: Module[], tools: ExternalTool[]): Sear
 }
 
 /**
+ * Score awarded to a subsequence-only match. Direct substring hits always
+ * score above this, which is what separates the two tiers.
+ */
+export const SUBSEQUENCE_SCORE = 100;
+
+/**
  * Score a search item against a trimmed, lowercased query.
  * Returns a positive number for matches (higher = better) or -1 for no match.
  *
@@ -78,7 +84,7 @@ export function scoreSearchItem(item: SearchItem, query: string): number {
   let i = 0;
   for (const ch of haystack) {
     if (ch === q[i]) i++;
-    if (i === q.length) return 100;
+    if (i === q.length) return SUBSEQUENCE_SCORE;
   }
   return -1;
 }
@@ -95,9 +101,12 @@ export function searchItems(index: SearchItem[], query: string): ScoredItem[] {
     .map((item) => ({ item, score: scoreSearchItem(item, trimmed) }))
     .filter((r) => r.score >= 0)
     .sort((a, b) => b.score - a.score);
-  // If at least one item has a direct substring hit (score >= 1000), drop the
-  // loose subsequence-only matches (score 100) — they make unrelated items look
-  // relevant when the user already has stronger candidates.
-  const hasDirectHit = scored.length > 0 && scored[0].score >= 1000;
-  return hasDirectHit ? scored.filter((r) => r.score >= 1000) : scored;
+  // If at least one item has a direct substring hit, drop the loose
+  // subsequence-only matches — they make unrelated items look relevant when the
+  // user already has stronger candidates. The tier boundary is the subsequence
+  // score itself, not a magic threshold: a direct hit deep inside a long
+  // haystack (a proposal body snippet, say) still scores well under 1000 and
+  // must not be mistaken for a subsequence match.
+  const hasDirectHit = scored.length > 0 && scored[0].score > SUBSEQUENCE_SCORE;
+  return hasDirectHit ? scored.filter((r) => r.score > SUBSEQUENCE_SCORE) : scored;
 }

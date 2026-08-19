@@ -8,22 +8,12 @@ import {
   getModelId,
   truncateBody,
   createClient,
+  extractJSONFromResponse,
 } from '@/lib/ai/client';
 import { AI_SUMMARY_CONFIG, getSummaryPrompt } from './config';
 import { getCachedSummary, cacheSummary } from './cache';
 import type { SummaryRequest, SummaryResponse } from './types';
 import { ProposalSummarySchema } from './types';
-
-/**
- * Extract JSON from Claude's response text
- */
-function extractJSONFromResponse(text: string): unknown {
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    return JSON.parse(jsonMatch[0]);
-  }
-  throw new Error('No JSON found in response');
-}
 
 /**
  * Generate a TL;DR summary for a proposal

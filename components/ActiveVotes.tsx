@@ -4,9 +4,10 @@ import ActiveVoteCard from './ActiveVoteCard';
 interface ActiveVotesProps {
   proposals: (SnapshotActiveProposal & { space?: GovernanceSpace })[];
   isAISummaryAvailable?: boolean;
+  isQnaAvailable?: boolean;
 }
 
-export default function ActiveVotes({ proposals, isAISummaryAvailable = false }: ActiveVotesProps) {
+export default function ActiveVotes({ proposals, isAISummaryAvailable = false, isQnaAvailable = false }: ActiveVotesProps) {
   return (
     <section className="mb-12">
       <h2 className="mb-5 flex items-center gap-2.5 text-xl">
@@ -18,7 +19,7 @@ export default function ActiveVotes({ proposals, isAISummaryAvailable = false }:
       </h2>
       <div className="flex flex-col gap-4">
         {proposals.map((proposal) => (
-          <ActiveVoteCard key={proposal.id} proposal={proposal} space={proposal.space} isAISummaryAvailable={isAISummaryAvailable} />
+          <ActiveVoteCard key={proposal.id} proposal={proposal} space={proposal.space} isAISummaryAvailable={isAISummaryAvailable} isQnaAvailable={isQnaAvailable} />
         ))}
       </div>
     </section>

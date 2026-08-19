@@ -4,9 +4,10 @@ import PendingVoteCard from './PendingVoteCard';
 interface PendingVotesProps {
   proposals: (SnapshotActiveProposal & { space?: GovernanceSpace })[];
   isAISummaryAvailable?: boolean;
+  isQnaAvailable?: boolean;
 }
 
-export default function PendingVotes({ proposals, isAISummaryAvailable = false }: PendingVotesProps) {
+export default function PendingVotes({ proposals, isAISummaryAvailable = false, isQnaAvailable = false }: PendingVotesProps) {
   return (
     <section className="mb-12">
       <h2 className="mb-5 flex items-center gap-2.5 text-xl">
@@ -15,7 +16,7 @@ export default function PendingVotes({ proposals, isAISummaryAvailable = false }
       </h2>
       <div className="flex flex-col gap-4">
         {proposals.map((proposal) => (
-          <PendingVoteCard key={proposal.id} proposal={proposal} space={proposal.space} isAISummaryAvailable={isAISummaryAvailable} />
+          <PendingVoteCard key={proposal.id} proposal={proposal} space={proposal.space} isAISummaryAvailable={isAISummaryAvailable} isQnaAvailable={isQnaAvailable} />
         ))}
       </div>
     </section>

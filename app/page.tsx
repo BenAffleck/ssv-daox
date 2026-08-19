@@ -6,6 +6,7 @@ import ActiveVotes from '@/components/ActiveVotes';
 import PendingVotes from '@/components/PendingVotes';
 import { fetchGovernanceProposals } from '@/lib/snapshot/api/fetch-governance-proposals';
 import { isAISummaryAvailable } from '@/lib/ai-summary';
+import { isProposalQnaAvailable } from '@/lib/ai-qna';
 
 export default async function Home() {
   const modules = getModulesSorted();
@@ -17,6 +18,7 @@ export default async function Home() {
   const activeProposals = proposals.filter((p) => p.state === 'active');
   const pendingProposals = proposals.filter((p) => p.state === 'pending');
   const aiSummaryAvailable = isAISummaryAvailable();
+  const qnaAvailable = isProposalQnaAvailable();
 
   return (
     <div className="container mx-auto max-w-6xl px-6 py-16">
@@ -33,8 +35,8 @@ export default async function Home() {
         </p>
       </div>
 
-      {activeProposals.length > 0 && <ActiveVotes proposals={activeProposals} isAISummaryAvailable={aiSummaryAvailable} />}
-      {pendingProposals.length > 0 && <PendingVotes proposals={pendingProposals} isAISummaryAvailable={aiSummaryAvailable} />}
+      {activeProposals.length > 0 && <ActiveVotes proposals={activeProposals} isAISummaryAvailable={aiSummaryAvailable} isQnaAvailable={qnaAvailable} />}
+      {pendingProposals.length > 0 && <PendingVotes proposals={pendingProposals} isAISummaryAvailable={aiSummaryAvailable} isQnaAvailable={qnaAvailable} />}
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {modules.map((module) => (

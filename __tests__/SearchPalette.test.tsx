@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SearchPalette, { openSearchPalette, SearchTrigger } from '@/components/SearchPalette';
@@ -131,6 +131,93 @@ describe('SearchPalette', () => {
       'noopener,noreferrer',
     );
     openSpy.mockRestore();
+  });
+});
+
+describe('SearchPalette votes', () => {
+  const votes = [
+    {
+      id: '0xfee',
+      title: 'Adjust the fee recipient address',
+      snippet: 'Moves protocol fees to a new multisig.',
+      spaceKey: 'main',
+      spaceLabel: 'DAO',
+      state: 'active',
+      end: 1700100000,
+      link: 'https://snapshot.org/#/x/proposal/0xfee',
+    },
+  ];
+
+  beforeEach(() => {
+    pushMock.mockClear();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** Open the palette and let the lazy vote-index fetch settle. */
+  async function openWithVotes(payload: unknown = { votes, failedSpaces: [] }) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => payload }),
+    );
+    render(<SearchPalette modules={modules} tools={tools} />);
+    await act(async () => {
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+    });
+  }
+
+  it('lazily loads the vote index on first open and lists a Votes group', async () => {
+    await openWithVotes();
+
+    expect(fetch).toHaveBeenCalledWith('/api/vote-index');
+    expect(await screen.findByText('Votes')).toBeInTheDocument();
+    expect(screen.getByText('Adjust the fee recipient address')).toBeInTheDocument();
+  });
+
+  it('matches a vote on its title and floats the Votes group above Modules', async () => {
+    const user = userEvent.setup();
+    await openWithVotes();
+    await screen.findByText('Votes');
+
+    await user.type(screen.getByLabelText('Search query'), 'fee recipient');
+
+    const groups = screen
+      .getAllByText(/^(Modules|External tools|Votes)$/)
+      .map((el) => el.textContent);
+    expect(groups[0]).toBe('Votes');
+  });
+
+  it('matches a vote on its body snippet', async () => {
+    const user = userEvent.setup();
+    await openWithVotes();
+    await screen.findByText('Votes');
+
+    await user.type(screen.getByLabelText('Search query'), 'multisig');
+
+    expect(screen.getByText('Adjust the fee recipient address')).toBeInTheDocument();
+  });
+
+  it('routes to the ask deep link when a vote is selected', async () => {
+    const user = userEvent.setup();
+    await openWithVotes();
+    await screen.findByText('Votes');
+
+    await user.click(screen.getByText('Adjust the fee recipient address'));
+
+    expect(pushMock).toHaveBeenCalledWith('/governance?ask=0xfee');
+  });
+
+  it('still renders modules and tools when the vote index fails to load', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    render(<SearchPalette modules={modules} tools={tools} />);
+    await act(async () => {
+      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+    });
+
+    expect(screen.getByText('DAO Delegates')).toBeInTheDocument();
+    expect(screen.queryByText('Votes')).not.toBeInTheDocument();
   });
 });
 

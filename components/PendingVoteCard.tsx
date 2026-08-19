@@ -6,15 +6,17 @@ import type { ProposalSummary } from '@/lib/ai-summary/types';
 import { formatTimeUntilStart } from '@/lib/snapshot/utils/time-remaining';
 import { getSpaceStyle } from '@/lib/dao-governance/space-style';
 import SpaceBadge from './dao-governance/SpaceBadge';
+import AskButton from './dao-governance/AskButton';
 
 interface PendingVoteCardProps {
   proposal: SnapshotActiveProposal;
   isAISummaryAvailable?: boolean;
+  isQnaAvailable?: boolean;
   /** When set, renders a space badge identifying the proposal's space. */
   space?: GovernanceSpace;
 }
 
-export default function PendingVoteCard({ proposal, isAISummaryAvailable = false, space }: PendingVoteCardProps) {
+export default function PendingVoteCard({ proposal, isAISummaryAvailable = false, isQnaAvailable = false, space }: PendingVoteCardProps) {
   const timeUntilStart = formatTimeUntilStart(proposal.start);
   const accentClass = space ? `border-l-4 ${getSpaceStyle(space.key).accentClass}` : '';
 
@@ -136,6 +138,7 @@ export default function PendingVoteCard({ proposal, isAISummaryAvailable = false
             {showSummary && summary ? 'Hide' : 'TL;DR'}
           </button>
         )}
+        {isQnaAvailable && <AskButton proposal={proposal} />}
         <a
           href={proposal.link}
           target="_blank"

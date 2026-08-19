@@ -15,6 +15,11 @@ vi.mock('@/lib/ai/client', () => ({
   getModelId: vi.fn().mockReturnValue('claude-haiku-4-5-20251001'),
   truncateBody: vi.fn((body: string, _max: number) => body),
   parseAPIError: vi.fn((e: unknown) => e instanceof Error ? e.message : 'Unknown error'),
+  extractJSONFromResponse: vi.fn((text: string) => {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('No JSON found in response');
+  }),
 }));
 
 vi.mock('../cache', () => ({

@@ -4,11 +4,14 @@ import { useCallback, useMemo } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import type { GovernanceProposal, GovernanceSpace } from '@/lib/snapshot/types';
 import { getSpaceStyle } from '@/lib/dao-governance/space-style';
+import { filterProposalsByQuery } from '@/lib/dao-governance/vote-search';
 import ActiveVoteCard from '@/components/ActiveVoteCard';
 import PendingVoteCard from '@/components/PendingVoteCard';
 import ClosedVoteCard from './ClosedVoteCard';
 import FilterChips, { ALL_VALUE } from './FilterChips';
 import StatusFilter, { type StatusValue } from './StatusFilter';
+import VoteSearchInput from './VoteSearchInput';
+import AskProposalDialog from './AskProposalDialog';
 
 interface GovernanceViewProps {
   proposals: GovernanceProposal[];
@@ -17,10 +20,13 @@ interface GovernanceViewProps {
   /** Labels of spaces whose data failed to load. */
   failedSpaces: string[];
   isAISummaryAvailable: boolean;
+  isQnaAvailable?: boolean;
 }
 
 const SPACE_PARAM = 'space';
 const STATUS_PARAM = 'status';
+const QUERY_PARAM = 'q';
+const ASK_PARAM = 'ask';
 const STATUS_VALUES: StatusValue[] = ['all', 'active', 'pending', 'closed'];
 
 /**
@@ -40,6 +46,7 @@ export default function GovernanceView({
   spaces,
   failedSpaces,
   isAISummaryAvailable,
+  isQnaAvailable = false,
 }: GovernanceViewProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -49,11 +56,14 @@ export default function GovernanceView({
 
   const selectedSpace = parseSpace(searchParams.get(SPACE_PARAM), spaceKeys);
   const status = parseStatus(searchParams.get(STATUS_PARAM));
+  const query = searchParams.get(QUERY_PARAM) ?? '';
+  const askId = searchParams.get(ASK_PARAM);
 
-  // Reflect both filters in the URL, omitting a param at its default ("all")
-  // for clean, shareable links.
+  // Reflect the filters in the URL, omitting a param at its default for clean,
+  // shareable links. `ask` is preserved separately so opening or closing the
+  // dialog doesn't disturb the filters, and vice versa.
   const commit = useCallback(
-    (nextSpace: string, nextStatus: StatusValue) => {
+    (nextSpace: string, nextStatus: StatusValue, nextQuery: string) => {
       const params = new URLSearchParams(searchParams.toString());
       if (nextSpace === ALL_VALUE) params.delete(SPACE_PARAM);
       else params.set(SPACE_PARAM, nextSpace);
@@ -61,18 +71,44 @@ export default function GovernanceView({
       if (nextStatus === 'all') params.delete(STATUS_PARAM);
       else params.set(STATUS_PARAM, nextStatus);
 
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      if (!nextQuery.trim()) params.delete(QUERY_PARAM);
+      else params.set(QUERY_PARAM, nextQuery);
+
+      const queryString = params.toString();
+      router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+        scroll: false,
+      });
     },
     [router, pathname, searchParams]
+  );
+
+  const closeAsk = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(ASK_PARAM);
+    const queryString = params.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    });
+  }, [router, pathname, searchParams]);
+
+  // Resolve the ?ask= target against the *unfiltered* list so a deep link from
+  // the command palette opens regardless of the active space/status/search.
+  const askProposal = useMemo(
+    () => (askId ? proposals.find((p) => p.id === askId) : undefined),
+    [askId, proposals]
+  );
+
+  const matching = useMemo(
+    () => filterProposalsByQuery(proposals, query),
+    [proposals, query]
   );
 
   const bySpace = useMemo(
     () =>
       selectedSpace === ALL_VALUE
-        ? proposals
-        : proposals.filter((p) => p.space.key === selectedSpace),
-    [proposals, selectedSpace]
+        ? matching
+        : matching.filter((p) => p.space.key === selectedSpace),
+    [matching, selectedSpace]
   );
   const showActive = status === 'all' || status === 'active';
   const showPending = status === 'all' || status === 'pending';
@@ -89,10 +125,13 @@ export default function GovernanceView({
     dotClass: getSpaceStyle(s.key).dotClass,
   }));
 
+  const hasQuery = query.trim().length > 0;
   const emptyMessage =
     spaces.length === 0
       ? 'No governance spaces are configured.'
-      : 'No votes match the current filters.';
+      : hasQuery
+        ? `No votes match “${query}”. Try a different keyword or clear the search.`
+        : 'No votes match the current filters.';
 
   return (
     <div>
@@ -114,15 +153,37 @@ export default function GovernanceView({
         </div>
       )}
 
-      <div className="mb-8 flex flex-col gap-3 border-b border-border pb-6 lg:flex-row lg:items-center lg:justify-between">
-        <StatusFilter value={status} onChange={(next) => commit(selectedSpace, next)} />
-        <FilterChips
-          items={spaceItems}
-          value={selectedSpace}
-          onChange={(next) => commit(next, status)}
-          allLabel="All spaces"
-          ariaLabel="Filter by space"
-        />
+      <div className="mb-8 flex flex-col gap-3 border-b border-border pb-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <StatusFilter
+            value={status}
+            onChange={(next) => commit(selectedSpace, next, query)}
+          />
+          <FilterChips
+            items={spaceItems}
+            value={selectedSpace}
+            onChange={(next) => commit(next, status, query)}
+            allLabel="All spaces"
+            ariaLabel="Filter by space"
+          />
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <VoteSearchInput
+              value={query}
+              onChange={(next) => commit(selectedSpace, status, next)}
+            />
+          </div>
+          {hasQuery && (
+            <span
+              className="text-[12px] text-muted sm:whitespace-nowrap"
+              data-testid="vote-search-count"
+            >
+              {totalVisible} of {proposals.length} vote
+              {proposals.length === 1 ? '' : 's'} match
+            </span>
+          )}
+        </div>
       </div>
 
       {totalVisible === 0 ? (
@@ -148,6 +209,7 @@ export default function GovernanceView({
                     proposal={proposal}
                     space={proposal.space}
                     isAISummaryAvailable={isAISummaryAvailable}
+                    isQnaAvailable={isQnaAvailable}
                   />
                 ))}
               </div>
@@ -167,6 +229,7 @@ export default function GovernanceView({
                     proposal={proposal}
                     space={proposal.space}
                     isAISummaryAvailable={isAISummaryAvailable}
+                    isQnaAvailable={isQnaAvailable}
                   />
                 ))}
               </div>
@@ -186,12 +249,17 @@ export default function GovernanceView({
                     proposal={proposal}
                     space={proposal.space}
                     isAISummaryAvailable={isAISummaryAvailable}
+                    isQnaAvailable={isQnaAvailable}
                   />
                 ))}
               </div>
             </section>
           )}
         </div>
+      )}
+
+      {isQnaAvailable && askProposal && (
+        <AskProposalDialog proposal={askProposal} open onClose={closeAsk} />
       )}
     </div>
   );

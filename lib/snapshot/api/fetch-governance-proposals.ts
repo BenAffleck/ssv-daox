@@ -10,7 +10,7 @@ import { PENDING_PROPOSALS_QUERY } from './fetch-pending-proposals';
 import { CLOSED_PROPOSALS_QUERY } from './fetch-closed-proposals';
 
 /** Number of most-recent closed proposals to fetch per space. */
-export const CLOSED_PROPOSALS_PER_SPACE = 20;
+export const CLOSED_PROPOSALS_PER_SPACE = 100;
 
 /**
  * Fetches active + pending (+ optionally recent closed) proposals for a single

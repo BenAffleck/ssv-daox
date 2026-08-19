@@ -88,3 +88,18 @@ export function truncateBody(body: string, maxLength: number): string {
 export function createClient(apiKey: string): Anthropic {
   return new Anthropic({ apiKey });
 }
+
+/**
+ * Extract the first JSON object from Claude's response text.
+ *
+ * Models occasionally wrap JSON in prose or a fenced code block despite being
+ * asked not to, so we scan for the outermost braces rather than parsing the
+ * whole response. Throws if no object is present.
+ */
+export function extractJSONFromResponse(text: string): unknown {
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    return JSON.parse(jsonMatch[0]);
+  }
+  throw new Error('No JSON found in response');
+}

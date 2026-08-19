@@ -24,8 +24,12 @@ ssv-daox/
 │   ├── api/                  # API Routes
 │   │   ├── ai-extraction/    # AI extraction endpoint
 │   │   │   └── route.ts      # POST /api/ai-extraction
-│   │   └── ai-summary/       # AI summary endpoint
-│   │       └── route.ts      # POST /api/ai-summary
+│   │   ├── ai-summary/       # AI summary endpoint
+│   │   │   └── route.ts      # POST /api/ai-summary
+│   │   ├── proposal-qna/     # AI proposal Q&A endpoint
+│   │   │   └── route.ts      # POST /api/proposal-qna
+│   │   └── vote-index/       # Searchable vote index for the command palette
+│   │       └── route.ts      # GET /api/vote-index
 │   ├── dao-delegates/        # DAO Delegates module
 │   │   └── page.tsx          # Server component (data orchestration)
 │   ├── dao-timeline/         # DAO Timeline module
@@ -89,6 +93,14 @@ ssv-daox/
 │   │   ├── config.ts         # Summary-specific config + prompt
 │   │   ├── cache.ts          # File-based caching (.cache/ai-summaries.json)
 │   │   ├── generate-summary.ts # Core logic (uses lib/ai/ client)
+│   │   ├── index.ts          # Module exports
+│   │   └── __tests__/        # Unit tests
+│   ├── ai-qna/               # AI proposal Q&A (single question per proposal)
+│   │   ├── types.ts          # ProposalAnswer type + Zod schemas
+│   │   ├── config.ts         # Q&A config + prompt + rate-limit config
+│   │   ├── cache.ts          # File-based caching (.cache/ai-qna.json)
+│   │   ├── rate-limit.ts     # In-memory fixed-window limiter
+│   │   ├── answer-question.ts # Core logic (uses lib/ai/ client)
 │   │   ├── index.ts          # Module exports
 │   │   └── __tests__/        # Unit tests
 │   └── snapshot/             # Snapshot.org integration
@@ -455,7 +467,8 @@ lib/dao-timeline/
 
 lib/ai/                             # Shared AI infrastructure
 ├── config.ts                       # isAIEnabled(), getAnthropicApiKey(), AI_MODEL_CONFIG
-└── client.ts                       # createClient(), getModelId(), parseAPIError(), truncateBody()
+└── client.ts                       # createClient(), getModelId(), parseAPIError(),
+                                    #   truncateBody(), extractJSONFromResponse()
 
 lib/ai-extraction/                  # AI event extraction (uses lib/ai/)
 ├── types.ts                        # AI event types, Zod schemas, time window utils
@@ -473,6 +486,19 @@ lib/ai-summary/                     # AI proposal summaries (uses lib/ai/)
 ├── generate-summary.ts             # Claude API integration
 ├── index.ts                        # Module exports
 └── __tests__/
+
+lib/ai-qna/                         # AI proposal Q&A (uses lib/ai/)
+├── types.ts                        # ProposalAnswer, Zod schemas
+├── config.ts                       # Q&A config, prompt, rate-limit config
+├── cache.ts                        # File-based answer cache, keyed proposal + question
+├── rate-limit.ts                   # In-memory fixed-window limiter
+├── answer-question.ts              # Claude API integration
+├── index.ts                        # Module exports
+└── __tests__/
+
+lib/dao-governance/
+└── vote-search.ts                  # Proposal → SearchItem adapter, snippet builder,
+                                    #   filterProposalsByQuery() (reuses lib/search scorer)
 
 lib/snapshot/api/
 └── fetch-timeline-proposals.ts # Snapshot proposals fetcher
@@ -583,7 +609,7 @@ shows quorum progress (token-weighted); committee spaces show **"No quorum"**.
 - `components/dao-governance/GovernanceView.tsx` — client view (space + status filters, grouping, states)
 - `components/dao-governance/StatusFilter.tsx` — status segmented control
 - `components/dao-governance/FilterChips.tsx` — single-select space chips, `SpaceBadge.tsx`, `ClosedVoteCard.tsx`
-- `components/ActiveVoteCard.tsx` / `PendingVoteCard.tsx` — optional `space` prop (badge + quorum + Vote Now gating)
+- `components/ActiveVoteCard.tsx` / `PendingVoteCard.tsx` — optional `space` prop (badge + quorum + Vote Now gating); `isQnaAvailable` gates the Ask button
 - `app/page.tsx`, `components/ActiveVotes.tsx` / `PendingVotes.tsx` — home page aggregates all spaces
 
 ### Environment Variables
@@ -598,6 +624,67 @@ SNAPSHOT_MULTISIG_SPACE_ID=                              # MSIG
 ```
 
 Reuses the existing AI TL;dr service (`/api/ai-summary`) for per-proposal summaries.
+
+### Proposal Q&A
+
+Beside the TL;DR button, each vote card carries an **"Ask"** pill opening a modal dialog
+where a member asks a single question about that proposal. One question in, one answer
+out — asking again replaces the previous answer rather than building a thread.
+
+**Flow:**
+1. User clicks "Ask" on any vote card → `AskProposalDialog` opens (portal modal).
+2. Client POSTs `{ proposalId, question }` to `/api/proposal-qna`.
+3. Route validates the body, then rate-limits per client (fixed window, default 10 per
+   10 min) — free-form user input makes this endpoint a cost vector that `/api/ai-summary`
+   is not.
+4. Route resolves the proposal **server-side** from `fetchGovernanceProposals()`. It
+   deliberately does not accept proposal text from the client, which would let the
+   endpoint act as a general-purpose LLM proxy. Unknown id → 404.
+5. `lib/ai-qna/` checks the file cache (`.cache/ai-qna.json`, keyed by proposal +
+   normalized-question hash), else calls Claude via the shared `lib/ai/` client.
+6. Returns `ProposalAnswer` — `answer`, `answered`, and up to 3 `supportingQuotes`.
+
+**Grounding:** answers use the proposal's title, body and choices only — never live
+scores, quorum or dates. The prompt instructs the model to set `answered: false` and say
+so when a question needs information the text doesn't hold, which the dialog renders as a
+distinct "not covered" notice instead of a guess. Because the context is static, answers
+don't go stale and share the summaries' plain 7-day TTL.
+
+**Untrusted input:** the question is fenced in explicit delimiters and the model is told
+to treat instructions inside it as text to report, not obey. Responses are Zod-validated
+and rendered as plain text (never `dangerouslySetInnerHTML`).
+
+### Vote search
+
+Text search across every aggregated proposal, on two surfaces sharing one scorer:
+- **Page search bar** — debounced (300 ms) input on `/governance`, synced to `?q=`
+  alongside the existing `?space=` / `?status=` params, with a "N of M votes match" count.
+- **Global Ctrl+K palette** — a "Votes" group in `SearchPalette`, lazily fetching
+  `/api/vote-index` on first open. The palette lives in the client-side `Header`, so
+  awaiting the aggregator in the root layout would put a cache miss on every page's
+  critical path. A failed fetch degrades to modules + tools.
+
+`lib/dao-governance/vote-search.ts` adapts proposals onto the shared `SearchItem` shape
+so both surfaces rank identically off `lib/search/index.ts` rather than growing a second
+matching implementation. Selecting a vote in the palette routes to `/governance?ask=<id>`,
+which opens that proposal's Ask dialog directly — the path from "find a proposal" to "ask
+a question". The `?ask=` target resolves against the *unfiltered* list, so a deep link
+works regardless of the active space/status/search filters.
+
+> **Scorer note:** `searchItems` previously separated direct-substring from
+> subsequence-only matches with a `score >= 1000` threshold. Proposal snippets are long
+> enough that a genuine substring hit deep in the text scores below 1000, so valid results
+> were dropped. The tier boundary is now `> SUBSEQUENCE_SCORE`, which is what the
+> threshold was always standing in for.
+
+**Files:**
+- `lib/ai-qna/` — Q&A module (types, config/prompt, cache, rate-limit, answer-question)
+- `app/api/proposal-qna/route.ts` — POST endpoint + GET availability probe
+- `app/api/vote-index/route.ts` — GET slim vote index for the palette
+- `lib/dao-governance/vote-search.ts` — proposal → `SearchItem` adapter + query filter
+- `components/dao-governance/AskProposalDialog.tsx` / `AskButton.tsx` — Q&A UI
+- `components/dao-governance/VoteSearchInput.tsx` — debounced page search bar
+- `components/SearchPalette.tsx` — Votes group + lazy index fetch
 
 ---
 

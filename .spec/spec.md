@@ -94,12 +94,37 @@ space by hand.
   met** (or the winning option for non-binary ballots).
 - **"Vote Now"** appears only for the token-weighted DAO space; committee
   spaces are whitelist-only voters and show **"View Proposal"** instead.
-- **Two single-select filters**, synced to the URL for shareable views:
+- **Two single-select filters plus a search box**, all synced to the URL for
+  shareable views:
   - **Status** — a segmented control (All / Active / Upcoming / Past), `?status=`.
   - **Space** — chips with color dots; "All spaces" or exactly one space
     (DAO / Leads / Operators / Grants / Multisig), `?space=`.
+  - **Search** — free-text over proposal titles, body text and space names,
+    `?q=`, debounced 300 ms, showing an "N of M votes match" count. Search
+    intersects with the other two filters rather than overriding them.
 - Distinct loading / empty / error states; a single failing space is reported
-  while the others still render.
+  while the others still render. An empty result explains itself in terms of the
+  search when one is active.
+
+**Proposal Q&A:** each card carries an **"Ask"** button (shown only when AI is
+configured) opening a dialog where a member asks **a single question** about that
+proposal, answered by Claude. Asking again replaces the previous answer — this is
+deliberately not a chat thread.
+- Answers are grounded in the proposal's **title, body and voting choices only**.
+  The model has no access to live tallies, quorum status or dates, and is
+  instructed to say so rather than guess; the dialog renders that as a distinct
+  "not covered by the proposal text" notice.
+- Each answer may carry up to three verbatim excerpts from the proposal, so a
+  reader can check it against the source.
+- Answers are neutral and explanatory — the feature never recommends how to vote.
+- Every answer is labelled AI-generated with a link out to the proposal.
+- Repeat questions are served from a shared cache; the endpoint is rate-limited
+  per client to bound cost.
+
+**Finding a vote:** proposals are also indexed in the global **Ctrl+K** command
+palette under a "Votes" group alongside modules and external tools. Selecting one
+opens the governance page with that proposal's Q&A dialog already open, so
+"I half-remember a vote about fees" reaches a grounded answer in two steps.
 
 **Home page:** active + pending votes across all governance spaces (incl.
 committees) are surfaced at the top of the landing page with space badges
