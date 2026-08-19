@@ -11,9 +11,12 @@ import {
   DayRange,
   clampRange,
   computeDomain,
-  filterByDayRange,
   resolveInitialRange,
 } from '@/lib/dao-timeline/logic/range-brush';
+import {
+  collapseSeriesAroundToday,
+  collapseSeriesInRange,
+} from '@/lib/dao-timeline/logic/series-collapse';
 import {
   ExtractionStats,
   ProposalForExtraction,
@@ -135,6 +138,7 @@ export default function Timeline({
       proposalsProcessed: 0,
       proposalsFromCache: 0,
       eventsFound: 0,
+      eventsFiltered: 0,
       errors: 0,
     };
 
@@ -172,6 +176,7 @@ export default function Timeline({
           if (data.stats) {
             stats.proposalsProcessed += data.stats.proposalsProcessed || 0;
             stats.proposalsFromCache += data.stats.proposalsFromCache || 0;
+            stats.eventsFiltered += data.stats.eventsFiltered || 0;
             if (data.stats.errors > 0) {
               stats.errors += data.stats.errors;
             }
@@ -250,16 +255,30 @@ export default function Timeline({
     );
   }, [allEvents, selectedSources]);
 
+  // Series are collapsed around today rather than around the brushed range for
+  // anything that feeds the brush itself: the axis and the histogram must not
+  // reshape while the user is dragging. This agrees with the list whenever the
+  // range spans today, which is the default.
+  const axisEvents = useMemo(
+    () => collapseSeriesAroundToday(allEvents, today),
+    [allEvents, today]
+  );
+
+  const histogramEvents = useMemo(
+    () => collapseSeriesAroundToday(sourceFilteredEvents, today),
+    [sourceFilteredEvents, today]
+  );
+
   // The axis spans every event, so toggling a source never moves it.
   const domain = useMemo(
-    () => computeDomain(allEvents, today),
-    [allEvents, today]
+    () => computeDomain(axisEvents, today),
+    [axisEvents, today]
   );
 
   // Resolved once: the near-term window, or the whole domain when that window
   // is empty. Later AI-extracted events must not move a range the user set.
   const [range, setRange] = useState<DayRange>(() =>
-    resolveInitialRange(domain, allEvents, today)
+    resolveInitialRange(domain, axisEvents, today)
   );
 
   // A stored range can fall outside the domain once new events arrive.
@@ -268,9 +287,16 @@ export default function Timeline({
     [range, domain]
   );
 
-  // Filter and group events
+  // Recurring series contribute at most their most recent and next occurrence
+  // here, so a weekly call cannot bury the one-off events.
+  const visibleEvents = useMemo(
+    () => collapseSeriesInRange(sourceFilteredEvents, activeRange, today),
+    [sourceFilteredEvents, activeRange, today]
+  );
+
+  // Group the visible events by day
   const groupedEvents = useMemo(() => {
-    const filtered = filterByDayRange(sourceFilteredEvents, activeRange, today);
+    const filtered = [...visibleEvents];
 
     // Sort by start date
     filtered.sort(
@@ -299,7 +325,7 @@ export default function Timeline({
     }
 
     return groups;
-  }, [sourceFilteredEvents, activeRange, today]);
+  }, [visibleEvents]);
 
   return (
     <div>
@@ -324,7 +350,8 @@ export default function Timeline({
       />
 
       <TimelineRangeBrush
-        events={sourceFilteredEvents}
+        events={histogramEvents}
+        visibleEvents={visibleEvents}
         today={today}
         domain={domain}
         range={activeRange}
@@ -339,7 +366,7 @@ export default function Timeline({
 
       <div className="mt-6 text-center text-sm text-muted">
         Showing {groupedEvents.reduce((acc, g) => acc + g.events.length, 0)} of{' '}
-        {allEvents.length} events
+        {axisEvents.length} events
         {aiEvents.length > 0 && (
           <span className="text-violet-600 dark:text-violet-400">
             {' '}

@@ -309,7 +309,7 @@ export function resolveInitialRange(
 
 export function getPresets(domain: BrushDomain): RangePreset[] {
   const presets: RangePreset[] = [
-    { id: 'past-14', label: 'Past 14d', from: -14, to: 0 },
+    { id: 'past-90', label: 'Past 90d', from: -90, to: 0 },
     { id: 'next-30', label: 'Next 30d', from: 0, to: 30 },
     { id: 'next-180', label: 'Next 180d', from: 0, to: 180 },
     { id: 'next-12-months', label: 'Next 12 months', from: 0, to: 365 },

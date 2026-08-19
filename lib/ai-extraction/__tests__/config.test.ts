@@ -58,7 +58,7 @@ describe('AI Extraction Config', () => {
         model: expect.stringMatching(/^(haiku|sonnet|opus)$/),
         processingDelayMs: 100,
         maxProposalBodyLength: 10000,
-        cacheVersion: 1,
+        cacheVersion: 2,
         maxCacheAgeDays: 30,
       });
     });

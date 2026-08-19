@@ -130,6 +130,14 @@ All badges use `.badge` base (`.inline-flex items-center rounded-full px-2.5 py-
 
 Small variant (11px): `.badge-sm-primary`, `.badge-sm-secondary`, `.badge-sm-muted` — used in cards and inline table cells.
 
+**Recurring-event badge.** A recurring event carries a `.badge-sm-muted` pill
+with a lucide `Repeat` icon stating its cadence ("Every 2 weeks on Tue") — muted
+because the cadence is metadata about the event, not a status of it. The
+timeline shows only a series' most recent and next occurrence, so this badge is
+what tells the reader the rest of the series exists; it is the **only** marker
+of recurrence. A past occurrence of a series keeps the standard tonal demotion
+and gains no colour, stripe or extra tone of its own.
+
 ### Input Fields
 
 - **Resting:** `border-border bg-card` with `font-body text-foreground placeholder:text-muted/70`

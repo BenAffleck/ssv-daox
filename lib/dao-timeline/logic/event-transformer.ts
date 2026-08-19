@@ -10,6 +10,7 @@ import {
   SerializedEvent,
 } from '../types';
 import { SnapshotTimelineProposal } from '@/lib/snapshot/types';
+import { buildSeriesInfo } from './recurrence-expander';
 
 /**
  * Transform a raw ICS event into a UnifiedEvent
@@ -18,6 +19,8 @@ export function transformICSEvent(
   raw: RawICSEvent,
   source: EventSourceConfig
 ): UnifiedEvent {
+  const recurrence = buildSeriesInfo(raw.rrule, raw.exdates);
+
   return {
     id: `${source.id}-${raw.uid}`,
     sourceId: source.id,
@@ -30,11 +33,11 @@ export function transformICSEvent(
     sourceName: source.name,
     sourceUrl: raw.url,
     location: raw.location,
-    isRecurring: raw.rrule !== null,
-    recurrenceId: raw.rrule ? raw.uid : null,
+    isRecurring: recurrence !== null,
+    recurrenceId: recurrence ? raw.uid : null,
+    recurrence,
     metadata: {
       originalUid: raw.uid,
-      rrule: raw.rrule,
     },
   };
 }
@@ -85,6 +88,7 @@ export function transformSnapshotProposal(
     location: null,
     isRecurring: false,
     recurrenceId: null,
+    recurrence: null,
     metadata: {
       state: proposal.state,
       created: proposal.created,

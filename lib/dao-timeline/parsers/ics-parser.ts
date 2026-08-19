@@ -10,6 +10,7 @@ import {
   unescapeText,
   extractComponents,
 } from '../utils/ics-utils';
+import { formatYMD } from '../utils/date-utils';
 
 /**
  * Parse ICS content into an array of raw events
@@ -45,12 +46,25 @@ function parseVEvent(block: string): RawICSEvent | null {
     { params: Record<string, string>; value: string }
   > = {};
 
+  // EXDATE may repeat, so it is accumulated rather than folded into the
+  // last-value-wins map below. A cancelled occurrence must not surface as the
+  // series' one visible "next" card.
+  const exdates: string[] = [];
+
   for (const line of lines) {
     const { name, params, value } = parsePropertyLine(line);
-    if (name) {
-      // Handle multi-value properties by overwriting (last value wins)
-      properties[name] = { params, value };
+    if (!name) continue;
+
+    if (name === 'EXDATE') {
+      for (const part of value.split(',')) {
+        if (!part.trim()) continue;
+        exdates.push(formatYMD(parseICSDate(part.trim(), params).date));
+      }
+      continue;
     }
+
+    // Handle multi-value properties by overwriting (last value wins)
+    properties[name] = { params, value };
   }
 
   // UID is required
@@ -109,6 +123,7 @@ function parseVEvent(block: string): RawICSEvent | null {
     location,
     url,
     rrule,
+    exdates,
     isAllDay,
   };
 }

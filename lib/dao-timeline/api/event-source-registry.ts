@@ -7,7 +7,6 @@ import {
   transformICSEvents,
   transformSnapshotProposals,
 } from '../logic/event-transformer';
-import { expandAllRecurringEvents } from '../logic/recurrence-expander';
 import { mergeEvents } from '../logic/event-aggregator';
 import { EventSource, EventSourceConfig, UnifiedEvent } from '../types';
 import { fetchICSFromUrl } from './fetch-ics';
@@ -21,9 +20,10 @@ async function fetchFromSource(
 ): Promise<UnifiedEvent[]> {
   switch (source.type) {
     case EventSource.ICS: {
+      // Recurring events stay as one event carrying their rule; the timeline
+      // collapses each series to the occurrences worth showing.
       const rawEvents = await fetchICSFromUrl(source.url);
-      const transformed = transformICSEvents(rawEvents, source);
-      return expandAllRecurringEvents(transformed);
+      return transformICSEvents(rawEvents, source);
     }
     case EventSource.SNAPSHOT_PROPOSALS: {
       // source.url contains the space ID for Snapshot sources

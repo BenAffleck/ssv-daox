@@ -50,7 +50,7 @@ export const AI_EXTRACTION_CONFIG = {
   /**
    * Cache version - increment when schema changes
    */
-  cacheVersion: 1,
+  cacheVersion: 2,
 
   /**
    * Maximum age for cached extractions (in days)
@@ -88,6 +88,83 @@ For each event found:
 - description: What happens on this date
 - excerpt: The exact text snippet mentioning this date (max 100 chars)
 - eventType: milestone, deadline, launch, meeting, or other
+- recurrence: null for a one-off event. Set it only when the text describes a
+  regular cadence (a standing call, a recurring report, a periodic review):
+  - audience: "community" or "internal" (see the recurrence bar below)
+  - freq: DAILY, WEEKLY, MONTHLY or YEARLY
+  - interval: how many of those units between occurrences (2 = every other)
+    There is no QUARTERLY or SEMI-ANNUAL option, so express those with MONTHLY
+    and an interval. Use this mapping exactly:
+      every quarter / quarterly / "each quarter"  -> MONTHLY, interval 3
+      twice a year / semi-annual / "each half"    -> MONTHLY, interval 6
+      every other month / bi-monthly              -> MONTHLY, interval 2
+      every two weeks / bi-weekly / fortnightly   -> WEEKLY,  interval 2
+      once a year / annual                        -> YEARLY,  interval 1
+    Only use YEARLY when the cadence really is once a year. A quarterly report
+    is NOT yearly.
+  - byDay: weekday codes when the text names them, e.g. ["TU"] or ["MO","TH"]
+  - count: total number of occurrences, only if the text states how many
+  - until: YYYY-MM-DD end date, only if the text states one
+  For a recurring event, "date" must be the FIRST occurrence.
+
+  Emit ONE event per recurring series. If the text names several dates that
+  belong to the same cadence ("every 1st of January and 1st of July"), that is
+  one series with interval 6 starting on the earlier date — not two events.
+
+THE BAR FOR RECURRING EVENTS (important):
+A one-off date appears once and scrolls away. A recurring one claims a
+permanent place on every DAO member's timeline, so it must be worth one to the
+whole DAO — something a member could show up to, vote in, receive, or must act
+on.
+
+"audience" is about WHO THE CADENCE IS FOR, not who performs it. Almost every
+recurring obligation is carried out by some specific body — the Foundation, a
+committee, a council, a contractor. That alone does NOT make it internal. Ask
+instead: does the DAO or the community receive something, or is this a group's
+own working rhythm?
+
+ALWAYS audience "community" — a standing obligation to deliver something to the
+DAO or the public. These are the most valuable recurring events there are, so
+never skip one:
+- any transparency report, public report, disclosure or financial statement
+- anything "published to the forum", "published to the DAO", or made public
+- recurring treasury, budget, spending or balance-sheet reporting
+- a recurring vote, election, renewal or ratification the DAO takes part in
+- calls, town halls or AMAs open to the community or to delegates
+Examples:
+- "on the 30th day of each quarter the Foundation will publish a transparency
+  report to the forum" -> audience "community" (the Foundation performs it, the
+  DAO receives it)
+- "the quarterly treasury report published to the DAO" -> "community"
+- "a community call every second Wednesday, open to all delegates" -> "community"
+- "a recurring vote each month to renew the budget" -> "community"
+
+audience "internal" — a group's own working rhythm, where nothing is delivered
+to the DAO. Skip these events entirely rather than extracting them:
+- "the Grants Council meets monthly to review applications"
+- "Operators sync every Tuesday"
+- "the core team holds a weekly standup"
+- "the security lead reports privately to the multisig each month"
+- "bi-weekly check-ins between the working group and the contractor"
+
+If the cadence produces anything the community can read, attend or vote on,
+it is "community". Only when nothing reaches the DAO is it "internal".
+
+Examples of recurrence interpretation:
+- "bi-weekly community call, open to all, starting March 4" ->
+  date 2026-03-04,
+  recurrence {audience: "community", freq: "WEEKLY", interval: 2, byDay: ["WE"]}
+- "monthly treasury report published to the DAO for the next 6 months" ->
+  recurrence {audience: "community", freq: "MONTHLY", interval: 1, count: 6}
+- "on the 30th day since the start of each quarter, the Foundation will publish
+  to the forum a report containing a balance sheet breakdown" ->
+  recurrence {audience: "community", freq: "MONTHLY", interval: 3}
+  (quarterly is MONTHLY interval 3 — never YEARLY)
+- "every 1st of January and 1st of July the representative is chosen" ->
+  ONE event, date 2026-01-01,
+  recurrence {audience: "community", freq: "MONTHLY", interval: 6}
+- "the working group meets every Tuesday" -> skip this event entirely
+- "the mainnet launch on June 1" -> recurrence null (happens once)
 
 Examples of relative date interpretation (assuming proposal passed on ${proposalEndDate}):
 - "within 2 weeks" -> calculate 2 weeks from ${proposalEndDate} (confidence: medium)

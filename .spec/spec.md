@@ -177,12 +177,43 @@ over a chosen window instead of all-or-nothing.
   in range, upcoming but outside the range, and past. It tracks the source
   filter, so the bars answer "where are this source's events?".
 - **Selection** — drag an edge to resize, drag the middle to pan, arrow keys to
-  nudge (shift steps a week). Presets: Past 14d / Next 30d / Next 180d /
+  nudge (shift steps a week). Presets: Past 90d / Next 30d / Next 180d /
   Next 12 months / All, each clamped to the axis. The
   header states the range and counts (`"6 upcoming · 3 past"`).
 - **Opening range** — the near-term window (-14…+30 days), falling back to the
   whole axis when that window holds no events, so the view never opens empty
   with no hint of where the events are.
+
+**Recurring events:**
+
+A weekly DAO call would otherwise contribute a card for every week it meets,
+burying the one-off events the timeline exists to surface. So a recurring
+series shows **only its most recent occurrence and its next one**, and carries
+a badge stating the cadence ("Every 2 weeks on Tue"). Nothing is hidden — the
+series is summarised rather than listed.
+
+- The pair is anchored to today when the brushed range spans today, and to the
+  range itself when it does not, so brushing months ahead still shows the
+  series where the member is looking. Every card falls inside the range.
+- Series are not expandable: the cadence badge and the "Next: Apr 1" /
+  "Previous: Mar 4" line on each card convey the rhythm without the list.
+- "Add to calendar" on a recurring event exports the whole series (`RRULE` plus
+  any `EXDATE` cancellations) under a stable UID, so the member subscribes to
+  the cadence rather than to one meeting.
+- Works identically for ICS `RRULE` series and AI-extracted events.
+- **AI-extracted recurrence is gated on relevance.** A recurring event claims a
+  permanent slot on every member's timeline, so it must be worth one to the DAO
+  at large — a community call, a governance call, a public reporting deadline.
+  Cadences internal to a role, team, council or working group ("Operators sync
+  every Tuesday") are dropped rather than shown, and an unlabelled cadence is
+  treated as internal. One-off events are never gated. The extraction panel
+  reports how many were skipped.
+- **Reports the DAO is owed are never filtered.** A standing obligation to
+  publish to the community — a transparency report, a treasury statement, a
+  public disclosure — is always kept, even though the body producing it is
+  always a specific one. DIP-43's quarterly Foundation Transparency Report is
+  the reference case: written entirely in terms of the Foundation, but the DAO
+  is who receives it.
 
 **Making upcoming events stand out:**
 - Events today or tomorrow carry an emphasised countdown badge; those further

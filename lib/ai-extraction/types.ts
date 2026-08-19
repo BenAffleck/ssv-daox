@@ -20,6 +20,31 @@ export type AIEventType =
 export type DateConfidence = 'high' | 'medium' | 'low';
 
 /**
+ * Zod schema for a recurrence the model detected in a proposal.
+ *
+ * The model emits structure rather than a raw RRULE so a malformed rule can
+ * never reach the occurrence engine; `buildRRule` turns this into the RRULE.
+ */
+export const AIRecurrenceSchema = z.object({
+  /**
+   * Who the cadence is for.
+   *
+   * A recurring event earns a permanent slot on the timeline, so it has to be
+   * worth one to the DAO at large. Role- and team-internal cadences are
+   * dropped. Defaults to 'internal' so an unlabelled series fails closed —
+   * the timeline stays crisp rather than filling with other teams' standups.
+   */
+  audience: z.enum(['community', 'internal']).default('internal'),
+  freq: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
+  interval: z.number().int().min(1).max(52).default(1),
+  byDay: z
+    .array(z.enum(['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']))
+    .nullish(),
+  count: z.number().int().min(2).max(400).nullish(),
+  until: z.string().nullish().describe('ISO 8601 date (YYYY-MM-DD)'),
+});
+
+/**
  * Zod schema for a single AI-extracted event
  */
 export const AIExtractedEventSchema = z.object({
@@ -35,6 +60,10 @@ export const AIExtractedEventSchema = z.object({
   eventType: z
     .enum(['milestone', 'deadline', 'launch', 'meeting', 'other'])
     .describe('Type of event'),
+  // Nullish so extractions cached before recurrence existed still validate.
+  recurrence: AIRecurrenceSchema.nullish().describe(
+    'Set only when the event repeats on a regular cadence; null otherwise'
+  ),
 });
 
 /**
@@ -52,6 +81,7 @@ export const AIExtractionResponseSchema = z.object({
 /**
  * Type inference from schemas
  */
+export type AIRecurrence = z.infer<typeof AIRecurrenceSchema>;
 export type AIExtractedEvent = z.infer<typeof AIExtractedEventSchema>;
 export type AIExtractionResponse = z.infer<typeof AIExtractionResponseSchema>;
 
@@ -139,6 +169,8 @@ export interface ExtractionStats {
   proposalsProcessed: number;
   proposalsFromCache: number;
   eventsFound: number;
+  /** Recurring events dropped as internal to a role or team. */
+  eventsFiltered: number;
   errors: number;
   /** User-friendly error message if extraction failed */
   errorMessage?: string;

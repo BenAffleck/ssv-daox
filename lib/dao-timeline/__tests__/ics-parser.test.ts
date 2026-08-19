@@ -189,4 +189,40 @@ END:VCALENDAR`;
       expect(events).toHaveLength(0);
     });
   });
+
+  it('accumulates EXDATE across repeated and multi-value properties', () => {
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'BEGIN:VEVENT',
+      'UID:series-1',
+      'SUMMARY:Community Call',
+      'DTSTART:20260304T150000Z',
+      'RRULE:FREQ=WEEKLY;BYDAY=WE',
+      'EXDATE;VALUE=DATE:20260311,20260318',
+      'EXDATE;VALUE=DATE:20260401',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    const events = parseICS(ics);
+
+    // A last-value-wins property map would have kept only the final line, and
+    // a cancelled occurrence would then surface as the series' next card.
+    expect(events[0].exdates).toEqual(['2026-03-11', '2026-03-18', '2026-04-01']);
+    expect(events[0].rrule).toBe('FREQ=WEEKLY;BYDAY=WE');
+  });
+
+  it('reports no exceptions for an event without EXDATE', () => {
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'BEGIN:VEVENT',
+      'UID:one-off',
+      'SUMMARY:Launch',
+      'DTSTART:20260304T150000Z',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    expect(parseICS(ics)[0].exdates).toEqual([]);
+  });
 });

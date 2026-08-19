@@ -88,6 +88,14 @@ export default function AIExtractionPanel({
                         ({stats.proposalsFromCache} from cache)
                       </span>
                     )}
+                    {stats.eventsFiltered > 0 && (
+                      <span className="text-muted/70">
+                        {' '}
+                        &middot; skipped {stats.eventsFiltered} internal
+                        recurring event
+                        {stats.eventsFiltered !== 1 ? 's' : ''}
+                      </span>
+                    )}
                   </>
                 ) : hasError ? (
                   'Could not extract events from proposals'

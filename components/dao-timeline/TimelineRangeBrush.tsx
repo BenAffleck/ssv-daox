@@ -33,6 +33,14 @@ const BAR_SCALE_HEIGHT = 34;
 interface TimelineRangeBrushProps {
   /** Events the histogram summarises — already narrowed by the source filter. */
   events: SerializedEvent[];
+  /**
+   * The events actually rendered below the brush, for the header counts.
+   *
+   * Series are collapsed against the brushed range for the list but against
+   * today for the histogram, so the two sets can differ; the counts follow the
+   * list, because that is what the reader can see. Defaults to `events`.
+   */
+  visibleEvents?: SerializedEvent[];
   today: Date;
   domain: BrushDomain;
   range: DayRange;
@@ -48,6 +56,7 @@ interface TimelineRangeBrushProps {
  */
 export default function TimelineRangeBrush({
   events,
+  visibleEvents,
   today,
   domain,
   range,
@@ -70,8 +79,8 @@ export default function TimelineRangeBrush({
   const presets = useMemo(() => getPresets(domain), [domain]);
 
   const inRange = useMemo(
-    () => filterByDayRange(events, range, today),
-    [events, range, today]
+    () => visibleEvents ?? filterByDayRange(events, range, today),
+    [visibleEvents, events, range, today]
   );
   const pastCount = useMemo(
     () =>

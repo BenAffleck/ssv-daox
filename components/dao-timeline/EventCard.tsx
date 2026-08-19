@@ -78,6 +78,20 @@ export default function EventCard({
       ? displayDesc.substring(0, maxDescLength) + '...'
       : displayDesc;
 
+  // A collapsed series shows only two cards, so each one points at the other
+  // to make the rhythm legible without listing every occurrence.
+  const siblingLabel = (() => {
+    const sibling = event.occurrence?.siblingDate;
+    if (!sibling) return null;
+    const label = new Date(sibling).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+    return event.occurrence?.role === 'previous'
+      ? `Next: ${label}`
+      : `Previous: ${label}`;
+  })();
+
   // Past events keep their content but lose the card surface, so upcoming
   // events read as the foreground of the list.
   const isPast = dayOffset !== undefined && isPastOffset(dayOffset);
@@ -113,6 +127,11 @@ export default function EventCard({
                 <span className="text-xs text-muted">&middot; {relativeLabel}</span>
               ))}
           </div>
+
+          {/* The other half of a collapsed series */}
+          {siblingLabel && (
+            <div className="mb-1 text-xs text-muted">{siblingLabel}</div>
+          )}
 
           {/* Title */}
           <h3 className="text-base">
@@ -202,7 +221,9 @@ export default function EventCard({
           ) : (
             <SourceBadge name={event.sourceName} color={sourceColor} />
           )}
-          {event.isRecurring && <RecurringBadge />}
+          {event.recurrence && (
+            <RecurringBadge summary={event.recurrence.summary} />
+          )}
           {!isPast && (
           <button
             type="button"

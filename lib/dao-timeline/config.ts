@@ -6,14 +6,22 @@ import { EventSource, EventSourceConfig } from './types';
 export const CACHE_REVALIDATE_SECONDS = 300;
 
 /**
- * Default window for event expansion (months)
+ * How far forward the timeline looks for a series' next occurrence.
+ *
+ * A series that has not met again within this window has no "next" card; the
+ * badge still states its cadence.
  */
-export const DEFAULT_EXPANSION_MONTHS = 6;
+export const SERIES_LOOKAHEAD_MONTHS = 6;
 
 /**
- * Maximum number of recurring instances to generate
+ * How far back the timeline looks for a series' most recent occurrence.
  */
-export const MAX_RECURRENCE_INSTANCES = 100;
+export const SERIES_LOOKBEHIND_MONTHS = 6;
+
+/**
+ * Iteration ceiling for the occurrence engine, so a malformed rule cannot spin.
+ */
+export const MAX_OCCURRENCE_ITERATIONS = 2000;
 
 /**
  * Get the Snapshot space ID for timeline proposals

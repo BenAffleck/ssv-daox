@@ -44,6 +44,7 @@ describe('AI Extraction Transform', () => {
         location: null,
         isRecurring: false,
         recurrenceId: null,
+        recurrence: null,
       });
 
       expect(result.startDate).toBeInstanceOf(Date);
@@ -133,5 +134,81 @@ describe('AI Extraction Transform', () => {
       expect(AI_EXTRACTION_SOURCE_ID).toBe('ai-insights');
       expect(AI_EXTRACTION_SOURCE_NAME).toBe('AI Insights');
     });
+  });
+});
+
+describe('AI-extracted recurrence', () => {
+  const base = {
+    id: 'ai-prop-1-0',
+    title: 'Contributor Call',
+    date: '2026-03-04',
+    dateConfidence: 'high' as const,
+    description: 'Bi-weekly contributor sync',
+    excerpt: 'bi-weekly contributor call starting March 4',
+    eventType: 'meeting' as const,
+    sourceProposalId: 'prop-1',
+    sourceProposalTitle: 'Contributor Programme',
+    sourceProposalUrl: 'https://snapshot.org/prop-1',
+  };
+
+  it('turns a structured recurrence into the same SeriesInfo an ICS series carries', () => {
+    const result = transformAIExtractedEvent({
+      ...base,
+      recurrence: {
+        audience: 'community' as const,
+        freq: 'WEEKLY',
+        interval: 2,
+        byDay: ['WE'],
+      },
+    });
+
+    expect(result.isRecurring).toBe(true);
+    expect(result.recurrenceId).toBe('ai-prop-1-0');
+    expect(result.recurrence).toEqual({
+      rrule: 'FREQ=WEEKLY;INTERVAL=2;BYDAY=WE',
+      summary: 'Every 2 weeks on Wed',
+      exceptions: [],
+    });
+  });
+
+  it('carries COUNT and UNTIL through to the rule', () => {
+    expect(
+      transformAIExtractedEvent({
+        ...base,
+        recurrence: {
+          audience: 'community' as const,
+          freq: 'MONTHLY',
+          interval: 1,
+          count: 6,
+        },
+      }).recurrence?.rrule
+    ).toBe('FREQ=MONTHLY;COUNT=6');
+
+    expect(
+      transformAIExtractedEvent({
+        ...base,
+        recurrence: {
+          audience: 'community' as const,
+          freq: 'MONTHLY',
+          interval: 1,
+          until: '2026-12-31',
+        },
+      }).recurrence?.rrule
+    ).toBe('FREQ=MONTHLY;UNTIL=20261231');
+  });
+
+  it('leaves an event without recurrence as a one-off', () => {
+    const result = transformAIExtractedEvent({ ...base, recurrence: null });
+
+    expect(result.isRecurring).toBe(false);
+    expect(result.recurrence).toBeNull();
+  });
+
+  it('treats a cached event predating the field as a one-off', () => {
+    // Extractions cached before recurrence existed simply omit the key.
+    const result = transformAIExtractedEvent(base);
+
+    expect(result.isRecurring).toBe(false);
+    expect(result.recurrence).toBeNull();
   });
 });

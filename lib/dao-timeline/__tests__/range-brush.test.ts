@@ -44,6 +44,7 @@ function makeEvent(dayOffset: number, id = `e${dayOffset}`): SerializedEvent {
     location: null,
     isRecurring: false,
     recurrenceId: null,
+    recurrence: null,
     metadata: {},
   };
 }
@@ -348,17 +349,17 @@ describe('range-brush', () => {
     });
 
     it('detects the active preset', () => {
-      const [past14] = getPresets(domain);
-      expect(isPresetActive(past14, { from: past14.from, to: past14.to })).toBe(true);
-      expect(isPresetActive(past14, { from: 0, to: 30 })).toBe(false);
+      const [past90] = getPresets(domain);
+      expect(isPresetActive(past90, { from: past90.from, to: past90.to })).toBe(true);
+      expect(isPresetActive(past90, { from: 0, to: 30 })).toBe(false);
     });
 
     it('offers the near, half-year and year windows', () => {
-      const wide = { min: -49, max: 400 };
+      const wide = { min: -120, max: 400 };
       expect(
         getPresets(wide).map((preset) => [preset.label, preset.from, preset.to])
       ).toEqual([
-        ['Past 14d', -14, 0],
+        ['Past 90d', -90, 0],
         ['Next 30d', 0, 30],
         ['Next 180d', 0, 180],
         ['Next 12 months', 0, 365],

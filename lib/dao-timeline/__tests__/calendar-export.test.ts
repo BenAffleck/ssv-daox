@@ -17,6 +17,7 @@ function makeEvent(overrides: Partial<SerializedEvent> = {}): SerializedEvent {
     location: null,
     isRecurring: false,
     recurrenceId: null,
+    recurrence: null,
     metadata: {},
     ...overrides,
   };
@@ -79,5 +80,53 @@ describe('generateICS', () => {
 
     expect(ics).toContain('LOCATION:Zurich\\, Switzerland');
     expect(ics).toContain('URL:https://example.com/event');
+  });
+
+  it('exports the whole series when the event recurs', () => {
+    const ics = generateICS(
+      makeEvent({
+      id: 'main-calendar-evt::2026-03-18',
+      isRecurring: true,
+      recurrenceId: 'evt',
+      recurrence: {
+        rrule: 'FREQ=WEEKLY;INTERVAL=2;BYDAY=WE',
+        summary: 'Every 2 weeks on Wed',
+        exceptions: ['2026-03-25'],
+      },
+      })
+    );
+
+    // Adding a collapsed occurrence to a calendar should subscribe the user to
+    // the cadence, not to one meeting.
+    expect(ics).toContain('RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=WE');
+    expect(ics).toContain('EXDATE;VALUE=DATE:20260325');
+  });
+
+  it('exports every occurrence of a series under one UID', () => {
+    const series: Partial<SerializedEvent> = {
+      isRecurring: true,
+      recurrenceId: 'evt',
+      recurrence: {
+        rrule: 'FREQ=WEEKLY;BYDAY=WE',
+        summary: 'Weekly on Wed',
+        exceptions: [],
+      },
+    };
+
+    const first = generateICS(
+      makeEvent({ ...series, id: 'main-calendar-evt::2026-03-18' })
+    );
+    const second = generateICS(
+      makeEvent({ ...series, id: 'main-calendar-evt::2026-03-25' })
+    );
+
+    // Distinct UIDs would make a calendar client file each export as its own
+    // separate series.
+    expect(first).toContain('UID:main-calendar-evt@daox');
+    expect(second).toContain('UID:main-calendar-evt@daox');
+  });
+
+  it('omits RRULE for a one-off event', () => {
+    expect(generateICS(makeEvent())).not.toContain('RRULE');
   });
 });

@@ -29,6 +29,17 @@ function formatICSDate(date: Date): string {
 }
 
 /**
+ * The UID to export under.
+ *
+ * A collapsed occurrence carries a per-date id, but every occurrence of a
+ * series must export under one UID or a calendar client would file each one as
+ * a separate series.
+ */
+function seriesUid(event: SerializedEvent): string {
+  return event.recurrence ? event.id.split('::')[0] : event.id;
+}
+
+/**
  * Generate a valid iCalendar (RFC 5545) string from a SerializedEvent
  */
 export function generateICS(event: SerializedEvent): string {
@@ -40,7 +51,7 @@ export function generateICS(event: SerializedEvent): string {
     'VERSION:2.0',
     'PRODID:-//DAOx//Timeline//EN',
     'BEGIN:VEVENT',
-    `UID:${event.id}@daox`,
+    `UID:${seriesUid(event)}@daox`,
     `DTSTAMP:${formatICSDateTime(new Date())}`,
   ];
 
@@ -53,6 +64,18 @@ export function generateICS(event: SerializedEvent): string {
     lines.push(`DTSTART:${formatICSDateTime(startDate)}`);
     if (endDate) {
       lines.push(`DTEND:${formatICSDateTime(endDate)}`);
+    }
+  }
+
+  // A collapsed occurrence stands for a whole series, so export the series:
+  // the user subscribes to the cadence, not to one meeting.
+  if (event.recurrence) {
+    lines.push(`RRULE:${event.recurrence.rrule}`);
+    if (event.recurrence.exceptions.length > 0) {
+      const dates = event.recurrence.exceptions
+        .map((ymd) => ymd.replace(/-/g, ''))
+        .join(',');
+      lines.push(`EXDATE;VALUE=DATE:${dates}`);
     }
   }
 

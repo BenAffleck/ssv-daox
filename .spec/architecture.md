@@ -378,10 +378,11 @@ Displays events from multiple calendar sources in a chronological timeline view.
 ```
 1. Load event sources from config (env vars)
 2. Fetch from all sources in parallel:
-   - ICS: Fetch → Parse → Transform → Expand recurrence
+   - ICS: Fetch → Parse → Transform (a recurring series stays ONE event)
    - Snapshot: Fetch proposals → Transform to events
 3. Merge all events
-4. Client-side: Filter by source, then by the brushed date range
+4. Client-side: Filter by source, then collapse each series to the
+   occurrences worth showing within the brushed date range
 5. Group by day for display
 ```
 
@@ -407,6 +408,32 @@ Displays events from multiple calendar sources in a chronological timeline view.
 - Shows confidence level (high/medium/low) and source proposal link
 - Cost-controlled with budget limits (~$0.10 per extraction run)
 - Uses Claude Haiku model for efficiency
+- Can mark an event as recurring. The model emits a **structured** recurrence
+  (`freq`/`interval`/`byDay`/`count`/`until`), never a raw RRULE; `buildRRule`
+  turns it into one, so AI and ICS series are the same thing by the time the
+  timeline sees them and collapse has a single code path.
+- **Recurrence relevance gate** (`lib/ai-extraction/relevance.ts`): a recurring
+  event claims a permanent slot on every member's timeline, so it must be worth
+  one to the DAO at large. The model labels each cadence's `audience` as
+  `community` or `internal`, and internal ones — a council's monthly review, a
+  team's weekly sync — are dropped. `audience` defaults to `internal`, so an
+  unlabelled cadence fails closed and the timeline stays crisp. One-off events
+  are never gated. The filter runs on read in `hydrateEvents`, so it applies to
+  cached extractions too and tightening the policy costs nothing to re-extract.
+  Dropped events are reported as `ExtractionStats.eventsFiltered`.
+- **Public reporting is exempt.** `isPublicReportingObligation` overrides the
+  audience label for standing obligations to report to the DAO — transparency
+  reports, treasury statements, anything published to the forum. These are the
+  most valuable recurring events the timeline carries and the easiest to
+  misread, because the body producing them is always a specific one (DIP-43's
+  report is described entirely in terms of the Foundation, yet the DAO is who
+  it is for). The rule requires a reporting term *and* a public-recipient term,
+  so "the security lead reports privately to the multisig" stays internal. It
+  is deliberately an allowlist: a false positive keeps one extra event, a false
+  negative loses a report the DAO is owed.
+- **Cadence mapping.** RRULE has no quarterly or semi-annual frequency, so the
+  prompt maps them onto `MONTHLY` with interval 3 and 6. Without this the model
+  reaches for `YEARLY` and a quarterly report renders as annual.
 
 ### AI Extraction Pipeline
 
@@ -443,9 +470,57 @@ interface UnifiedEvent {
   sourceUrl: string | null;   // Link to external event
   location: string | null;
   isRecurring: boolean;
+  recurrenceId: string | null;
+  recurrence: SeriesInfo | null;  // The cadence, when this is a series
   metadata: Record<string, unknown>;
 }
+
+interface SeriesInfo {
+  rrule: string;        // RFC 5545 RRULE — the source of truth for the cadence
+  summary: string;      // "Every 2 weeks on Tue", for the badge
+  exceptions: string[]; // Cancelled dates (ICS EXDATE), as YYYY-MM-DD
+}
+
+// Set only on an occurrence the collapse step materialised for display.
+interface OccurrenceInfo {
+  role: 'previous' | 'next';
+  siblingDate: string | null;
+}
 ```
+
+### Recurring Events
+
+A recurring series is never materialised into one event per occurrence. It
+travels as a single `UnifiedEvent` carrying its `SeriesInfo`, and the timeline
+renders **at most two cards per series**: the most recent occurrence and the
+next one. A weekly call therefore costs two rows instead of twenty-six, and the
+`RecurringBadge` states the cadence so nothing is hidden — only summarised.
+
+**Anchoring.** The split point is today, clamped into the brushed range:
+
+| Brushed range | Anchor | Shows |
+|---|---|---|
+| Spans today (the default) | today | most recent + next occurrence |
+| Entirely in the future | range start | the first occurrence(s) in the window |
+| Entirely in the past | range end | the last occurrence in the window |
+
+Every card the collapse returns falls inside the brushed range, so the brush
+contract holds: what the range says is showing is what shows.
+
+`collapseSeriesInRange` drives the list. The axis and the density histogram use
+`collapseSeriesAroundToday` instead — range-independent, so they cannot reshape
+while the brush is being dragged. The two agree whenever the range spans today.
+The brush header's counts come from the rendered list, so the numbers never
+contradict the cards.
+
+**Occurrence engine** (`logic/recurrence-expander.ts`) is a query API, not an
+expander: `occurrencesBetween`, `previousOccurrence`, `nextOccurrence`, plus
+`buildRRule` / `describeRecurrence` / `buildSeriesInfo`. It honours `FREQ`,
+`INTERVAL`, `COUNT`, `UNTIL`, `BYDAY` (including ordinals such as `1MO` /
+`-1FR`), `BYMONTHDAY` and `BYMONTH`, and skips `EXDATE` cancellations. `COUNT`
+is counted from the seed, independently of the query window, so narrowing the
+window can never lengthen a series. `RDATE`, `RECURRENCE-ID` and `TZID` remain
+unhandled.
 
 ### Directory Structure
 
@@ -460,7 +535,8 @@ lib/dao-timeline/
 │   └── ics-parser.ts           # RFC 5545 parser
 ├── logic/
 │   ├── event-transformer.ts    # Raw → UnifiedEvent
-│   ├── recurrence-expander.ts  # RRULE expansion
+│   ├── recurrence-expander.ts  # RRULE parsing and occurrence queries
+│   ├── series-collapse.ts      # Series → its most recent + next occurrence
 │   ├── event-aggregator.ts     # Filter, sort, group
 │   └── range-brush.ts          # Date-range brush domain/histogram/labels
 └── utils/

@@ -22,6 +22,7 @@ function makeEvent(dayOffset: number, id = `e${dayOffset}`): SerializedEvent {
     location: null,
     isRecurring: false,
     recurrenceId: null,
+    recurrence: null,
     metadata: {},
   };
 }
@@ -97,7 +98,7 @@ describe('TimelineRangeBrush', () => {
 
   it('offers the long presets', () => {
     renderBrush();
-    for (const label of ['Past 14d', 'Next 30d', 'Next 180d', 'Next 12 months']) {
+    for (const label of ['Past 90d', 'Next 30d', 'Next 180d', 'Next 12 months']) {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
     }
   });

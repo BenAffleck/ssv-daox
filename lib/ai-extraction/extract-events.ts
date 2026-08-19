@@ -26,6 +26,7 @@ import {
   ExtractionStats,
   ProposalForExtraction,
 } from './types';
+import { filterTimelineWorthy } from './relevance';
 
 /**
  * Format Unix timestamp as ISO date string
@@ -84,7 +85,15 @@ Respond with ONLY a valid JSON object in this exact format, no other text:
       "dateConfidence": "high" | "medium" | "low",
       "description": "What happens",
       "excerpt": "Original text mentioning date",
-      "eventType": "milestone" | "deadline" | "launch" | "meeting" | "other"
+      "eventType": "milestone" | "deadline" | "launch" | "meeting" | "other",
+      "recurrence": null | {
+        "audience": "community" | "internal",
+        "freq": "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY",
+        "interval": 1,
+        "byDay": ["MO"] | null,
+        "count": null,
+        "until": null
+      }
     }
   ]
 }
@@ -132,19 +141,30 @@ If no events with specific dates are found, return: {"events": []}`;
 }
 
 /**
- * Add source information to extracted events
+ * Add source information to extracted events, dropping the ones that do not
+ * belong on the timeline.
+ *
+ * Both the cache and the API land here, so the relevance policy is applied on
+ * read: tightening it takes effect for already-cached extractions too, without
+ * paying to re-extract them.
  */
 function hydrateEvents(
   events: AIExtractedEvent[],
   proposal: ProposalForExtraction
-): AIExtractedEventWithSource[] {
-  return events.map((event, index) => ({
-    ...event,
-    id: `ai-${proposal.id}-${index}`,
-    sourceProposalId: proposal.id,
-    sourceProposalTitle: proposal.title,
-    sourceProposalUrl: proposal.link,
-  }));
+): { events: AIExtractedEventWithSource[]; filtered: number } {
+  const { kept, filtered } = filterTimelineWorthy(events);
+
+  return {
+    // Indexed after filtering, so ids stay contiguous per proposal.
+    events: kept.map((event, index) => ({
+      ...event,
+      id: `ai-${proposal.id}-${index}`,
+      sourceProposalId: proposal.id,
+      sourceProposalTitle: proposal.title,
+      sourceProposalUrl: proposal.link,
+    })),
+    filtered,
+  };
 }
 
 /**
@@ -186,6 +206,7 @@ export async function extractEventsFromProposals(
     proposalsProcessed: 0,
     proposalsFromCache: 0,
     eventsFound: 0,
+    eventsFiltered: 0,
     errors: 0,
   };
 
@@ -223,8 +244,9 @@ export async function extractEventsFromProposals(
         // Use cached extraction
         stats.proposalsFromCache++;
         const hydrated = hydrateEvents(cached, proposal);
-        allEvents.push(...hydrated);
-        stats.eventsFound += hydrated.length;
+        allEvents.push(...hydrated.events);
+        stats.eventsFound += hydrated.events.length;
+        stats.eventsFiltered += hydrated.filtered;
       } else {
         uncachedProposals.push(proposal);
       }
@@ -253,8 +275,9 @@ export async function extractEventsFromProposals(
       newExtractions.push({ proposalId: proposal.id, events: result.events });
 
       const hydrated = hydrateEvents(result.events, proposal);
-      allEvents.push(...hydrated);
-      stats.eventsFound += hydrated.length;
+      allEvents.push(...hydrated.events);
+      stats.eventsFound += hydrated.events.length;
+      stats.eventsFiltered += hydrated.filtered;
       stats.proposalsProcessed++;
 
       // Track non-critical errors
