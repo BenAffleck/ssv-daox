@@ -19,7 +19,8 @@ const REJECT_CHOICES = new Set(['against', 'no', 'reject', 'deny']);
  * - Otherwise the winning choice (highest score) decides: an approval-style
  *   choice → "Passed", a rejection-style choice → "Failed". For non-binary
  *   ballots the winning option's label is shown as a neutral outcome.
- * - With no votes at all → "No votes".
+ * - With no votes at all → "No votes", shown with the same "failed" styling
+ *   since an uncontested/unvoted proposal did not pass.
  */
 export function getProposalOutcome(
   proposal: Pick<
@@ -35,7 +36,7 @@ export function getProposalOutcome(
   }
 
   if (proposal.scores_total <= 0 || proposal.scores.length === 0) {
-    return { label: 'No votes', variant: 'neutral' };
+    return { label: 'No votes', variant: 'failed' };
   }
 
   // Winning choice = highest score.

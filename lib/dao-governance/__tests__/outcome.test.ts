@@ -46,6 +46,6 @@ describe('getProposalOutcome', () => {
       { choices: ['For', 'Against'], scores: [0, 0], scores_total: 0, quorum: 0 },
       true
     );
-    expect(out).toEqual({ label: 'No votes', variant: 'neutral' });
+    expect(out).toEqual({ label: 'No votes', variant: 'failed' });
   });
 });
