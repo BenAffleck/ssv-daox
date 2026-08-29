@@ -41,5 +41,14 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Check formatting
+        run: npm run format:check
+
+      # `next build` is not a substitute here: it reaches the network for
+      # Snapshot data, and it does not type-check test files at all, which is
+      # where type errors had been accumulating unnoticed.
+      - name: Type-check
+        run: npm run type-check
+
       - name: Unit tests
         run: npm test -- run

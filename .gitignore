@@ -60,7 +60,7 @@ Thumbs.db
 # IDE / Editor
 .vscode/*
 !.vscode/settings.json
-spec!.vscode/tasks.json
+!.vscode/tasks.json
 !.vscode/extensions.json
 .idea/
 *.sublime-project
