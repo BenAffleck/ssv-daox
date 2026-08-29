@@ -14,6 +14,7 @@ const MOCK_ACTIVE_PROPOSALS: SnapshotActiveProposal[] = [
   {
     id: 'active-1',
     title: 'Active Proposal 1',
+    body: 'Active Proposal 1 body.',
     start: 1700000000,
     end: 1700100000,
     state: 'active',
@@ -28,6 +29,7 @@ const MOCK_ACTIVE_PROPOSALS: SnapshotActiveProposal[] = [
   {
     id: 'active-2',
     title: 'Active Proposal 2',
+    body: 'Active Proposal 2 body.',
     start: 1700000000,
     end: 1700200000,
     state: 'active',

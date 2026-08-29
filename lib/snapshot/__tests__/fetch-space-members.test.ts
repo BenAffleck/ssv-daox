@@ -34,7 +34,7 @@ describe('fetchSpaceMembers', () => {
   });
 
   it('should return empty array for non-existent space', async () => {
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -77,7 +77,7 @@ describe('fetchSpaceMembers', () => {
   });
 
   it('should return empty array when space has no strategies', async () => {
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -93,7 +93,7 @@ describe('fetchSpaceMembers', () => {
   });
 
   it('should return empty array when strategy has no addresses', async () => {
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     mockFetch.mockResolvedValueOnce({
       ok: true,

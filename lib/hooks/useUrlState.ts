@@ -10,7 +10,6 @@ export interface ParamConfig<T> {
   deserialize: (raw: string | null) => T;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ParamConfigs = Record<string, ParamConfig<any>>;
 
 type StateFromConfigs<C extends ParamConfigs> = {

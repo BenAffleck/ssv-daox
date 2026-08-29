@@ -14,6 +14,29 @@ import {
   MOCK_EMPTY_DELEGATIONS_RESPONSE,
 } from './__mocks__/snapshot-responses';
 
+// `SNAPSHOT_CONFIG` reads env vars at import time, so a developer's local .env
+// would otherwise decide whether the "not configured" tests pass. Stub the
+// delegation source addresses instead and let each test set them explicitly.
+const { mockSourceAddresses } = vi.hoisted(() => ({
+  mockSourceAddresses: { value: [] as string[] },
+}));
+
+vi.mock('../config', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../config')>();
+  return {
+    ...actual,
+    SNAPSHOT_CONFIG: {
+      ...actual.SNAPSHOT_CONFIG,
+      delegation: {
+        ...actual.SNAPSHOT_CONFIG.delegation,
+        get sourceAddresses() {
+          return mockSourceAddresses.value;
+        },
+      },
+    },
+  };
+});
+
 // Mock fetch globally
 const mockFetch = vi.fn();
 global.fetch = mockFetch as any;
@@ -87,7 +110,7 @@ describe('fetchDelegationRecipients', () => {
   });
 
   it('should return empty array for empty source list', async () => {
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const recipients = await fetchDelegationRecipients([]);
 
@@ -148,7 +171,7 @@ describe('fetchDelegationRecipients', () => {
   });
 
   it('should handle no active delegations gracefully', async () => {
-    const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation();
+    const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -228,7 +251,7 @@ describe('fetchDelegationRecipients', () => {
   });
 
   it('should log info when delegations are found', async () => {
-    const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation();
+    const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -248,9 +271,11 @@ describe('fetchConfiguredDelegationRecipients', () => {
   beforeEach(() => {
     mockFetch.mockReset();
     vi.clearAllMocks();
+    mockSourceAddresses.value = [];
   });
 
   it('should use configured source addresses from config', async () => {
+    mockSourceAddresses.value = MOCK_DELEGATION_SOURCE_ADDRESSES;
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => MOCK_DELEGATIONS_RESPONSE,
@@ -258,16 +283,13 @@ describe('fetchConfiguredDelegationRecipients', () => {
 
     const recipients = await fetchConfiguredDelegationRecipients();
 
-    // Should call fetch if addresses are configured
-    // Note: This depends on SNAPSHOT_DELEGATION_SOURCE_ADDRESSES env var
-    // In test environment, it should be empty, so this will return empty array
-    expect(Array.isArray(recipients)).toBe(true);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(recipients).toEqual(MOCK_ALREADY_DELEGATED.slice(0, 3));
   });
 
   it('should return empty array when no addresses configured', async () => {
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    // This test assumes SNAPSHOT_DELEGATION_SOURCE_ADDRESSES is not set in test env
     const recipients = await fetchConfiguredDelegationRecipients();
 
     expect(recipients).toEqual([]);
@@ -278,7 +300,7 @@ describe('fetchConfiguredDelegationRecipients', () => {
   });
 
   it('should log warning when configuration is empty', async () => {
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     await fetchConfiguredDelegationRecipients();
 
@@ -293,7 +315,7 @@ describe('fetchConfiguredDelegationRecipients', () => {
     // Temporarily remove API key
     delete process.env.THEGRAPH_API_KEY;
 
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const recipients = await fetchDelegationRecipients(['0xtest']);
 

@@ -36,7 +36,7 @@ function cacheFileWith(
   proposalId: string,
   question: string,
   daysAgo: number,
-  version = AI_QNA_CONFIG.cacheVersion,
+  version: number = AI_QNA_CONFIG.cacheVersion,
 ): string {
   const cachedAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
   const cache: AnswerCache = {

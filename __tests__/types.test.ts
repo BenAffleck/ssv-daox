@@ -8,6 +8,7 @@ describe('Module Types', () => {
       id: 'test-1',
       slug: 'test-module',
       name: 'Test Module',
+      description: 'A module used to verify the Module type.',
       status: ModuleStatus.ACTIVE,
       sortOrder: 1,
     };
