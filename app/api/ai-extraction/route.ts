@@ -7,11 +7,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+
 import {
   extractEventsFromProposals,
+  ExtractionStats,
   isAIExtractionAvailable,
   ProposalForExtraction,
-  ExtractionStats,
 } from '@/lib/ai-extraction';
 import { serializeAIExtractedEvents } from '@/lib/ai-extraction/transform';
 import { SerializedEvent } from '@/lib/dao-timeline/types';
@@ -69,9 +70,7 @@ function validateRequest(body: unknown): body is AIExtractionRequest {
 /**
  * Handle POST request for AI extraction
  */
-export async function POST(
-  request: NextRequest
-): Promise<NextResponse<AIExtractionResponse>> {
+export async function POST(request: NextRequest): Promise<NextResponse<AIExtractionResponse>> {
   // Check if AI extraction is available
   if (!isAIExtractionAvailable()) {
     return NextResponse.json(
@@ -87,7 +86,7 @@ export async function POST(
         },
         error: 'AI extraction is not available. Check configuration.',
       },
-      { status: 503 }
+      { status: 503 },
     );
   }
 
@@ -109,7 +108,7 @@ export async function POST(
         },
         error: 'Invalid JSON in request body',
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -128,7 +127,7 @@ export async function POST(
         },
         error: 'Invalid request body. Expected { proposals: ProposalForExtraction[] }',
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -154,7 +153,8 @@ export async function POST(
     return NextResponse.json(response);
   } catch (error) {
     console.error('AI extraction failed:', error);
-    const errorMessage = error instanceof Error ? error.message : 'AI extraction failed. Please try again later.';
+    const errorMessage =
+      error instanceof Error ? error.message : 'AI extraction failed. Please try again later.';
     return NextResponse.json(
       {
         events: [],
@@ -169,7 +169,7 @@ export async function POST(
         },
         error: errorMessage,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

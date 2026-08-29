@@ -10,9 +10,7 @@ export default function Error({
   return (
     <div className="flex min-h-[400px] flex-col items-center justify-center px-4">
       <div className="text-center">
-        <h2 className="mb-4">
-          Error Loading Delegates
-        </h2>
+        <h2 className="mb-4">Error Loading Delegates</h2>
         <p className="mb-6 text-[15px] text-muted">
           {error.message || 'Something went wrong while fetching delegate data.'}
         </p>

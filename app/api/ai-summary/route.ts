@@ -7,11 +7,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+
 import {
   generateProposalSummary,
   isAISummaryAvailable,
+  type SummaryRequest,
+  type SummaryResponse,
 } from '@/lib/ai-summary';
-import type { SummaryRequest, SummaryResponse } from '@/lib/ai-summary';
 
 /**
  * Validate that the request body contains valid summary request data
@@ -35,9 +37,7 @@ function validateRequest(body: unknown): body is SummaryRequest {
 /**
  * Handle POST request for AI summary generation
  */
-export async function POST(
-  request: NextRequest
-): Promise<NextResponse<SummaryResponse>> {
+export async function POST(request: NextRequest): Promise<NextResponse<SummaryResponse>> {
   if (!isAISummaryAvailable()) {
     return NextResponse.json(
       {
@@ -45,7 +45,7 @@ export async function POST(
         fromCache: false,
         error: 'AI summary is not available. Check configuration.',
       },
-      { status: 503 }
+      { status: 503 },
     );
   }
 
@@ -59,7 +59,7 @@ export async function POST(
         fromCache: false,
         error: 'Invalid JSON in request body',
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -70,7 +70,7 @@ export async function POST(
         fromCache: false,
         error: 'Invalid request body. Expected { proposalId, title, body, choices }',
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -85,7 +85,7 @@ export async function POST(
         fromCache: false,
         error: error instanceof Error ? error.message : 'Summary generation failed',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

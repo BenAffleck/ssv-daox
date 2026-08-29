@@ -2,25 +2,23 @@
  * AI-powered proposal summary generation using Claude API
  */
 
-import { isAIEnabled, getAnthropicApiKey } from '@/lib/ai/config';
 import {
-  parseAPIError,
-  getModelId,
-  truncateBody,
   createClient,
   extractJSONFromResponse,
+  getModelId,
+  parseAPIError,
+  truncateBody,
 } from '@/lib/ai/client';
+import { getAnthropicApiKey, isAIEnabled } from '@/lib/ai/config';
+
+import { cacheSummary, getCachedSummary } from './cache';
 import { AI_SUMMARY_CONFIG, getSummaryPrompt } from './config';
-import { getCachedSummary, cacheSummary } from './cache';
-import type { SummaryRequest, SummaryResponse } from './types';
-import { ProposalSummarySchema } from './types';
+import { ProposalSummarySchema, type SummaryRequest, type SummaryResponse } from './types';
 
 /**
  * Generate a TL;DR summary for a proposal
  */
-export async function generateProposalSummary(
-  request: SummaryRequest
-): Promise<SummaryResponse> {
+export async function generateProposalSummary(request: SummaryRequest): Promise<SummaryResponse> {
   // Check cache first
   const cached = await getCachedSummary(request.proposalId);
   if (cached) {

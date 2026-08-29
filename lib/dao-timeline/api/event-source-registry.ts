@@ -2,22 +2,18 @@
  * Registry for fetching events from multiple sources
  */
 
+import { fetchTimelineProposals } from '@/lib/snapshot/api/fetch-timeline-proposals';
+
 import { getEventSources } from '../config';
-import {
-  transformICSEvents,
-  transformSnapshotProposals,
-} from '../logic/event-transformer';
 import { mergeEvents } from '../logic/event-aggregator';
+import { transformICSEvents, transformSnapshotProposals } from '../logic/event-transformer';
 import { EventSource, EventSourceConfig, UnifiedEvent } from '../types';
 import { fetchICSFromUrl } from './fetch-ics';
-import { fetchTimelineProposals } from '@/lib/snapshot/api/fetch-timeline-proposals';
 
 /**
  * Fetch events from a single source
  */
-async function fetchFromSource(
-  source: EventSourceConfig
-): Promise<UnifiedEvent[]> {
+async function fetchFromSource(source: EventSourceConfig): Promise<UnifiedEvent[]> {
   switch (source.type) {
     case EventSource.ICS: {
       // Recurring events stay as one event carrying their rule; the timeline
@@ -49,9 +45,7 @@ export async function fetchAllEvents(): Promise<UnifiedEvent[]> {
   }
 
   // Fetch from all sources in parallel
-  const eventArrays = await Promise.all(
-    sources.map((source) => fetchFromSource(source))
-  );
+  const eventArrays = await Promise.all(sources.map((source) => fetchFromSource(source)));
 
   // Merge all events
   return mergeEvents(...eventArrays);

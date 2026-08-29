@@ -2,16 +2,8 @@
  * Transform AI-extracted events into UnifiedEvent format for the timeline
  */
 
-import {
-  EventSource,
-  SeriesInfo,
-  SerializedEvent,
-  UnifiedEvent,
-} from '../dao-timeline/types';
-import {
-  buildRRule,
-  buildSeriesInfo,
-} from '../dao-timeline/logic/recurrence-expander';
+import { buildRRule, buildSeriesInfo } from '../dao-timeline/logic/recurrence-expander';
+import { EventSource, SerializedEvent, SeriesInfo, UnifiedEvent } from '../dao-timeline/types';
 import { parseYMD } from '../dao-timeline/utils/date-utils';
 import { AIExtractedEventWithSource, AIRecurrence } from './types';
 
@@ -32,9 +24,7 @@ export const AI_EXTRACTION_SOURCE_NAME = 'AI Insights';
  * directly means AI-extracted series and ICS series are the same thing by the
  * time the timeline sees them, and collapse only has one code path.
  */
-export function toSeriesInfo(
-  recurrence: AIRecurrence | null | undefined
-): SeriesInfo | null {
+export function toSeriesInfo(recurrence: AIRecurrence | null | undefined): SeriesInfo | null {
   if (!recurrence) return null;
 
   return buildSeriesInfo(
@@ -44,16 +34,14 @@ export function toSeriesInfo(
       count: recurrence.count ?? null,
       until: recurrence.until ? parseYMD(recurrence.until) : null,
       byDay: recurrence.byDay?.length ? [...recurrence.byDay] : null,
-    })
+    }),
   );
 }
 
 /**
  * Transform an AI-extracted event into a UnifiedEvent
  */
-export function transformAIExtractedEvent(
-  event: AIExtractedEventWithSource
-): UnifiedEvent {
+export function transformAIExtractedEvent(event: AIExtractedEventWithSource): UnifiedEvent {
   // Parse the date from ISO format
   const eventDate = new Date(event.date);
   const recurrence = toSeriesInfo(event.recurrence);
@@ -87,18 +75,14 @@ export function transformAIExtractedEvent(
 /**
  * Transform multiple AI-extracted events into UnifiedEvents
  */
-export function transformAIExtractedEvents(
-  events: AIExtractedEventWithSource[]
-): UnifiedEvent[] {
+export function transformAIExtractedEvents(events: AIExtractedEventWithSource[]): UnifiedEvent[] {
   return events.map(transformAIExtractedEvent);
 }
 
 /**
  * Serialize an AI-extracted event for client-side use
  */
-export function serializeAIExtractedEvent(
-  event: AIExtractedEventWithSource
-): SerializedEvent {
+export function serializeAIExtractedEvent(event: AIExtractedEventWithSource): SerializedEvent {
   const unified = transformAIExtractedEvent(event);
   return {
     ...unified,
@@ -111,7 +95,7 @@ export function serializeAIExtractedEvent(
  * Serialize multiple AI-extracted events
  */
 export function serializeAIExtractedEvents(
-  events: AIExtractedEventWithSource[]
+  events: AIExtractedEventWithSource[],
 ): SerializedEvent[] {
   return events.map(serializeAIExtractedEvent);
 }

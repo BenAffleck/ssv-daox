@@ -1,5 +1,5 @@
-import { ExternalTool } from '@/lib/types';
 import { externalTools as generatedTools } from '@/lib/data/external-tools.generated';
+import { ExternalTool } from '@/lib/types';
 
 /**
  * The external-tools catalog.

@@ -1,8 +1,8 @@
 import { SNAPSHOT_CONFIG } from '../config';
 import type {
   SnapshotGraphQLResponse,
-  TimelineProposalsQueryResponse,
   SnapshotTimelineProposal,
+  TimelineProposalsQueryResponse,
 } from '../types';
 
 /**
@@ -43,7 +43,7 @@ const DEFAULT_PROPOSAL_LIMIT = 50;
  */
 export async function fetchTimelineProposals(
   spaceId: string,
-  limit: number = DEFAULT_PROPOSAL_LIMIT
+  limit: number = DEFAULT_PROPOSAL_LIMIT,
 ): Promise<SnapshotTimelineProposal[]> {
   try {
     const response = await fetch(SNAPSHOT_CONFIG.apiUrl, {
@@ -59,13 +59,10 @@ export async function fetchTimelineProposals(
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Snapshot API error: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Snapshot API error: ${response.status} ${response.statusText}`);
     }
 
-    const result: SnapshotGraphQLResponse<TimelineProposalsQueryResponse> =
-      await response.json();
+    const result: SnapshotGraphQLResponse<TimelineProposalsQueryResponse> = await response.json();
 
     // Check for GraphQL errors
     if (result.errors?.length) {
@@ -74,10 +71,7 @@ export async function fetchTimelineProposals(
 
     return result.data?.proposals ?? [];
   } catch (error) {
-    console.error(
-      `Failed to fetch timeline proposals for space ${spaceId}:`,
-      error
-    );
+    console.error(`Failed to fetch timeline proposals for space ${spaceId}:`, error);
     // Return empty array instead of throwing to allow other sources to work
     return [];
   }

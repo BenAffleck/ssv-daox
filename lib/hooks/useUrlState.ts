@@ -1,7 +1,7 @@
 'use client';
 
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { useMemo, useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 export interface ParamConfig<T> {
   key: string;
@@ -24,7 +24,7 @@ type SettersFromConfigs<C extends ParamConfigs> = {
 type SetMultiple<C extends ParamConfigs> = (updates: Partial<StateFromConfigs<C>>) => void;
 
 export function useUrlState<C extends ParamConfigs>(
-  configs: C
+  configs: C,
 ): [StateFromConfigs<C>, SettersFromConfigs<C>, SetMultiple<C>] {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -58,7 +58,7 @@ export function useUrlState<C extends ParamConfigs>(
 
       return params;
     },
-    [searchParams]
+    [searchParams],
   );
 
   const setMultiple = useCallback(
@@ -67,7 +67,7 @@ export function useUrlState<C extends ParamConfigs>(
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [buildParams, router, pathname]
+    [buildParams, router, pathname],
   );
 
   const setters = useMemo(() => {
@@ -106,7 +106,7 @@ export function stringParam(key: string, defaultValue: string = ''): ParamConfig
 export function enumParam<T extends string>(
   key: string,
   defaultValue: T,
-  validValues: readonly T[]
+  validValues: readonly T[],
 ): ParamConfig<T> {
   return {
     key,

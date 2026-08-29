@@ -2,12 +2,13 @@
  * Unit tests for AI extraction configuration
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import {
-  isAIExtractionEnabled,
+  AI_EXTRACTION_CONFIG,
   getAnthropicApiKey,
   getExtractionPrompt,
-  AI_EXTRACTION_CONFIG,
+  isAIExtractionEnabled,
 } from '../config';
 
 describe('AI Extraction Config', () => {
@@ -54,7 +55,7 @@ describe('AI Extraction Config', () => {
     it('should have default configuration values', () => {
       expect(AI_EXTRACTION_CONFIG).toMatchObject({
         maxBudgetUsd: expect.any(Number),
-        perProposalBudgetUsd: 0.10,
+        perProposalBudgetUsd: 0.1,
         model: expect.stringMatching(/^(haiku|sonnet|opus)$/),
         processingDelayMs: 100,
         maxProposalBodyLength: 10000,
@@ -74,7 +75,7 @@ describe('AI Extraction Config', () => {
         'proposal-123',
         'Test Proposal',
         '2026-02-15',
-        'This is the proposal body with a deadline on March 1st, 2026.'
+        'This is the proposal body with a deadline on March 1st, 2026.',
       );
 
       expect(prompt).toContain('proposal-123');
@@ -85,12 +86,7 @@ describe('AI Extraction Config', () => {
     });
 
     it('should include instructions for relative date interpretation', () => {
-      const prompt = getExtractionPrompt(
-        'id',
-        'Title',
-        '2026-02-15',
-        'Body'
-      );
+      const prompt = getExtractionPrompt('id', 'Title', '2026-02-15', 'Body');
 
       expect(prompt).toContain('within 2 weeks');
       expect(prompt).toContain('30 days after approval');
@@ -99,12 +95,7 @@ describe('AI Extraction Config', () => {
     });
 
     it('should include confidence level guidance', () => {
-      const prompt = getExtractionPrompt(
-        'id',
-        'Title',
-        '2026-02-15',
-        'Body'
-      );
+      const prompt = getExtractionPrompt('id', 'Title', '2026-02-15', 'Body');
 
       expect(prompt).toContain('dateConfidence');
       expect(prompt).toContain('high');
@@ -113,12 +104,7 @@ describe('AI Extraction Config', () => {
     });
 
     it('should include event type options', () => {
-      const prompt = getExtractionPrompt(
-        'id',
-        'Title',
-        '2026-02-15',
-        'Body'
-      );
+      const prompt = getExtractionPrompt('id', 'Title', '2026-02-15', 'Body');
 
       expect(prompt).toContain('milestone');
       expect(prompt).toContain('deadline');

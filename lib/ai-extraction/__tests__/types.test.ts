@@ -2,12 +2,13 @@
  * Unit tests for AI extraction types and time window utilities
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-  TIME_WINDOWS,
   filterProposalsByTimeWindow,
   getProposalCountsByWindow,
   ProposalForExtraction,
+  TIME_WINDOWS,
 } from '../types';
 
 describe('AI Extraction Types', () => {
@@ -38,10 +39,7 @@ describe('AI Extraction Types', () => {
     const msPerDay = 24 * 60 * 60 * 1000;
 
     // Helper to create proposal with created timestamp X days ago
-    const createProposal = (
-      id: string,
-      daysAgo: number
-    ): ProposalForExtraction => ({
+    const createProposal = (id: string, daysAgo: number): ProposalForExtraction => ({
       id,
       title: `Proposal ${id}`,
       body: 'Test body',
@@ -91,10 +89,7 @@ describe('AI Extraction Types', () => {
     const now = Date.now();
     const msPerDay = 24 * 60 * 60 * 1000;
 
-    const createProposal = (
-      id: string,
-      daysAgo: number
-    ): ProposalForExtraction => ({
+    const createProposal = (id: string, daysAgo: number): ProposalForExtraction => ({
       id,
       title: `Proposal ${id}`,
       body: 'Test body',

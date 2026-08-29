@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
 import { externalTools, getExternalToolsSorted } from '@/lib/data/external-tools';
-import { ExternalToolCategory } from '@/lib/types';
 import { externalToolSchema, parseExternalTool } from '@/lib/external-tool.schema';
+import { ExternalToolCategory } from '@/lib/types';
 
 const DATA_DIR = join(process.cwd(), 'data', 'external-tools');
 const toolFiles = readdirSync(DATA_DIR)
@@ -99,7 +100,9 @@ describe('external-tools data', () => {
       // every featured tool appears before any non-featured one
       sorted.forEach((tool, idx) => {
         if (tool.featured) {
-          expect(idx).toBeLessThan(firstNonFeaturedIdx === -1 ? sorted.length : firstNonFeaturedIdx);
+          expect(idx).toBeLessThan(
+            firstNonFeaturedIdx === -1 ? sorted.length : firstNonFeaturedIdx,
+          );
         }
       });
     });

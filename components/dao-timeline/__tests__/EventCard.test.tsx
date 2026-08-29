@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import EventCard from '../EventCard';
+import { describe, expect, it } from 'vitest';
+
 import { EventSource, SerializedEvent } from '@/lib/dao-timeline/types';
+
+import EventCard from '../EventCard';
 
 function event(overrides: Partial<SerializedEvent> = {}): SerializedEvent {
   return {
@@ -59,7 +61,7 @@ describe('EventCard', () => {
           },
         })}
         dayOffset={-3}
-      />
+      />,
     );
 
     expect(screen.getByText('Next: Apr 1')).toBeInTheDocument();
@@ -75,7 +77,7 @@ describe('EventCard', () => {
           },
         })}
         dayOffset={7}
-      />
+      />,
     );
 
     expect(screen.getByText('Previous: Mar 4')).toBeInTheDocument();
@@ -86,7 +88,7 @@ describe('EventCard', () => {
       <EventCard
         event={recurring({ occurrence: { role: 'next', siblingDate: null } })}
         dayOffset={7}
-      />
+      />,
     );
 
     expect(screen.queryByText(/^(Next|Previous):/)).not.toBeInTheDocument();
@@ -95,9 +97,7 @@ describe('EventCard', () => {
   it('keeps the tonal demotion for a past occurrence, adding no accent', () => {
     // The design system separates past from upcoming by demotion alone, so a
     // recurring past card must not gain a border or colour of its own.
-    const { container } = render(
-      <EventCard event={recurring()} dayOffset={-3} />
-    );
+    const { container } = render(<EventCard event={recurring()} dayOffset={-3} />);
 
     const card = container.firstElementChild!;
     expect(card.className).toContain('opacity-55');

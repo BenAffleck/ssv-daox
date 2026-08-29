@@ -53,12 +53,7 @@ export function parseRRule(rrule: string): RecurrenceRule | null {
 
     switch (key) {
       case 'FREQ':
-        if (
-          value === 'DAILY' ||
-          value === 'WEEKLY' ||
-          value === 'MONTHLY' ||
-          value === 'YEARLY'
-        ) {
+        if (value === 'DAILY' || value === 'WEEKLY' || value === 'MONTHLY' || value === 'YEARLY') {
           rule.freq = value;
           sawFreq = true;
         }
@@ -163,7 +158,7 @@ export function describeRecurrence(rule: RecurrenceRule): string {
  */
 export function buildSeriesInfo(
   rrule: string | null | undefined,
-  exceptions: readonly string[] = []
+  exceptions: readonly string[] = [],
 ): SeriesInfo | null {
   if (!rrule) return null;
 
@@ -188,7 +183,7 @@ export function occurrencesBetween(
   seed: Date,
   from: Date,
   to: Date,
-  options: OccurrenceOptions = {}
+  options: OccurrenceOptions = {},
 ): Date[] {
   const cap = options.cap ?? MAX_OCCURRENCE_ITERATIONS;
   const excluded = new Set(options.exceptions ?? []);
@@ -242,7 +237,7 @@ export function previousOccurrence(
   seed: Date,
   anchor: Date,
   floor: Date,
-  options: OccurrenceOptions = {}
+  options: OccurrenceOptions = {},
 ): Date | null {
   const found = occurrencesBetween(rule, seed, floor, anchor, options);
   return found.length ? found[found.length - 1] : null;
@@ -256,7 +251,7 @@ export function nextOccurrence(
   seed: Date,
   anchor: Date,
   ceiling: Date,
-  options: OccurrenceOptions = {}
+  options: OccurrenceOptions = {},
 ): Date | null {
   const after = new Date(anchor.getTime() + 1);
   const found = occurrencesBetween(rule, seed, after, ceiling, options);
@@ -304,7 +299,10 @@ function formatUntilDate(date: Date): string {
 
 /** Split a BYDAY token such as "MO", "1MO" or "-1FR". */
 function parseByDay(token: string): { ordinal: number | null; weekday: number } | null {
-  const match = token.trim().toUpperCase().match(/^([+-]?\d+)?(SU|MO|TU|WE|TH|FR|SA)$/);
+  const match = token
+    .trim()
+    .toUpperCase()
+    .match(/^([+-]?\d+)?(SU|MO|TU|WE|TH|FR|SA)$/);
   if (!match) return null;
 
   return {
@@ -326,12 +324,7 @@ function formatByDayList(byDay: readonly string[]): string {
 /** Copy the time-of-day from `seed` onto `date`. */
 function withSeedTime(date: Date, seed: Date): Date {
   const result = new Date(date);
-  result.setHours(
-    seed.getHours(),
-    seed.getMinutes(),
-    seed.getSeconds(),
-    seed.getMilliseconds()
-  );
+  result.setHours(seed.getHours(), seed.getMinutes(), seed.getSeconds(), seed.getMilliseconds());
   return result;
 }
 
@@ -383,27 +376,23 @@ function periodOffsetFor(rule: RecurrenceRule, seed: Date, target: Date): number
   switch (rule.freq) {
     case 'DAILY':
       periods = Math.floor(
-        (startOfDay(target).getTime() - startOfDay(seed).getTime()) /
-          (MS_PER_DAY * rule.interval)
+        (startOfDay(target).getTime() - startOfDay(seed).getTime()) / (MS_PER_DAY * rule.interval),
       );
       break;
     case 'WEEKLY':
       periods = Math.floor(
         (startOfWeek(target).getTime() - startOfWeek(seed).getTime()) /
-          (MS_PER_DAY * 7 * rule.interval)
+          (MS_PER_DAY * 7 * rule.interval),
       );
       break;
     case 'MONTHLY':
       periods = Math.floor(
-        ((target.getFullYear() - seed.getFullYear()) * 12 +
-          (target.getMonth() - seed.getMonth())) /
-          rule.interval
+        ((target.getFullYear() - seed.getFullYear()) * 12 + (target.getMonth() - seed.getMonth())) /
+          rule.interval,
       );
       break;
     case 'YEARLY':
-      periods = Math.floor(
-        (target.getFullYear() - seed.getFullYear()) / rule.interval
-      );
+      periods = Math.floor((target.getFullYear() - seed.getFullYear()) / rule.interval);
       break;
   }
 
@@ -414,11 +403,7 @@ function periodOffsetFor(rule: RecurrenceRule, seed: Date, target: Date): number
  * Every candidate date inside period `n`, in ascending order, before the
  * BYMONTH filter and window bounds are applied.
  */
-function candidatesForPeriod(
-  rule: RecurrenceRule,
-  seed: Date,
-  n: number
-): Date[] {
+function candidatesForPeriod(rule: RecurrenceRule, seed: Date, n: number): Date[] {
   const anchor = periodStart(rule, seed, n);
   let dates: Date[];
 
@@ -470,11 +455,7 @@ function candidatesForPeriod(
 }
 
 /** Days selected within the month that `anchor` falls in. */
-function monthlyCandidates(
-  rule: RecurrenceRule,
-  seed: Date,
-  anchor: Date
-): Date[] {
+function monthlyCandidates(rule: RecurrenceRule, seed: Date, anchor: Date): Date[] {
   const year = anchor.getFullYear();
   const month = anchor.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -501,17 +482,12 @@ function monthlyCandidates(
       }
 
       if (parsed.ordinal === null) {
-        dates.push(
-          ...matching.map((day) => withSeedTime(new Date(year, month, day), seed))
-        );
+        dates.push(...matching.map((day) => withSeedTime(new Date(year, month, day), seed)));
         continue;
       }
 
       // "1MO" is the first Monday, "-1FR" the last Friday.
-      const index =
-        parsed.ordinal > 0
-          ? parsed.ordinal - 1
-          : matching.length + parsed.ordinal;
+      const index = parsed.ordinal > 0 ? parsed.ordinal - 1 : matching.length + parsed.ordinal;
       if (index >= 0 && index < matching.length) {
         dates.push(withSeedTime(new Date(year, month, matching[index]), seed));
       }

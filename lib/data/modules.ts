@@ -5,7 +5,8 @@ export const modules: Module[] = [
     id: 'dao-delegates',
     slug: 'delegates',
     name: 'DAO Delegates',
-    description: 'Ranked leaderboard of active delegates with voting power, eligibility, and delegation program tracking.',
+    description:
+      'Ranked leaderboard of active delegates with voting power, eligibility, and delegation program tracking.',
     status: ModuleStatus.ACTIVE,
     sortOrder: 1,
   },
@@ -21,7 +22,8 @@ export const modules: Module[] = [
     id: 'dao-governance',
     slug: 'governance',
     name: 'Governance Votes',
-    description: 'All active and upcoming SSV votes across every Snapshot space in one place, with participation, quorum, and AI summaries.',
+    description:
+      'All active and upcoming SSV votes across every Snapshot space in one place, with participation, quorum, and AI summaries.',
     status: ModuleStatus.ACTIVE,
     sortOrder: 3,
   },
@@ -36,9 +38,9 @@ export function getModuleBySlug(slug: string): Module | undefined {
 }
 
 export function getActiveModules(): Module[] {
-  return getModulesSorted().filter(m => m.status === ModuleStatus.ACTIVE);
+  return getModulesSorted().filter((m) => m.status === ModuleStatus.ACTIVE);
 }
 
 export function getComingSoonModules(): Module[] {
-  return getModulesSorted().filter(m => m.status === ModuleStatus.COMING_SOON);
+  return getModulesSorted().filter((m) => m.status === ModuleStatus.COMING_SOON);
 }

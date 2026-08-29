@@ -91,10 +91,7 @@ function endOfMonthOffset(offset: number, today: Date): number {
  * Covers every event, never less than MIN_PAST_DAYS/MIN_FUTURE_DAYS around
  * today, and lands on whole months so the month ticks sit at the edges.
  */
-export function computeDomain(
-  events: SerializedEvent[],
-  today: Date
-): BrushDomain {
+export function computeDomain(events: SerializedEvent[], today: Date): BrushDomain {
   let min = -MIN_PAST_DAYS;
   let max = MIN_FUTURE_DAYS;
 
@@ -142,28 +139,22 @@ export function buildHistogram(
   events: SerializedEvent[],
   domain: BrushDomain,
   today: Date,
-  bucketCount: number = BUCKET_COUNT
+  bucketCount: number = BUCKET_COUNT,
 ): HistogramBucket[] {
   const span = domain.max - domain.min;
   if (span <= 0 || bucketCount <= 0) return [];
 
   const size = span / bucketCount;
-  const buckets: HistogramBucket[] = Array.from(
-    { length: bucketCount },
-    (_, index) => ({
-      from: domain.min + index * size,
-      to: domain.min + (index + 1) * size,
-      count: 0,
-    })
-  );
+  const buckets: HistogramBucket[] = Array.from({ length: bucketCount }, (_, index) => ({
+    from: domain.min + index * size,
+    to: domain.min + (index + 1) * size,
+    count: 0,
+  }));
 
   for (const event of events) {
     const offset = toDayOffset(new Date(event.startDate), today);
     if (offset < domain.min || offset > domain.max) continue;
-    const index = Math.min(
-      Math.max(Math.floor((offset - domain.min) / size), 0),
-      bucketCount - 1
-    );
+    const index = Math.min(Math.max(Math.floor((offset - domain.min) / size), 0), bucketCount - 1);
     buckets[index].count++;
   }
 
@@ -186,7 +177,7 @@ export function peakCount(buckets: HistogramBucket[]): number {
 export function buildMonthTicks(
   domain: BrushDomain,
   today: Date,
-  maxTicks: number = MAX_MONTH_TICKS
+  maxTicks: number = MAX_MONTH_TICKS,
 ): MonthTick[] {
   const ticks: MonthTick[] = [];
   if (domain.max <= domain.min) return ticks;
@@ -194,9 +185,7 @@ export function buildMonthTicks(
   const first = fromDayOffset(domain.min, today);
   const last = fromDayOffset(domain.max, today);
   const spanMonths =
-    (last.getFullYear() - first.getFullYear()) * 12 +
-    (last.getMonth() - first.getMonth()) +
-    1;
+    (last.getFullYear() - first.getFullYear()) * 12 + (last.getMonth() - first.getMonth()) + 1;
 
   let step = TICK_STEP_MONTHS[TICK_STEP_MONTHS.length - 1];
   for (const candidate of TICK_STEP_MONTHS) {
@@ -210,8 +199,7 @@ export function buildMonthTicks(
     step += 12;
   }
 
-  const alignedMonth =
-    step >= 12 ? 0 : Math.floor(first.getMonth() / step) * step;
+  const alignedMonth = step >= 12 ? 0 : Math.floor(first.getMonth() / step) * step;
   const cursor = new Date(first.getFullYear(), alignedMonth, 1);
   while (toDayOffset(cursor, today) < domain.min) {
     cursor.setMonth(cursor.getMonth() + step);
@@ -240,7 +228,7 @@ export function buildMonthTicks(
 export function filterByDayRange(
   events: SerializedEvent[],
   range: DayRange,
-  today: Date
+  today: Date,
 ): SerializedEvent[] {
   return events.filter((event) => {
     const offset = toDayOffset(new Date(event.startDate), today);
@@ -281,10 +269,7 @@ export function formatOffsetLong(offset: number, today: Date): string {
 }
 
 export function formatRangeLabel(range: DayRange, today: Date): string {
-  return `${formatOffsetShort(range.from, today)} – ${formatOffsetShort(
-    range.to,
-    today
-  )}`;
+  return `${formatOffsetShort(range.from, today)} – ${formatOffsetShort(range.to, today)}`;
 }
 
 /**
@@ -298,7 +283,7 @@ export function formatRangeLabel(range: DayRange, today: Date): string {
 export function resolveInitialRange(
   domain: BrushDomain,
   events: SerializedEvent[],
-  today: Date
+  today: Date,
 ): DayRange {
   const preferred = clampRange(getDefaultRange(), domain);
   if (filterByDayRange(events, preferred, today).length > 0) {

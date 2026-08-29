@@ -33,7 +33,7 @@ export default function VoteSearchInput({ value, onChange }: VoteSearchInputProp
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => onChange(next), DEBOUNCE_MS);
     },
-    [onChange]
+    [onChange],
   );
 
   const clear = useCallback(() => {
@@ -48,7 +48,7 @@ export default function VoteSearchInput({ value, onChange }: VoteSearchInputProp
     <div className="relative">
       <Search
         size={14}
-        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
+        className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted"
       />
       <input
         type="search"
@@ -56,14 +56,14 @@ export default function VoteSearchInput({ value, onChange }: VoteSearchInputProp
         onChange={(e) => handleChange(e.target.value)}
         placeholder="Search votes by title or content…"
         aria-label="Search votes"
-        className="filter-input pl-9 pr-9"
+        className="filter-input pr-9 pl-9"
       />
       {input.length > 0 && (
         <button
           type="button"
           onClick={clear}
           aria-label="Clear search"
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-foreground"
+          className="absolute top-1/2 right-3 -translate-y-1/2 text-muted transition-colors hover:text-foreground"
         >
           <X size={14} />
         </button>

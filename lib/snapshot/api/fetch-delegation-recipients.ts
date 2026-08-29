@@ -1,8 +1,5 @@
 import { SNAPSHOT_CONFIG } from '../config';
-import type {
-  SnapshotGraphQLResponse,
-  DelegationsQueryResponse,
-} from '../types';
+import type { DelegationsQueryResponse, SnapshotGraphQLResponse } from '../types';
 
 /**
  * GraphQL query to fetch delegations FROM specific source addresses
@@ -44,9 +41,7 @@ const DELEGATIONS_QUERY = `
  * // recipients = ['0x1234...', '0x5678...']
  * ```
  */
-export async function fetchDelegationRecipients(
-  sourceAddresses: string[]
-): Promise<string[]> {
+export async function fetchDelegationRecipients(sourceAddresses: string[]): Promise<string[]> {
   // If no source addresses configured, return empty array
   if (!sourceAddresses || sourceAddresses.length === 0) {
     console.warn('No delegation source addresses configured');
@@ -60,7 +55,7 @@ export async function fetchDelegationRecipients(
   if (!subgraphUrl) {
     console.warn(
       'THEGRAPH_API_KEY not configured. Cannot fetch delegation data. ' +
-      'Get a free API key at https://thegraph.com/studio/apikeys/'
+        'Get a free API key at https://thegraph.com/studio/apikeys/',
     );
     return [];
   }
@@ -88,13 +83,10 @@ export async function fetchDelegationRecipients(
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Snapshot API error: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Snapshot API error: ${response.status} ${response.statusText}`);
     }
 
-    const result: SnapshotGraphQLResponse<DelegationsQueryResponse> =
-      await response.json();
+    const result: SnapshotGraphQLResponse<DelegationsQueryResponse> = await response.json();
 
     // Check for GraphQL errors
     if (result.errors?.length) {
@@ -105,9 +97,7 @@ export async function fetchDelegationRecipients(
     const delegations = result.data?.delegations || [];
 
     if (delegations.length === 0) {
-      console.info(
-        `No active delegations found from ${sourceAddresses.length} source address(es)`
-      );
+      console.info(`No active delegations found from ${sourceAddresses.length} source address(es)`);
       return [];
     }
 
@@ -121,7 +111,7 @@ export async function fetchDelegationRecipients(
 
     const recipients = Array.from(uniqueDelegates);
     console.info(
-      `Found ${recipients.length} delegation recipient(s) from ${sourceAddresses.length} source address(es)`
+      `Found ${recipients.length} delegation recipient(s) from ${sourceAddresses.length} source address(es)`,
     );
 
     return recipients;
@@ -147,15 +137,11 @@ export async function fetchDelegationRecipients(
  * // recipients = ['0x1234...', '0x5678...']
  * ```
  */
-export async function fetchConfiguredDelegationRecipients(): Promise<
-  string[]
-> {
+export async function fetchConfiguredDelegationRecipients(): Promise<string[]> {
   const sourceAddresses = SNAPSHOT_CONFIG.delegation.sourceAddresses;
 
   if (sourceAddresses.length === 0) {
-    console.warn(
-      'SNAPSHOT_DELEGATION_SOURCE_ADDRESSES not configured. Skipping delegation fetch.'
-    );
+    console.warn('SNAPSHOT_DELEGATION_SOURCE_ADDRESSES not configured. Skipping delegation fetch.');
     return [];
   }
 

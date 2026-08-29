@@ -36,16 +36,11 @@ export const ACTIVE_PROPOSALS_QUERY = `
  * @param spaceId - The Snapshot space ID (e.g., 'ssv.dao.eth')
  * @returns Array of active proposal objects with voting data
  */
-export async function fetchActiveProposals(
-  spaceId: string
-): Promise<SnapshotActiveProposal[]> {
+export async function fetchActiveProposals(spaceId: string): Promise<SnapshotActiveProposal[]> {
   try {
     return await executeProposalsQuery(ACTIVE_PROPOSALS_QUERY, { spaceId });
   } catch (error) {
-    console.error(
-      `Failed to fetch active proposals for space ${spaceId}:`,
-      error
-    );
+    console.error(`Failed to fetch active proposals for space ${spaceId}:`, error);
     return [];
   }
 }

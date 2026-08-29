@@ -17,9 +17,9 @@ export const ChoiceExplanationSchema = z.object({
  */
 export const ProposalSummarySchema = z.object({
   tldr: z.string().describe('2-3 sentence TL;DR of the proposal'),
-  choiceExplanations: z.array(ChoiceExplanationSchema).describe(
-    'Explanation of each voting choice'
-  ),
+  choiceExplanations: z
+    .array(ChoiceExplanationSchema)
+    .describe('Explanation of each voting choice'),
 });
 
 /**

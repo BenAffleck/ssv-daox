@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  filterTimelineWorthy,
-  isPublicReportingObligation,
-  isTimelineWorthy,
-} from '../relevance';
+
+import { filterTimelineWorthy, isPublicReportingObligation, isTimelineWorthy } from '../relevance';
 import { AIExtractedEvent, AIExtractedEventSchema } from '../types';
 
 function extracted(overrides: Partial<AIExtractedEvent> = {}): AIExtractedEvent {
@@ -32,9 +29,7 @@ describe('isTimelineWorthy', () => {
   });
 
   it('keeps a community-facing recurring event', () => {
-    expect(
-      isTimelineWorthy(extracted({ recurrence: recurrence() }))
-    ).toBe(true);
+    expect(isTimelineWorthy(extracted({ recurrence: recurrence() }))).toBe(true);
   });
 
   it('drops a recurring event internal to a role or team', () => {
@@ -47,18 +42,14 @@ describe('isTimelineWorthy', () => {
           description: 'The Grants Council reviews applications',
           excerpt: 'the Grants Council meets monthly to review applications',
           recurrence: recurrence({ audience: 'internal', freq: 'MONTHLY' }),
-        })
-      )
+        }),
+      ),
     ).toBe(false);
   });
 
   it('keeps a one-off event regardless of who it concerns', () => {
     // Only recurrence claims a permanent slot, so only recurrence is gated.
-    expect(
-      isTimelineWorthy(
-        extracted({ title: 'Council handover', recurrence: null })
-      )
-    ).toBe(true);
+    expect(isTimelineWorthy(extracted({ title: 'Council handover', recurrence: null }))).toBe(true);
   });
 });
 
@@ -103,10 +94,7 @@ describe('filterTimelineWorthy', () => {
       extracted({ title: 'Mainnet Launch' }),
     ]);
 
-    expect(kept.map((e) => e.title)).toEqual([
-      'Community Call',
-      'Mainnet Launch',
-    ]);
+    expect(kept.map((e) => e.title)).toEqual(['Community Call', 'Mainnet Launch']);
     expect(filtered).toBe(1);
   });
 
@@ -127,8 +115,7 @@ describe('DIP-43 — SSV Foundation Transparency Policy', () => {
   const transparencyReport = (recurrenceOverrides = {}) =>
     extracted({
       title: 'Foundation Transparency Report',
-      description:
-        'The Foundation publishes a balance sheet breakdown to the ssv.network forum',
+      description: 'The Foundation publishes a balance sheet breakdown to the ssv.network forum',
       excerpt:
         'On the 30th day since the start of each quarter, the Foundation will publish to the ssv.network forum a report',
       eventType: 'deadline',
@@ -142,9 +129,7 @@ describe('DIP-43 — SSV Foundation Transparency Policy', () => {
   it('keeps it even when the model reads the Foundation as internal', () => {
     // The likeliest misread: every sentence names the Foundation, so the model
     // labels the cadence by its performer rather than its recipient.
-    expect(isTimelineWorthy(transparencyReport({ audience: 'internal' }))).toBe(
-      true
-    );
+    expect(isTimelineWorthy(transparencyReport({ audience: 'internal' }))).toBe(true);
   });
 
   it('keeps it when the model omits audience entirely', () => {
@@ -179,22 +164,21 @@ describe('DIP-43 — SSV Foundation Transparency Policy', () => {
           description: 'The security lead reports privately to the multisig',
           excerpt: 'the security lead reports privately to the multisig each month',
           recurrence: recurrence({ audience: 'internal', freq: 'MONTHLY' }),
-        })
-      )
+        }),
+      ),
     ).toBe(false);
   });
 
-  it('still drops the committee\'s own working rhythm', () => {
+  it("still drops the committee's own working rhythm", () => {
     expect(
       isTimelineWorthy(
         extracted({
           title: 'Oversight Committee Access Review',
           description: 'The FOC reviews Foundation information',
-          excerpt:
-            'The FOC will have continuous access to all Foundation information',
+          excerpt: 'The FOC will have continuous access to all Foundation information',
           recurrence: recurrence({ audience: 'internal', freq: 'MONTHLY' }),
-        })
-      )
+        }),
+      ),
     ).toBe(false);
   });
 
@@ -209,8 +193,8 @@ describe('DIP-43 — SSV Foundation Transparency Policy', () => {
           excerpt:
             'Every 1st of January and 1st of July, the Community Representative will be chosen by the FOC',
           recurrence: recurrence({ audience: 'community', freq: 'MONTHLY', interval: 6 }),
-        })
-      )
+        }),
+      ),
     ).toBe(true);
   });
 

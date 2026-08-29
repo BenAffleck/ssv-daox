@@ -1,4 +1,5 @@
 import Link from 'next/link';
+
 import { Module, ModuleStatus } from '@/lib/types';
 
 interface ModuleCardProps {
@@ -13,13 +14,14 @@ export default function ModuleCard({ module }: ModuleCardProps) {
     <>
       <div className="flex items-center justify-between">
         <h3>{module.name}</h3>
-        {isComingSoon && (
-          <span className="badge-sm-muted font-heading">
-            Coming Soon
-          </span>
-        )}
+        {isComingSoon && <span className="badge-sm-muted font-heading">Coming Soon</span>}
         {isActive && (
-          <svg className="h-5 w-5 text-muted transition-colors group-hover:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="h-5 w-5 text-muted transition-colors group-hover:text-primary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         )}
@@ -32,7 +34,7 @@ export default function ModuleCard({ module }: ModuleCardProps) {
     return (
       <Link
         href={`/${module.slug}`}
-        className="group block card p-6 transition-all hover:border-primary hover:shadow-lg"
+        className="group card block p-6 transition-all hover:border-primary hover:shadow-lg"
       >
         {cardContent}
       </Link>

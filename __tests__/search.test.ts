@@ -1,15 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import {
-  buildSearchIndex,
-  scoreSearchItem,
-  searchItems,
-} from '@/lib/search';
-import {
-  ExternalTool,
-  ExternalToolCategory,
-  Module,
-  ModuleStatus,
-} from '@/lib/types';
+import { describe, expect, it } from 'vitest';
+
+import { buildSearchIndex, scoreSearchItem, searchItems } from '@/lib/search';
+import { ExternalTool, ExternalToolCategory, Module, ModuleStatus } from '@/lib/types';
 
 const modules: Module[] = [
   {

@@ -1,13 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fetchSpaceMembers } from '../api/fetch-space-members';
-import {
-  MOCK_GRANTS_SPACE_RESPONSE,
-  MOCK_NULL_SPACE_RESPONSE,
-  MOCK_ERROR_RESPONSE,
-  MOCK_EMPTY_STRATEGIES_RESPONSE,
-  MOCK_NO_ADDRESSES_RESPONSE,
-} from './__mocks__/snapshot-responses';
 import { MOCK_GRANTS_COMMITTEE } from './__mocks__/committee-data';
+import {
+  MOCK_EMPTY_STRATEGIES_RESPONSE,
+  MOCK_ERROR_RESPONSE,
+  MOCK_GRANTS_SPACE_RESPONSE,
+  MOCK_NO_ADDRESSES_RESPONSE,
+  MOCK_NULL_SPACE_RESPONSE,
+} from './__mocks__/snapshot-responses';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -28,9 +29,7 @@ describe('fetchSpaceMembers', () => {
     const members = await fetchSpaceMembers('grants.ssvnetwork.eth');
 
     // Addresses should be normalized to lowercase
-    expect(members).toEqual(
-      MOCK_GRANTS_COMMITTEE.map((addr) => addr.toLowerCase())
-    );
+    expect(members).toEqual(MOCK_GRANTS_COMMITTEE.map((addr) => addr.toLowerCase()));
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
@@ -45,9 +44,7 @@ describe('fetchSpaceMembers', () => {
     const members = await fetchSpaceMembers('invalid.eth');
 
     expect(members).toEqual([]);
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'Snapshot space not found: invalid.eth'
-    );
+    expect(consoleWarnSpy).toHaveBeenCalledWith('Snapshot space not found: invalid.eth');
 
     consoleWarnSpy.mockRestore();
   });
@@ -55,9 +52,7 @@ describe('fetchSpaceMembers', () => {
   it('should throw on network error', async () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-    await expect(fetchSpaceMembers('test.eth')).rejects.toThrow(
-      'Network error'
-    );
+    await expect(fetchSpaceMembers('test.eth')).rejects.toThrow('Network error');
   });
 
   it('should throw on HTTP error', async () => {
@@ -68,7 +63,7 @@ describe('fetchSpaceMembers', () => {
     });
 
     await expect(fetchSpaceMembers('test.eth')).rejects.toThrow(
-      'Snapshot API error: 500 Internal Server Error'
+      'Snapshot API error: 500 Internal Server Error',
     );
   });
 
@@ -78,9 +73,7 @@ describe('fetchSpaceMembers', () => {
       json: async () => MOCK_ERROR_RESPONSE,
     });
 
-    await expect(fetchSpaceMembers('test.eth')).rejects.toThrow(
-      'GraphQL error: Rate limited'
-    );
+    await expect(fetchSpaceMembers('test.eth')).rejects.toThrow('GraphQL error: Rate limited');
   });
 
   it('should return empty array when space has no strategies', async () => {
@@ -94,9 +87,7 @@ describe('fetchSpaceMembers', () => {
     const members = await fetchSpaceMembers('empty.eth');
 
     expect(members).toEqual([]);
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'No strategies found for space: empty.eth'
-    );
+    expect(consoleWarnSpy).toHaveBeenCalledWith('No strategies found for space: empty.eth');
 
     consoleWarnSpy.mockRestore();
   });
@@ -113,18 +104,14 @@ describe('fetchSpaceMembers', () => {
 
     expect(members).toEqual([]);
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'No addresses found in strategy params for space: noaddrs.eth'
+      'No addresses found in strategy params for space: noaddrs.eth',
     );
 
     consoleWarnSpy.mockRestore();
   });
 
   it('should normalize addresses to lowercase', async () => {
-    const mixedCaseAddresses = [
-      '0xABCDEF123456789',
-      '0xaBcDeF987654321',
-      '0xABCDEF111111111',
-    ];
+    const mixedCaseAddresses = ['0xABCDEF123456789', '0xaBcDeF987654321', '0xABCDEF111111111'];
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -148,9 +135,7 @@ describe('fetchSpaceMembers', () => {
 
     const members = await fetchSpaceMembers('test.eth');
 
-    expect(members).toEqual(
-      mixedCaseAddresses.map((addr) => addr.toLowerCase())
-    );
+    expect(members).toEqual(mixedCaseAddresses.map((addr) => addr.toLowerCase()));
   });
 
   it('should make POST request with correct query and variables', async () => {
@@ -167,7 +152,7 @@ describe('fetchSpaceMembers', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: expect.stringContaining('GetSpaceStrategies'),
-      })
+      }),
     );
 
     const callArgs = mockFetch.mock.calls[0][1];

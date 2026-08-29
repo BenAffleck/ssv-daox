@@ -1,10 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import {
-  transformSnapshotProposal,
-  transformSnapshotProposals,
-} from '../logic/event-transformer';
-import { EventSource, EventSourceConfig } from '../types';
+import { describe, expect, it } from 'vitest';
+
 import { SnapshotTimelineProposal } from '@/lib/snapshot/types';
+
+import { transformSnapshotProposal, transformSnapshotProposals } from '../logic/event-transformer';
+import { EventSource, EventSourceConfig } from '../types';
 
 describe('Snapshot proposal transformer', () => {
   const mockSource: EventSourceConfig = {
@@ -29,11 +28,7 @@ describe('Snapshot proposal transformer', () => {
 
   describe('transformSnapshotProposal', () => {
     it('should transform proposal to UnifiedEvent', () => {
-      const result = transformSnapshotProposal(
-        mockProposal,
-        mockSource,
-        'mainnet.ssvnetwork.eth'
-      );
+      const result = transformSnapshotProposal(mockProposal, mockSource, 'mainnet.ssvnetwork.eth');
 
       expect(result.id).toBe('snapshot-proposals-QmTest123');
       expect(result.sourceId).toBe('snapshot-proposals');
@@ -47,11 +42,7 @@ describe('Snapshot proposal transformer', () => {
     });
 
     it('should convert Unix timestamps to Date objects', () => {
-      const result = transformSnapshotProposal(
-        mockProposal,
-        mockSource,
-        'mainnet.ssvnetwork.eth'
-      );
+      const result = transformSnapshotProposal(mockProposal, mockSource, 'mainnet.ssvnetwork.eth');
 
       expect(result.startDate).toBeInstanceOf(Date);
       expect(result.endDate).toBeInstanceOf(Date);
@@ -60,11 +51,7 @@ describe('Snapshot proposal transformer', () => {
     });
 
     it('should use proposal link as sourceUrl', () => {
-      const result = transformSnapshotProposal(
-        mockProposal,
-        mockSource,
-        'mainnet.ssvnetwork.eth'
-      );
+      const result = transformSnapshotProposal(mockProposal, mockSource, 'mainnet.ssvnetwork.eth');
 
       expect(result.sourceUrl).toBe(mockProposal.link);
     });
@@ -78,20 +65,16 @@ describe('Snapshot proposal transformer', () => {
       const result = transformSnapshotProposal(
         proposalWithoutLink,
         mockSource,
-        'mainnet.ssvnetwork.eth'
+        'mainnet.ssvnetwork.eth',
       );
 
       expect(result.sourceUrl).toBe(
-        'https://snapshot.org/#/mainnet.ssvnetwork.eth/proposal/QmTest123'
+        'https://snapshot.org/#/mainnet.ssvnetwork.eth/proposal/QmTest123',
       );
     });
 
     it('should include state in metadata', () => {
-      const result = transformSnapshotProposal(
-        mockProposal,
-        mockSource,
-        'mainnet.ssvnetwork.eth'
-      );
+      const result = transformSnapshotProposal(mockProposal, mockSource, 'mainnet.ssvnetwork.eth');
 
       expect(result.metadata.state).toBe('active');
       expect(result.metadata.created).toBe(1700000000);
@@ -108,7 +91,7 @@ describe('Snapshot proposal transformer', () => {
       const result = transformSnapshotProposal(
         proposalWithLongBody,
         mockSource,
-        'mainnet.ssvnetwork.eth'
+        'mainnet.ssvnetwork.eth',
       );
 
       expect(result.description?.length).toBeLessThanOrEqual(503); // 500 + '...'
@@ -124,7 +107,7 @@ describe('Snapshot proposal transformer', () => {
       const result = transformSnapshotProposal(
         proposalWithEmptyBody,
         mockSource,
-        'mainnet.ssvnetwork.eth'
+        'mainnet.ssvnetwork.eth',
       );
 
       expect(result.description).toBeNull();
@@ -143,11 +126,7 @@ describe('Snapshot proposal transformer', () => {
         },
       ];
 
-      const results = transformSnapshotProposals(
-        proposals,
-        mockSource,
-        'mainnet.ssvnetwork.eth'
-      );
+      const results = transformSnapshotProposals(proposals, mockSource, 'mainnet.ssvnetwork.eth');
 
       expect(results).toHaveLength(2);
       expect(results[0].id).toBe('snapshot-proposals-QmTest123');
@@ -156,11 +135,7 @@ describe('Snapshot proposal transformer', () => {
     });
 
     it('should return empty array for empty input', () => {
-      const results = transformSnapshotProposals(
-        [],
-        mockSource,
-        'mainnet.ssvnetwork.eth'
-      );
+      const results = transformSnapshotProposals([], mockSource, 'mainnet.ssvnetwork.eth');
 
       expect(results).toEqual([]);
     });

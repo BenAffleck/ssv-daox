@@ -1,8 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import TimelineRangeBrush from '../TimelineRangeBrush';
-import { EventSource, SerializedEvent } from '@/lib/dao-timeline/types';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fromDayOffset } from '@/lib/dao-timeline/logic/range-brush';
+import { EventSource, SerializedEvent } from '@/lib/dao-timeline/types';
+
+import TimelineRangeBrush from '../TimelineRangeBrush';
 
 const TODAY = new Date(2026, 7, 19); // Aug 19, 2026
 const DOMAIN = { min: -49, max: 134 };
@@ -39,7 +41,7 @@ function renderBrush(range = { from: -14, to: 30 }) {
       domain={DOMAIN}
       range={range}
       onRangeChange={onRangeChange}
-    />
+    />,
   );
 }
 
@@ -88,12 +90,8 @@ describe('TimelineRangeBrush', () => {
 
   it('marks the active preset', () => {
     renderBrush({ from: 0, to: 30 });
-    expect(screen.getByRole('button', { name: 'Next 30d' })).toHaveClass(
-      'filter-btn-active'
-    );
-    expect(screen.getByRole('button', { name: 'Next 180d' })).toHaveClass(
-      'filter-btn'
-    );
+    expect(screen.getByRole('button', { name: 'Next 30d' })).toHaveClass('filter-btn-active');
+    expect(screen.getByRole('button', { name: 'Next 180d' })).toHaveClass('filter-btn');
   });
 
   it('offers the long presets', () => {
@@ -111,9 +109,9 @@ describe('TimelineRangeBrush', () => {
 
     onRangeChange.mockClear();
     renderBrush({ from: 0, to: DOMAIN.max });
-    expect(
-      screen.getAllByRole('button', { name: 'Next 12 months' })[1]
-    ).toHaveClass('filter-btn-active');
+    expect(screen.getAllByRole('button', { name: 'Next 12 months' })[1]).toHaveClass(
+      'filter-btn-active',
+    );
   });
 
   it('nudges an edge by a day with the arrow keys', () => {

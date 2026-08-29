@@ -2,18 +2,23 @@
  * AI-powered Q&A against a single governance proposal, using the Claude API.
  */
 
-import { isAIEnabled, getAnthropicApiKey } from '@/lib/ai/config';
 import {
-  parseAPIError,
-  getModelId,
-  truncateBody,
   createClient,
   extractJSONFromResponse,
+  getModelId,
+  parseAPIError,
+  truncateBody,
 } from '@/lib/ai/client';
+import { getAnthropicApiKey, isAIEnabled } from '@/lib/ai/config';
+
+import { cacheAnswer, getCachedAnswer } from './cache';
 import { AI_QNA_CONFIG, getQnaPrompt } from './config';
-import { getCachedAnswer, cacheAnswer } from './cache';
-import type { QnaRequest, QnaResponse, QnaProposalContext } from './types';
-import { ProposalAnswerSchema } from './types';
+import {
+  ProposalAnswerSchema,
+  type QnaProposalContext,
+  type QnaRequest,
+  type QnaResponse,
+} from './types';
 
 /**
  * Answer a single question about a proposal, grounded in its text.
@@ -23,7 +28,7 @@ import { ProposalAnswerSchema } from './types';
  */
 export async function answerProposalQuestion(
   request: QnaRequest,
-  proposal: QnaProposalContext
+  proposal: QnaProposalContext,
 ): Promise<QnaResponse> {
   // Check cache first
   const cached = await getCachedAnswer(request.proposalId, request.question);
@@ -43,12 +48,7 @@ export async function answerProposalQuestion(
 
   const client = createClient(apiKey);
   const truncatedBody = truncateBody(proposal.body, AI_QNA_CONFIG.maxBodyLength);
-  const prompt = getQnaPrompt(
-    proposal.title,
-    truncatedBody,
-    proposal.choices,
-    request.question
-  );
+  const prompt = getQnaPrompt(proposal.title, truncatedBody, proposal.choices, request.question);
 
   try {
     const message = await client.messages.create({
@@ -74,10 +74,7 @@ export async function answerProposalQuestion(
 
     return { answer: validated.data, fromCache: false };
   } catch (error) {
-    console.error(
-      `Failed to answer question for proposal ${request.proposalId}:`,
-      error
-    );
+    console.error(`Failed to answer question for proposal ${request.proposalId}:`, error);
     return { answer: null, fromCache: false, error: parseAPIError(error) };
   }
 }

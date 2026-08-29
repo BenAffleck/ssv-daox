@@ -25,8 +25,5 @@ export const AI_MODEL_CONFIG = {
    * Model to use for AI features
    * haiku is cost-efficient and fast for text extraction/summarization
    */
-  model: (process.env.AI_EXTRACTION_MODEL || 'haiku') as
-    | 'haiku'
-    | 'sonnet'
-    | 'opus',
+  model: (process.env.AI_EXTRACTION_MODEL || 'haiku') as 'haiku' | 'sonnet' | 'opus',
 } as const;

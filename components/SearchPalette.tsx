@@ -16,17 +16,10 @@ import {
   Telescope,
   Vote,
 } from 'lucide-react';
+
+import { buildVoteSearchIndex, type VoteIndexEntry } from '@/lib/dao-governance/vote-search';
+import { buildSearchIndex, searchItems, type ScoredItem, type SearchItem } from '@/lib/search';
 import { ExternalToolCategory, type ExternalTool, type Module } from '@/lib/types';
-import {
-  buildSearchIndex,
-  searchItems,
-  type ScoredItem,
-  type SearchItem,
-} from '@/lib/search';
-import {
-  buildVoteSearchIndex,
-  type VoteIndexEntry,
-} from '@/lib/dao-governance/vote-search';
 
 const OPEN_EVENT = 'daox:open-search';
 
@@ -85,9 +78,7 @@ function ResultRow({ item, idx, active, onHover, onClick }: ResultRowProps) {
       onMouseMove={onHover}
       onClick={onClick}
       className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
-        active
-          ? 'border-primary/40 bg-primary/10'
-          : 'border-transparent hover:bg-card-hover'
+        active ? 'border-primary/40 bg-primary/10' : 'border-transparent hover:bg-card-hover'
       }`}
     >
       <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-border bg-background">
@@ -99,12 +90,12 @@ function ResultRow({ item, idx, active, onHover, onClick }: ResultRowProps) {
             {item.name}
           </span>
           {item.featured && (
-            <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-primary px-2 py-0.5 font-heading text-[11px] font-medium text-white">
+            <span className="inline-flex shrink-0 items-center rounded-full bg-primary px-2 py-0.5 font-heading text-[11px] font-medium whitespace-nowrap text-white">
               Featured
             </span>
           )}
           <span
-            className={`${CATEGORY_BADGE[item.category] ?? 'badge-sm-muted'} shrink-0 whitespace-nowrap font-heading`}
+            className={`${CATEGORY_BADGE[item.category] ?? 'badge-sm-muted'} shrink-0 font-heading whitespace-nowrap`}
           >
             {item.category}
           </span>
@@ -168,9 +159,7 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
 
   // Group label → items, with each row's global active-index preserved for
   // keyboard nav.
-  const groupedEntries = useMemo<
-    Array<[string, Array<ScoredItem & { _idx: number }>]>
-  >(() => {
+  const groupedEntries = useMemo<Array<[string, Array<ScoredItem & { _idx: number }>]>>(() => {
     const buckets: Record<SearchItem['kind'], Array<ScoredItem & { _idx: number }>> = {
       module: [],
       tool: [],
@@ -315,7 +304,7 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
             groupedEntries.map(([group, items]) =>
               items.length === 0 ? null : (
                 <div key={group}>
-                  <div className="px-2.5 pb-1 pt-2 font-heading text-[10px] font-semibold uppercase tracking-wider text-muted">
+                  <div className="px-2.5 pt-2 pb-1 font-heading text-[10px] font-semibold tracking-wider text-muted uppercase">
                     {group}
                   </div>
                   {items.map(({ item, _idx }) => (
@@ -411,7 +400,7 @@ export function SearchTrigger({ variant = 'desktop', className = '' }: SearchTri
       onClick={openSearchPalette}
       aria-label="Open search (Ctrl+K)"
       data-testid="search-trigger"
-      className={`inline-flex h-[34px] min-w-[200px] items-center gap-2 rounded-lg border border-border bg-card pl-3 pr-2 font-body text-[13px] text-muted transition-colors hover:border-primary ${className}`}
+      className={`inline-flex h-[34px] min-w-[200px] items-center gap-2 rounded-lg border border-border bg-card pr-2 pl-3 font-body text-[13px] text-muted transition-colors hover:border-primary ${className}`}
     >
       <Search size={14} />
       <span className="flex-1 text-left">Search…</span>

@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
 import Header from '@/components/Header';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
 
@@ -15,9 +16,30 @@ vi.mock('@/lib/data/modules', () => {
   const ACTIVE = 'active';
   const COMING_SOON = 'coming_soon';
   const all = [
-    { id: 'dao-delegates', slug: 'delegates', name: 'DAO Delegates', description: '', status: ACTIVE, sortOrder: 1 },
-    { id: 'dao-timeline', slug: 'timeline', name: 'DAO Timeline', description: '', status: ACTIVE, sortOrder: 2 },
-    { id: 'placeholder', slug: 'placeholder', name: 'Placeholder', description: '', status: COMING_SOON, sortOrder: 9 },
+    {
+      id: 'dao-delegates',
+      slug: 'delegates',
+      name: 'DAO Delegates',
+      description: '',
+      status: ACTIVE,
+      sortOrder: 1,
+    },
+    {
+      id: 'dao-timeline',
+      slug: 'timeline',
+      name: 'DAO Timeline',
+      description: '',
+      status: ACTIVE,
+      sortOrder: 2,
+    },
+    {
+      id: 'placeholder',
+      slug: 'placeholder',
+      name: 'Placeholder',
+      description: '',
+      status: COMING_SOON,
+      sortOrder: 9,
+    },
   ];
   return {
     getModulesSorted: () => all,
@@ -32,7 +54,7 @@ describe('Header', () => {
     render(
       <ThemeProvider>
         <Header />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(screen.getByText('DAOx')).toBeInTheDocument();
@@ -42,7 +64,7 @@ describe('Header', () => {
     render(
       <ThemeProvider>
         <Header />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     const homeLinks = screen.getAllByRole('link', { name: /daox/i });
@@ -53,7 +75,7 @@ describe('Header', () => {
     const { container } = render(
       <ThemeProvider>
         <Header />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     const titleLink = container.querySelector('a[href="/"]');
 
@@ -65,7 +87,7 @@ describe('Header', () => {
     const { container } = render(
       <ThemeProvider>
         <Header />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     const header = container.querySelector('header');
 
@@ -77,7 +99,7 @@ describe('Header', () => {
     render(
       <ThemeProvider>
         <Header />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(screen.getByText('Home')).toBeInTheDocument();
@@ -89,7 +111,7 @@ describe('Header', () => {
     render(
       <ThemeProvider>
         <Header />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     const guestElements = screen.getAllByText('Guest');
@@ -100,7 +122,7 @@ describe('Header', () => {
     render(
       <ThemeProvider>
         <Header />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(screen.getByText('More')).toBeInTheDocument();

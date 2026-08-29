@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import {
   buildRRule,
   buildSeriesInfo,
@@ -42,10 +43,10 @@ describe('parseRRule', () => {
 
   it('parses UNTIL in both date and date-time forms', () => {
     expect(parseRRule('FREQ=DAILY;UNTIL=20260315')?.until).toEqual(
-      new Date(2026, 2, 15, 23, 59, 59, 999)
+      new Date(2026, 2, 15, 23, 59, 59, 999),
     );
     expect(parseRRule('FREQ=DAILY;UNTIL=20260315T120000Z')?.until).toEqual(
-      new Date(Date.UTC(2026, 2, 15, 12, 0, 0))
+      new Date(Date.UTC(2026, 2, 15, 12, 0, 0)),
     );
   });
 
@@ -75,7 +76,7 @@ describe('buildRRule', () => {
         interval: 2,
         byDay: ['TU'],
         count: 6,
-      })
+      }),
     ).toBe('FREQ=WEEKLY;INTERVAL=2;COUNT=6;BYDAY=TU');
   });
 
@@ -85,9 +86,7 @@ describe('buildRRule', () => {
     const until = new Date(2026, 11, 31, 23, 59, 59, 999);
     const parsed = parseRRule(buildRRule({ freq: 'MONTHLY', until }));
 
-    expect(buildRRule({ freq: 'MONTHLY', until })).toBe(
-      'FREQ=MONTHLY;UNTIL=20261231'
-    );
+    expect(buildRRule({ freq: 'MONTHLY', until })).toBe('FREQ=MONTHLY;UNTIL=20261231');
     expect(parsed?.until).toEqual(until);
   });
 
@@ -130,7 +129,7 @@ describe('occurrencesBetween', () => {
       rule({ byDay: ['MO', 'WE', 'FR'] }),
       at(2026, 3, 2), // a Monday
       at(2026, 3, 1),
-      at(2026, 3, 14)
+      at(2026, 3, 14),
     );
 
     expect(ymd(found)).toEqual([
@@ -148,7 +147,7 @@ describe('occurrencesBetween', () => {
       rule({ interval: 2, byDay: ['WE'] }),
       at(2026, 3, 4),
       at(2026, 3, 1),
-      at(2026, 4, 5)
+      at(2026, 4, 5),
     );
 
     expect(ymd(found)).toEqual(['2026-03-04', '2026-03-18', '2026-04-01']);
@@ -160,12 +159,8 @@ describe('occurrencesBetween', () => {
 
     // Asking about a later window must not resurrect a series that already
     // exhausted its COUNT before that window began.
-    expect(
-      occurrencesBetween(seriesRule, seed, at(2026, 3, 1), at(2026, 5, 1))
-    ).toHaveLength(3);
-    expect(
-      occurrencesBetween(seriesRule, seed, at(2026, 4, 1), at(2026, 5, 1))
-    ).toHaveLength(0);
+    expect(occurrencesBetween(seriesRule, seed, at(2026, 3, 1), at(2026, 5, 1))).toHaveLength(3);
+    expect(occurrencesBetween(seriesRule, seed, at(2026, 4, 1), at(2026, 5, 1))).toHaveLength(0);
   });
 
   it('stops at UNTIL', () => {
@@ -173,7 +168,7 @@ describe('occurrencesBetween', () => {
       rule({ byDay: ['WE'], until: new Date(2026, 2, 18, 23, 59, 59) }),
       at(2026, 3, 4),
       at(2026, 3, 1),
-      at(2026, 5, 1)
+      at(2026, 5, 1),
     );
 
     expect(ymd(found)).toEqual(['2026-03-04', '2026-03-11', '2026-03-18']);
@@ -184,7 +179,7 @@ describe('occurrencesBetween', () => {
       rule({ byDay: ['MO', 'FR'] }),
       at(2026, 3, 4), // a Wednesday: Monday of that week precedes it
       at(2026, 3, 1),
-      at(2026, 3, 8)
+      at(2026, 3, 8),
     );
 
     expect(ymd(found)).toEqual(['2026-03-06']);
@@ -196,7 +191,7 @@ describe('occurrencesBetween', () => {
       at(2026, 3, 4),
       at(2026, 3, 1),
       at(2026, 3, 26),
-      { exceptions: ['2026-03-11'] }
+      { exceptions: ['2026-03-11'] },
     );
 
     expect(ymd(found)).toEqual(['2026-03-04', '2026-03-18', '2026-03-25']);
@@ -207,7 +202,7 @@ describe('occurrencesBetween', () => {
       rule({ freq: 'MONTHLY', byDay: ['1MO'] }),
       at(2026, 3, 2),
       at(2026, 3, 1),
-      at(2026, 5, 31)
+      at(2026, 5, 31),
     );
 
     expect(ymd(found)).toEqual(['2026-03-02', '2026-04-06', '2026-05-04']);
@@ -218,7 +213,7 @@ describe('occurrencesBetween', () => {
       rule({ freq: 'MONTHLY', byDay: ['-1FR'] }),
       at(2026, 3, 27),
       at(2026, 3, 1),
-      at(2026, 4, 30)
+      at(2026, 4, 30),
     );
 
     expect(ymd(found)).toEqual(['2026-03-27', '2026-04-24']);
@@ -229,15 +224,10 @@ describe('occurrencesBetween', () => {
       rule({ freq: 'MONTHLY', byMonthDay: [1, 15] }),
       at(2026, 3, 1),
       at(2026, 3, 1),
-      at(2026, 4, 30)
+      at(2026, 4, 30),
     );
 
-    expect(ymd(found)).toEqual([
-      '2026-03-01',
-      '2026-03-15',
-      '2026-04-01',
-      '2026-04-15',
-    ]);
+    expect(ymd(found)).toEqual(['2026-03-01', '2026-03-15', '2026-04-01', '2026-04-15']);
   });
 
   it('skips months too short for the seed day', () => {
@@ -245,7 +235,7 @@ describe('occurrencesBetween', () => {
       rule({ freq: 'MONTHLY' }),
       at(2026, 1, 31),
       at(2026, 1, 1),
-      at(2026, 4, 30)
+      at(2026, 4, 30),
     );
 
     expect(ymd(found)).toEqual(['2026-01-31', '2026-03-31']);
@@ -257,7 +247,7 @@ describe('occurrencesBetween', () => {
       rule({ freq: 'DAILY' }),
       at(2026, 3, 6, 9),
       at(2026, 3, 6, 0),
-      at(2026, 3, 10, 23)
+      at(2026, 3, 10, 23),
     );
 
     expect(ymd(found)).toEqual([
@@ -276,16 +266,14 @@ describe('occurrencesBetween', () => {
       at(2019, 1, 1),
       at(2026, 8, 19),
       at(2026, 8, 21),
-      { cap: 50 }
+      { cap: 50 },
     );
 
     expect(ymd(found)).toEqual(['2026-08-19', '2026-08-20', '2026-08-21']);
   });
 
   it('returns nothing for an inverted window', () => {
-    expect(
-      occurrencesBetween(rule(), at(2026, 3, 4), at(2026, 4, 1), at(2026, 3, 1))
-    ).toEqual([]);
+    expect(occurrencesBetween(rule(), at(2026, 3, 4), at(2026, 4, 1), at(2026, 3, 1))).toEqual([]);
   });
 });
 
@@ -296,41 +284,28 @@ describe('previousOccurrence / nextOccurrence', () => {
   it('splits the series either side of the anchor', () => {
     const anchor = at(2026, 3, 20);
 
-    expect(formatYMD(previousOccurrence(weekly, seed, anchor, at(2026, 1, 1))!))
-      .toBe('2026-03-18');
-    expect(formatYMD(nextOccurrence(weekly, seed, anchor, at(2026, 6, 1))!))
-      .toBe('2026-03-25');
+    expect(formatYMD(previousOccurrence(weekly, seed, anchor, at(2026, 1, 1))!)).toBe('2026-03-18');
+    expect(formatYMD(nextOccurrence(weekly, seed, anchor, at(2026, 6, 1))!)).toBe('2026-03-25');
   });
 
   it('treats an occurrence on the anchor itself as previous, not next', () => {
     const anchor = new Date(2026, 2, 18, 23, 59, 59, 999);
 
-    expect(formatYMD(previousOccurrence(weekly, seed, anchor, at(2026, 1, 1))!))
-      .toBe('2026-03-18');
-    expect(formatYMD(nextOccurrence(weekly, seed, anchor, at(2026, 6, 1))!))
-      .toBe('2026-03-25');
+    expect(formatYMD(previousOccurrence(weekly, seed, anchor, at(2026, 1, 1))!)).toBe('2026-03-18');
+    expect(formatYMD(nextOccurrence(weekly, seed, anchor, at(2026, 6, 1))!)).toBe('2026-03-25');
   });
 
   it('returns null when the search window holds no occurrence', () => {
+    expect(previousOccurrence(weekly, seed, at(2026, 3, 1), at(2026, 1, 1))).toBeNull();
     expect(
-      previousOccurrence(weekly, seed, at(2026, 3, 1), at(2026, 1, 1))
-    ).toBeNull();
-    expect(
-      nextOccurrence(
-        rule({ byDay: ['WE'], count: 1 }),
-        seed,
-        at(2026, 3, 20),
-        at(2026, 6, 1)
-      )
+      nextOccurrence(rule({ byDay: ['WE'], count: 1 }), seed, at(2026, 3, 20), at(2026, 6, 1)),
     ).toBeNull();
   });
 });
 
 describe('buildSeriesInfo', () => {
   it('packages a rule with its cadence and exceptions', () => {
-    expect(
-      buildSeriesInfo('FREQ=WEEKLY;INTERVAL=2;BYDAY=TU', ['2026-03-10'])
-    ).toEqual({
+    expect(buildSeriesInfo('FREQ=WEEKLY;INTERVAL=2;BYDAY=TU', ['2026-03-10'])).toEqual({
       rrule: 'FREQ=WEEKLY;INTERVAL=2;BYDAY=TU',
       summary: 'Every 2 weeks on Tue',
       exceptions: ['2026-03-10'],

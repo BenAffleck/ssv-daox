@@ -2,16 +2,18 @@
  * Unit tests for vote search
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
+import type { GovernanceProposal, GovernanceSpace } from '@/lib/snapshot/types';
+
 import {
   buildSnippet,
   buildVoteSearchIndex,
   filterProposalsByQuery,
-  getVoteAskUrl,
   getStateLabel,
+  getVoteAskUrl,
   toVoteIndexEntry,
 } from '../vote-search';
-import type { GovernanceProposal, GovernanceSpace } from '@/lib/snapshot/types';
 
 const DAO: GovernanceSpace = {
   key: 'main',
@@ -31,7 +33,7 @@ function proposal(
   title: string,
   body: string,
   space: GovernanceSpace = DAO,
-  state: string = 'active'
+  state: string = 'active',
 ): GovernanceProposal {
   return {
     id,
@@ -65,14 +67,12 @@ describe('buildSnippet', () => {
 
   it('keeps link text and drops the target', () => {
     expect(buildSnippet('See [the forum post](https://forum.example/x) for detail')).toBe(
-      'See the forum post for detail'
+      'See the forum post for detail',
     );
   });
 
   it('removes fenced code blocks and images', () => {
-    expect(buildSnippet('Before ```const x = 1;``` ![alt](img.png) after')).toBe(
-      'Before after'
-    );
+    expect(buildSnippet('Before ```const x = 1;``` ![alt](img.png) after')).toBe('Before after');
   });
 
   it('truncates to the requested length with an ellipsis', () => {
@@ -149,9 +149,7 @@ describe('filterProposalsByQuery', () => {
   });
 
   it('is case-insensitive', () => {
-    expect(filterProposalsByQuery(PROPOSALS, 'FEE RECIPIENT').map((p) => p.id)).toEqual([
-      'p1',
-    ]);
+    expect(filterProposalsByQuery(PROPOSALS, 'FEE RECIPIENT').map((p) => p.id)).toEqual(['p1']);
   });
 
   it('preserves the input order so section grouping is unaffected', () => {

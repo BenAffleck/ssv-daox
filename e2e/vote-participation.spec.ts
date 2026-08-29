@@ -1,21 +1,15 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Vote Participation', () => {
-  test('displays vote participation column in delegates table', async ({
-    page,
-  }) => {
+  test('displays vote participation column in delegates table', async ({ page }) => {
     // Navigate to dao-delegates page
     await page.goto('/delegates');
 
     // Wait for the table to load
-    await expect(
-      page.getByRole('heading', { name: 'DAO Delegates' })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'DAO Delegates' })).toBeVisible();
 
     // Assert "Votes" column header is visible
-    await expect(
-      page.getByRole('columnheader', { name: /Vote Activity/ })
-    ).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /Vote Activity/ })).toBeVisible();
 
     // Assert at least one percentage badge is visible (matches /^\d{1,3}%$/)
     const percentageBadges = page.locator('td span:text-matches("^\\\\d{1,3}%$")');
@@ -26,9 +20,7 @@ test.describe('Vote Participation', () => {
     await page.goto('/delegates');
 
     // Wait for the table to load
-    await expect(
-      page.getByRole('heading', { name: 'DAO Delegates' })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'DAO Delegates' })).toBeVisible();
 
     // Find a percentage badge and check its title attribute
     const percentageBadge = page.locator('td span[title*="Voted on"]').first();

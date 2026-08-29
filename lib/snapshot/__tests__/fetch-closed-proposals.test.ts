@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fetchClosedProposals } from '../api/fetch-closed-proposals';
-import type { SnapshotGraphQLResponse, ActiveProposalsQueryResponse } from '../types';
+import type { ActiveProposalsQueryResponse, SnapshotGraphQLResponse } from '../types';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch as any;
@@ -44,7 +45,7 @@ describe('fetchClosedProposals', () => {
       expect.objectContaining({
         method: 'POST',
         body: expect.stringContaining('GetClosedProposals'),
-      })
+      }),
     );
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.variables).toEqual({ spaceId: 'ssv.dao.eth', limit: 20 });

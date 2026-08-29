@@ -7,12 +7,7 @@ import { z } from 'zod';
 /**
  * Event types that can be extracted from proposals
  */
-export type AIEventType =
-  | 'milestone'
-  | 'deadline'
-  | 'launch'
-  | 'meeting'
-  | 'other';
+export type AIEventType = 'milestone' | 'deadline' | 'launch' | 'meeting' | 'other';
 
 /**
  * Confidence level for extracted dates
@@ -37,9 +32,7 @@ export const AIRecurrenceSchema = z.object({
   audience: z.enum(['community', 'internal']).default('internal'),
   freq: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
   interval: z.number().int().min(1).max(52).default(1),
-  byDay: z
-    .array(z.enum(['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']))
-    .nullish(),
+  byDay: z.array(z.enum(['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'])).nullish(),
   count: z.number().int().min(2).max(400).nullish(),
   until: z.string().nullish().describe('ISO 8601 date (YYYY-MM-DD)'),
 });
@@ -50,19 +43,19 @@ export const AIRecurrenceSchema = z.object({
 export const AIExtractedEventSchema = z.object({
   title: z.string().describe('Clear, concise event title'),
   date: z.string().describe('ISO 8601 date (YYYY-MM-DD)'),
-  dateConfidence: z.enum(['high', 'medium', 'low']).describe(
-    'Confidence level: high for exact dates, medium for approximate/calculated, low for inferred'
-  ),
+  dateConfidence: z
+    .enum(['high', 'medium', 'low'])
+    .describe(
+      'Confidence level: high for exact dates, medium for approximate/calculated, low for inferred',
+    ),
   description: z.string().describe('What happens on this date'),
-  excerpt: z
-    .string()
-    .describe('Original text snippet mentioning this date (max 100 chars)'),
+  excerpt: z.string().describe('Original text snippet mentioning this date (max 100 chars)'),
   eventType: z
     .enum(['milestone', 'deadline', 'launch', 'meeting', 'other'])
     .describe('Type of event'),
   // Nullish so extractions cached before recurrence existed still validate.
   recurrence: AIRecurrenceSchema.nullish().describe(
-    'Set only when the event repeats on a regular cadence; null otherwise'
+    'Set only when the event repeats on a regular cadence; null otherwise',
   ),
 });
 
@@ -136,7 +129,7 @@ export const TIME_WINDOWS: TimeWindowConfig[] = [
  */
 export function filterProposalsByTimeWindow(
   proposals: ProposalForExtraction[],
-  window: TimeWindow
+  window: TimeWindow,
 ): ProposalForExtraction[] {
   if (window === 'all') return proposals;
 
@@ -151,7 +144,7 @@ export function filterProposalsByTimeWindow(
  * Get proposal counts for each time window
  */
 export function getProposalCountsByWindow(
-  proposals: ProposalForExtraction[]
+  proposals: ProposalForExtraction[],
 ): Record<TimeWindow, number> {
   return {
     '30d': filterProposalsByTimeWindow(proposals, '30d').length,

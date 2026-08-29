@@ -1,9 +1,5 @@
 import { SNAPSHOT_CONFIG } from '../config';
-import type {
-  SnapshotGraphQLResponse,
-  ProposalsQueryResponse,
-  SnapshotProposal,
-} from '../types';
+import type { ProposalsQueryResponse, SnapshotGraphQLResponse, SnapshotProposal } from '../types';
 
 /**
  * GraphQL query to fetch latest closed proposals from a space
@@ -33,7 +29,7 @@ const PROPOSALS_QUERY = `
  */
 export async function fetchProposals(
   spaceId: string,
-  limit: number = SNAPSHOT_CONFIG.voteParticipation.proposalCount
+  limit: number = SNAPSHOT_CONFIG.voteParticipation.proposalCount,
 ): Promise<SnapshotProposal[]> {
   try {
     const response = await fetch(SNAPSHOT_CONFIG.apiUrl, {
@@ -49,13 +45,10 @@ export async function fetchProposals(
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Snapshot API error: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Snapshot API error: ${response.status} ${response.statusText}`);
     }
 
-    const result: SnapshotGraphQLResponse<ProposalsQueryResponse> =
-      await response.json();
+    const result: SnapshotGraphQLResponse<ProposalsQueryResponse> = await response.json();
 
     // Check for GraphQL errors
     if (result.errors?.length) {
@@ -64,10 +57,7 @@ export async function fetchProposals(
 
     return result.data?.proposals ?? [];
   } catch (error) {
-    console.error(
-      `Failed to fetch proposals for space ${spaceId}:`,
-      error
-    );
+    console.error(`Failed to fetch proposals for space ${spaceId}:`, error);
     throw error;
   }
 }

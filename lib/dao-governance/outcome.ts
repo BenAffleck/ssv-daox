@@ -23,11 +23,8 @@ const REJECT_CHOICES = new Set(['against', 'no', 'reject', 'deny']);
  *   since an uncontested/unvoted proposal did not pass.
  */
 export function getProposalOutcome(
-  proposal: Pick<
-    SnapshotActiveProposal,
-    'choices' | 'scores' | 'scores_total' | 'quorum'
-  >,
-  isMemberVote: boolean
+  proposal: Pick<SnapshotActiveProposal, 'choices' | 'scores' | 'scores_total' | 'quorum'>,
+  isMemberVote: boolean,
 ): ProposalOutcome {
   const quorumApplies = !isMemberVote && proposal.quorum > 0;
 

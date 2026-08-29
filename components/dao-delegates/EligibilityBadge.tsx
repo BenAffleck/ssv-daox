@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Delegate } from '@/lib/dao-delegates/types';
 
 interface EligibilityBadgeProps {
@@ -14,7 +15,7 @@ export default function EligibilityBadge({ delegate }: EligibilityBadgeProps) {
       badges.push(
         <span key={name} className="badge badge-secondary">
           {name} (seated)
-        </span>
+        </span>,
       );
     });
   }
@@ -22,12 +23,9 @@ export default function EligibilityBadge({ delegate }: EligibilityBadgeProps) {
   // If eligible for competitive seats
   if (delegate.isEligible && !delegate.isOnFixedList) {
     badges.push(
-      <span
-        key="eligible"
-        className="badge badge-accent"
-      >
+      <span key="eligible" className="badge badge-accent">
         Eligible
-      </span>
+      </span>,
     );
   }
 
@@ -35,24 +33,18 @@ export default function EligibilityBadge({ delegate }: EligibilityBadgeProps) {
   if (!delegate.isEligible) {
     if (delegate.isVIP) {
       badges.push(
-        <span
-          key="vip"
-          className="badge badge-primary"
-        >
+        <span key="vip" className="badge badge-primary">
           VIP
-        </span>
+        </span>,
       );
     }
 
     if (delegate.isOnCommittee) {
       delegate.committeeNames.forEach((name) => {
         badges.push(
-          <span
-            key={name}
-            className="badge badge-secondary"
-          >
+          <span key={name} className="badge badge-secondary">
             {name}
-          </span>
+          </span>,
         );
       });
     }

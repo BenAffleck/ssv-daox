@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-  unfoldLines,
-  parsePropertyLine,
-  parseICSDate,
-  unescapeText,
   extractComponents,
+  parseICSDate,
+  parsePropertyLine,
+  unescapeText,
+  unfoldLines,
 } from '../utils/ics-utils';
 
 describe('ics-utils', () => {
@@ -44,7 +45,9 @@ describe('ics-utils', () => {
     });
 
     it('should parse property with multiple parameters', () => {
-      const result = parsePropertyLine('DTSTART;VALUE=DATE-TIME;TZID=America/New_York:20240115T100000');
+      const result = parsePropertyLine(
+        'DTSTART;VALUE=DATE-TIME;TZID=America/New_York:20240115T100000',
+      );
       expect(result.name).toBe('DTSTART');
       expect(result.params).toEqual({
         VALUE: 'DATE-TIME',

@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CornerDownLeft, ExternalLink, Info, Sparkles } from 'lucide-react';
-import type { ProposalAnswer } from '@/lib/ai-qna/types';
+
 import { AI_QNA_CONFIG } from '@/lib/ai-qna/config';
+import type { ProposalAnswer } from '@/lib/ai-qna/types';
 
 /** The proposal fields the dialog needs — kept minimal so both full proposals
  *  and slim search-index entries can drive it. */
@@ -27,11 +28,7 @@ interface AskProposalDialogProps {
  * rather than building a thread. Answers are grounded in the proposal's text
  * only, so the model is expected to decline questions about live results.
  */
-export default function AskProposalDialog({
-  proposal,
-  open,
-  onClose,
-}: AskProposalDialogProps) {
+export default function AskProposalDialog({ proposal, open, onClose }: AskProposalDialogProps) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<ProposalAnswer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -126,7 +123,7 @@ export default function AskProposalDialog({
         <div className="flex items-start gap-3 border-b border-border px-4 py-3.5">
           <Sparkles size={18} className="mt-0.5 flex-shrink-0 text-primary" />
           <div className="min-w-0 flex-1">
-            <div className="font-heading text-[10px] font-semibold uppercase tracking-wider text-muted">
+            <div className="font-heading text-[10px] font-semibold tracking-wider text-muted uppercase">
               Ask about
             </div>
             <div className="truncate font-heading text-[14px] font-semibold text-foreground">
@@ -148,9 +145,7 @@ export default function AskProposalDialog({
           <textarea
             ref={inputRef}
             value={question}
-            onChange={(e) =>
-              setQuestion(e.target.value.slice(0, AI_QNA_CONFIG.maxQuestionLength))
-            }
+            onChange={(e) => setQuestion(e.target.value.slice(0, AI_QNA_CONFIG.maxQuestionLength))}
             onKeyDown={onInputKey}
             rows={2}
             placeholder="What would you like to know about this proposal?"
@@ -196,25 +191,25 @@ export default function AskProposalDialog({
                 <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-[12px] text-warning">
                   <Info size={14} className="mt-0.5 flex-shrink-0" />
                   <span>
-                    This isn’t covered by the proposal text. Check the proposal page for
-                    live results and discussion.
+                    This isn’t covered by the proposal text. Check the proposal page for live
+                    results and discussion.
                   </span>
                 </div>
               )}
 
-              <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-foreground">
+              <p className="text-[14px] leading-relaxed whitespace-pre-wrap text-foreground">
                 {answer.answer}
               </p>
 
               {answer.supportingQuotes.length > 0 && (
                 <div className="space-y-1.5 rounded-lg border border-border bg-background px-3 py-2.5">
-                  <div className="font-heading text-[10px] font-semibold uppercase tracking-wider text-muted">
+                  <div className="font-heading text-[10px] font-semibold tracking-wider text-muted uppercase">
                     From the proposal
                   </div>
                   {answer.supportingQuotes.map((quote, i) => (
                     <p
                       key={i}
-                      className="border-l-2 border-secondary/40 pl-2.5 text-[12px] italic leading-relaxed text-muted"
+                      className="border-l-2 border-secondary/40 pl-2.5 text-[12px] leading-relaxed text-muted italic"
                     >
                       {quote}
                     </p>
@@ -226,8 +221,8 @@ export default function AskProposalDialog({
 
           {!isLoading && !error && !answer && (
             <p className="text-[13px] text-muted">
-              Ask a single question — for example, what changes if this passes, who is
-              responsible for executing it, or what each voting choice means.
+              Ask a single question — for example, what changes if this passes, who is responsible
+              for executing it, or what each voting choice means.
             </p>
           )}
         </div>
@@ -248,6 +243,6 @@ export default function AskProposalDialog({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

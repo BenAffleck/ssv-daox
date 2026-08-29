@@ -109,14 +109,12 @@ export function buildVoteSearchIndex(votes: VoteIndexEntry[]): SearchItem[] {
  */
 export function filterProposalsByQuery(
   proposals: GovernanceProposal[],
-  query: string
+  query: string,
 ): GovernanceProposal[] {
   if (!query.trim()) return proposals;
 
   const index = buildVoteSearchIndex(proposals.map(toVoteIndexEntry));
-  const matchedIds = new Set(
-    searchItems(index, query).map((r) => r.item.id.slice('vote:'.length))
-  );
+  const matchedIds = new Set(searchItems(index, query).map((r) => r.item.id.slice('vote:'.length)));
 
   return proposals.filter((p) => matchedIds.has(p.id));
 }

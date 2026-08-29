@@ -16,13 +16,11 @@ export const VOTER_MIXED_CASE = '0xAbCdEf0000000000000000000000000000000004';
 /**
  * Mock votes - voter with 100% participation (5/5 proposals)
  */
-export const VOTES_100_PERCENT: SnapshotVote[] = MOCK_PROPOSAL_IDS.map(
-  (proposalId, idx) => ({
-    id: `vote-100-${idx}`,
-    voter: VOTER_100_PERCENT,
-    proposal: { id: proposalId },
-  })
-);
+export const VOTES_100_PERCENT: SnapshotVote[] = MOCK_PROPOSAL_IDS.map((proposalId, idx) => ({
+  id: `vote-100-${idx}`,
+  voter: VOTER_100_PERCENT,
+  proposal: { id: proposalId },
+}));
 
 /**
  * Mock votes - voter with 40% participation (2/5 proposals)

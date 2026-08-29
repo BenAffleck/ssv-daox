@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import { getProposalOutcome } from '../outcome';
 
 type P = Parameters<typeof getProposalOutcome>[0];
@@ -14,7 +15,7 @@ describe('getProposalOutcome', () => {
   it('marks a token vote as Failed when a rejection choice wins', () => {
     const out = getProposalOutcome(
       { choices: ['For', 'Against'], scores: [2, 9], scores_total: 11, quorum: 5 },
-      false
+      false,
     );
     expect(out).toEqual({ label: 'Failed', variant: 'failed' });
   });
@@ -22,7 +23,7 @@ describe('getProposalOutcome', () => {
   it('marks Quorum not met when token total falls short of quorum', () => {
     const out = getProposalOutcome(
       { choices: ['For', 'Against'], scores: [3, 1], scores_total: 4, quorum: 100 },
-      false
+      false,
     );
     expect(out).toEqual({ label: 'Quorum not met', variant: 'quorum-not-met' });
   });
@@ -35,8 +36,13 @@ describe('getProposalOutcome', () => {
 
   it('surfaces the winning option for non-binary ballots', () => {
     const out = getProposalOutcome(
-      { choices: ['Option A', 'Option B', 'Option C'], scores: [1, 9, 2], scores_total: 12, quorum: 0 },
-      false
+      {
+        choices: ['Option A', 'Option B', 'Option C'],
+        scores: [1, 9, 2],
+        scores_total: 12,
+        quorum: 0,
+      },
+      false,
     );
     expect(out).toEqual({ label: 'Option B', variant: 'neutral' });
   });
@@ -44,7 +50,7 @@ describe('getProposalOutcome', () => {
   it('returns "No votes" when nothing was cast', () => {
     const out = getProposalOutcome(
       { choices: ['For', 'Against'], scores: [0, 0], scores_total: 0, quorum: 0 },
-      true
+      true,
     );
     expect(out).toEqual({ label: 'No votes', variant: 'failed' });
   });

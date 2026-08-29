@@ -2,9 +2,10 @@
  * Unit tests for the Q&A rate limiter
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { checkRateLimit, getClientKey, resetRateLimits } from '../rate-limit';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { getRateLimitConfig } from '../config';
+import { checkRateLimit, getClientKey, resetRateLimits } from '../rate-limit';
 
 describe('checkRateLimit', () => {
   beforeEach(() => {

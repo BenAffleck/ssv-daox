@@ -1,8 +1,10 @@
 'use client';
 
-import { createContext, useEffect, useState, ReactNode } from 'react';
-import { Theme } from './types';
+import { createContext, ReactNode, useEffect, useState } from 'react';
+
 import { getSystemTheme, loadThemePreference, saveThemePreference } from '@/lib/utils/theme';
+
+import { Theme } from './types';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -43,8 +45,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const themes: Theme[] = ['ssvdark', 'ssvlight'];
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, themes }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={{ theme, setTheme, themes }}>{children}</ThemeContext.Provider>
   );
 }

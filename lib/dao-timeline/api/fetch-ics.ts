@@ -34,9 +34,7 @@ export async function fetchICSFromUrl(url: string): Promise<RawICSEvent[]> {
 /**
  * Fetch ICS data from multiple URLs in parallel
  */
-export async function fetchMultipleICS(
-  urls: string[]
-): Promise<Map<string, RawICSEvent[]>> {
+export async function fetchMultipleICS(urls: string[]): Promise<Map<string, RawICSEvent[]>> {
   const results = new Map<string, RawICSEvent[]>();
 
   const fetchPromises = urls.map(async (url) => {

@@ -1,13 +1,9 @@
 import { getGovernanceSpaces } from '../config';
-import type {
-  GovernanceProposal,
-  GovernanceProposalsResult,
-  GovernanceSpace,
-} from '../types';
+import type { GovernanceProposal, GovernanceProposalsResult, GovernanceSpace } from '../types';
 import { executeProposalsQuery } from './execute-proposals-query';
 import { ACTIVE_PROPOSALS_QUERY } from './fetch-active-proposals';
-import { PENDING_PROPOSALS_QUERY } from './fetch-pending-proposals';
 import { CLOSED_PROPOSALS_QUERY } from './fetch-closed-proposals';
+import { PENDING_PROPOSALS_QUERY } from './fetch-pending-proposals';
 
 /** Number of most-recent closed proposals to fetch per space. */
 export const CLOSED_PROPOSALS_PER_SPACE = 100;
@@ -19,7 +15,7 @@ export const CLOSED_PROPOSALS_PER_SPACE = 100;
  */
 async function fetchSpaceProposals(
   space: GovernanceSpace,
-  includeClosed: boolean
+  includeClosed: boolean,
 ): Promise<GovernanceProposal[]> {
   const queries = [
     executeProposalsQuery(ACTIVE_PROPOSALS_QUERY, { spaceId: space.spaceId }),
@@ -30,7 +26,7 @@ async function fetchSpaceProposals(
       executeProposalsQuery(CLOSED_PROPOSALS_QUERY, {
         spaceId: space.spaceId,
         limit: CLOSED_PROPOSALS_PER_SPACE,
-      })
+      }),
     );
   }
 
@@ -43,12 +39,8 @@ async function fetchSpaceProposals(
  * soonest deadline (`end`) first; within pendings, soonest opening (`start`)
  * first; within closed, most recently ended first.
  */
-function compareProposals(
-  a: GovernanceProposal,
-  b: GovernanceProposal
-): number {
-  const stateRank = (state: string) =>
-    state === 'active' ? 0 : state === 'pending' ? 1 : 2;
+function compareProposals(a: GovernanceProposal, b: GovernanceProposal): number {
+  const stateRank = (state: string) => (state === 'active' ? 0 : state === 'pending' ? 1 : 2);
   const rankDiff = stateRank(a.state) - stateRank(b.state);
   if (rankDiff !== 0) return rankDiff;
 
@@ -72,11 +64,11 @@ function compareProposals(
  */
 export async function fetchGovernanceProposals(
   spaces: GovernanceSpace[] = getGovernanceSpaces(),
-  options: { includeClosed?: boolean } = {}
+  options: { includeClosed?: boolean } = {},
 ): Promise<GovernanceProposalsResult> {
   const { includeClosed = true } = options;
   const results = await Promise.allSettled(
-    spaces.map((space) => fetchSpaceProposals(space, includeClosed))
+    spaces.map((space) => fetchSpaceProposals(space, includeClosed)),
   );
 
   const proposals: GovernanceProposal[] = [];
@@ -89,7 +81,7 @@ export async function fetchGovernanceProposals(
       failedSpaces.push(spaces[index].label);
       console.error(
         `Failed to fetch governance proposals for space ${spaces[index].spaceId}:`,
-        result.reason
+        result.reason,
       );
     }
   });

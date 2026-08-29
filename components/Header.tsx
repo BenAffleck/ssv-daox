@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Calendar, FileText, Vote, Menu, X, User, ChevronDown } from 'lucide-react';
-import ThemeToggle from '@/lib/theme/ThemeToggle';
-import { getActiveModules, getComingSoonModules, getModulesSorted } from '@/lib/data/modules';
-import { getExternalToolsSorted } from '@/lib/data/external-tools';
+import { Calendar, ChevronDown, FileText, Home, Menu, User, Users, Vote, X } from 'lucide-react';
+
 import SearchPalette, { SearchTrigger } from '@/components/SearchPalette';
+import { getExternalToolsSorted } from '@/lib/data/external-tools';
+import { getActiveModules, getComingSoonModules, getModulesSorted } from '@/lib/data/modules';
+import ThemeToggle from '@/lib/theme/ThemeToggle';
 import type { Module } from '@/lib/types';
 
 const slugIconMap: Record<string, React.ComponentType<{ size?: number }>> = {
-  'delegates': Users,
-  'timeline': Calendar,
-  'governance': Vote,
+  delegates: Users,
+  timeline: Calendar,
+  governance: Vote,
 };
 
 function getIconForSlug(slug: string) {
@@ -62,19 +63,30 @@ export default function Header() {
           href="/"
           className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 font-heading text-[15px] font-semibold tracking-tight text-foreground transition-colors hover:text-primary"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="100 60 300 340" fill="none" className="flex-shrink-0">
-            <path fill="#2DB1FF" d="m204.141 337.252 37.927-46.64c3.96-4.869 11.415-4.869 15.375 0l37.928 46.64a9.856 9.856 0 0 1 0 12.445l-37.928 46.64c-3.96 4.87-11.415 4.87-15.375 0l-37.927-46.64a9.856 9.856 0 0 1 0-12.445Z" opacity=".62"/>
-            <path fill="#2DB1FF" d="m263.064 223.197 37.927-46.64c3.96-4.869 11.415-4.869 15.376 0l37.926 46.64a9.855 9.855 0 0 1 0 12.446l-37.926 46.639c-3.961 4.87-11.416 4.87-15.376 0l-37.927-46.639a9.858 9.858 0 0 1 0-12.446Zm-117.852 0 37.928-46.64c3.96-4.869 11.415-4.869 15.375 0l37.927 46.64a9.858 9.858 0 0 1 0 12.446l-37.927 46.639c-3.96 4.87-11.415 4.87-15.375 0l-37.928-46.639a9.858 9.858 0 0 1 0-12.446Zm58.929-72.899 37.927-46.646c3.96-4.87 11.415-4.87 15.375 0l37.928 46.64a9.856 9.856 0 0 1 0 12.445l-37.928 46.64c-3.96 4.87-11.415 4.87-15.375 0l-37.927-46.634a9.856 9.856 0 0 1 0-12.445Z"/>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="22"
+            viewBox="100 60 300 340"
+            fill="none"
+            className="flex-shrink-0"
+          >
+            <path
+              fill="#2DB1FF"
+              d="m204.141 337.252 37.927-46.64c3.96-4.869 11.415-4.869 15.375 0l37.928 46.64a9.856 9.856 0 0 1 0 12.445l-37.928 46.64c-3.96 4.87-11.415 4.87-15.375 0l-37.927-46.64a9.856 9.856 0 0 1 0-12.445Z"
+              opacity=".62"
+            />
+            <path
+              fill="#2DB1FF"
+              d="m263.064 223.197 37.927-46.64c3.96-4.869 11.415-4.869 15.376 0l37.926 46.64a9.855 9.855 0 0 1 0 12.446l-37.926 46.639c-3.961 4.87-11.416 4.87-15.376 0l-37.927-46.639a9.858 9.858 0 0 1 0-12.446Zm-117.852 0 37.928-46.64c3.96-4.869 11.415-4.869 15.375 0l37.927 46.64a9.858 9.858 0 0 1 0 12.446l-37.927 46.639c-3.96 4.87-11.415 4.87-15.375 0l-37.928-46.639a9.858 9.858 0 0 1 0-12.446Zm58.929-72.899 37.927-46.646c3.96-4.87 11.415-4.87 15.375 0l37.928 46.64a9.856 9.856 0 0 1 0 12.445l-37.928 46.64c-3.96 4.87-11.415 4.87-15.375 0l-37.927-46.634a9.856 9.856 0 0 1 0-12.445Z"
+            />
           </svg>
           DAOx
         </Link>
 
         {/* Desktop navigation */}
         <nav className="hidden items-center gap-1 md:flex">
-          <Link
-            href="/"
-            className={pathname === '/' ? 'nav-item-active' : 'nav-item'}
-          >
+          <Link href="/" className={pathname === '/' ? 'nav-item-active' : 'nav-item'}>
             <Home size={16} />
             Home
           </Link>
@@ -96,17 +108,17 @@ export default function Header() {
 
           {comingSoonModules.length > 0 && (
             <div className="relative" ref={moreRef}>
-              <button
-                onClick={() => setMoreOpen(!moreOpen)}
-                className="nav-item"
-              >
+              <button onClick={() => setMoreOpen(!moreOpen)} className="nav-item">
                 <Menu size={16} />
                 More
-                <ChevronDown size={14} className={`transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform ${moreOpen ? 'rotate-180' : ''}`}
+                />
               </button>
 
               {moreOpen && (
-                <div className="absolute right-0 top-full mt-2 min-w-48 rounded-lg border border-border bg-card p-2 shadow-lg">
+                <div className="absolute top-full right-0 mt-2 min-w-48 rounded-lg border border-border bg-card p-2 shadow-lg">
                   {comingSoonModules.map((mod: Module) => {
                     const Icon = getIconForSlug(mod.slug);
                     return (
@@ -154,10 +166,7 @@ export default function Header() {
       {mobileOpen && (
         <div className="border-b border-border bg-background/95 px-6 pb-4 backdrop-blur-md md:hidden">
           <nav className="flex flex-col gap-1">
-            <Link
-              href="/"
-              className={pathname === '/' ? 'nav-item-active' : 'nav-item'}
-            >
+            <Link href="/" className={pathname === '/' ? 'nav-item-active' : 'nav-item'}>
               <Home size={16} />
               Home
             </Link>

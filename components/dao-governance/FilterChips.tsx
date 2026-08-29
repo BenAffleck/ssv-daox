@@ -42,7 +42,9 @@ export default function FilterChips({
         className={`inline-flex items-center gap-1.5 ${active ? 'filter-btn-active' : 'filter-btn'}`}
       >
         {dotClass && (
-          <span className={`inline-block h-2 w-2 rounded-full ${dotClass} ${active ? '' : 'opacity-40'}`} />
+          <span
+            className={`inline-block h-2 w-2 rounded-full ${dotClass} ${active ? '' : 'opacity-40'}`}
+          />
         )}
         {label}
       </button>

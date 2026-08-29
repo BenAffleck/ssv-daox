@@ -25,19 +25,19 @@ Add `data/external-tools/<id>.json`, where `<id>` is a short, lower-case, kebab-
 
 ### 2. Field reference
 
-| Field         | Required | Notes |
-| ------------- | -------- | ----- |
-| `$schema`     | recommended | Keep `"../external-tool.schema.json"` so your editor autocompletes and validates as you type. |
-| `id`          | ✅ | Lower-case kebab-case, unique, matches the filename. Never shown to users. |
-| `name`        | ✅ | Display name. |
-| `description` | ✅ | One or two sentences: what it does and for whom. |
-| `categories`  | ✅ | One or more of: `Simulator`, `Calculator`, `Dashboard`, `Explorer`, `Claim`. Drives the filter and the auto-selected icon. |
-| `inputs`      | ✅ | Short, formula-style. Separate segments with ` · ` (e.g. `Staked ETH · Tier`). |
-| `outputs`     | ✅ | Short, formula-style (e.g. `SSV/yr · USD`). |
-| `url`         | ✅ | The tool's real, official `https://` URL. |
-| `host`        | optional | Display host. Derived from `url` automatically — only set it if you want to show a different host (e.g. show `ssvrewards.com` for `https://www.ssvrewards.com/`). |
-| `featured`    | maintainer-only | Pins the tool to the top with a "Featured" pill. Leave this out — maintainers decide what gets featured. |
-| `sortOrder`   | optional | Ordering hint; lower sorts first. Usually unnecessary. |
+| Field         | Required        | Notes                                                                                                                                                             |
+| ------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$schema`     | recommended     | Keep `"../external-tool.schema.json"` so your editor autocompletes and validates as you type.                                                                     |
+| `id`          | ✅              | Lower-case kebab-case, unique, matches the filename. Never shown to users.                                                                                        |
+| `name`        | ✅              | Display name.                                                                                                                                                     |
+| `description` | ✅              | One or two sentences: what it does and for whom.                                                                                                                  |
+| `categories`  | ✅              | One or more of: `Simulator`, `Calculator`, `Dashboard`, `Explorer`, `Claim`. Drives the filter and the auto-selected icon.                                        |
+| `inputs`      | ✅              | Short, formula-style. Separate segments with `·` (e.g. `Staked ETH · Tier`).                                                                                      |
+| `outputs`     | ✅              | Short, formula-style (e.g. `SSV/yr · USD`).                                                                                                                       |
+| `url`         | ✅              | The tool's real, official `https://` URL.                                                                                                                         |
+| `host`        | optional        | Display host. Derived from `url` automatically — only set it if you want to show a different host (e.g. show `ssvrewards.com` for `https://www.ssvrewards.com/`). |
+| `featured`    | maintainer-only | Pins the tool to the top with a "Featured" pill. Leave this out — maintainers decide what gets featured.                                                          |
+| `sortOrder`   | optional        | Ordering hint; lower sorts first. Usually unnecessary.                                                                                                            |
 
 You don't need to touch any TypeScript, pick an icon, or wire up search — the UI is fully data-driven and updates automatically.
 

@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { formatTimeRemaining, formatTimeUntilStart, formatTimeAgo } from '../utils/time-remaining';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { formatTimeAgo, formatTimeRemaining, formatTimeUntilStart } from '../utils/time-remaining';
 
 describe('formatTimeRemaining', () => {
   afterEach(() => {

@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fetchVotingPower } from '../api/fetch-voting-power';
 import { GNOSIS_CONFIG, SSV_STRATEGY_PAYLOAD } from '../config';
 
@@ -61,9 +62,7 @@ describe('fetchVotingPower', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
 
     const [url, init] = mockFetch.mock.calls[0];
-    expect(url).toBe(
-      `${GNOSIS_CONFIG.apiBaseUrl}/${GNOSIS_CONFIG.spaceId}/pin/${address}`
-    );
+    expect(url).toBe(`${GNOSIS_CONFIG.apiBaseUrl}/${GNOSIS_CONFIG.spaceId}/pin/${address}`);
     expect(init.method).toBe('POST');
     expect(init.headers).toMatchObject({ 'Content-Type': 'application/json' });
     expect(JSON.parse(init.body)).toEqual(SSV_STRATEGY_PAYLOAD);
@@ -93,10 +92,7 @@ describe('fetchVotingPower', () => {
   });
 
   it('batches requests according to GNOSIS_CONFIG.batchSize', async () => {
-    const addresses = Array.from(
-      { length: 12 },
-      (_, i) => `0x${String(i).padStart(40, '0')}`
-    );
+    const addresses = Array.from({ length: 12 }, (_, i) => `0x${String(i).padStart(40, '0')}`);
 
     mockFetch.mockResolvedValue(ok(SAMPLE_RESPONSE));
 
@@ -113,9 +109,7 @@ describe('fetchVotingPower', () => {
     const okAddr = '0x1111111111111111111111111111111111111111';
     const badAddr = '0x2222222222222222222222222222222222222222';
 
-    mockFetch
-      .mockResolvedValueOnce(ok(SAMPLE_RESPONSE))
-      .mockResolvedValueOnce(notOk(429));
+    mockFetch.mockResolvedValueOnce(ok(SAMPLE_RESPONSE)).mockResolvedValueOnce(notOk(429));
 
     const result = await fetchVotingPower([okAddr, badAddr]);
 

@@ -1,10 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import { toVotingPowerData } from '../logic/transform-voting-power';
 import type { GnosisDelegationResponse } from '../types';
 
-function response(
-  overrides: Partial<GnosisDelegationResponse> = {}
-): GnosisDelegationResponse {
+function response(overrides: Partial<GnosisDelegationResponse> = {}): GnosisDelegationResponse {
   return {
     votingPower: '1000',
     incomingPower: '300',
@@ -25,7 +24,7 @@ describe('toVotingPowerData', () => {
           { delegator: '0xaaa', delegatedPower: 100 },
           { delegator: '0xbbb', delegatedPower: 200 },
         ],
-      })
+      }),
     );
 
     expect(result.incomingDelegations).toEqual([
@@ -41,7 +40,7 @@ describe('toVotingPowerData', () => {
         outgoingPower: '75',
         delegates: ['0xccc'],
         delegateTree: [{ delegate: '0xccc', delegatedPower: '75' }],
-      })
+      }),
     );
 
     expect(result.outgoingDelegations).toEqual([{ address: '0xccc', power: 75 }]);
@@ -55,14 +54,10 @@ describe('toVotingPowerData', () => {
           { delegator: '0xccc', delegatedPower: 300 },
           { delegator: '0xbbb', delegatedPower: 20 },
         ],
-      })
+      }),
     );
 
-    expect(result.incomingDelegations.map((e) => e.address)).toEqual([
-      '0xccc',
-      '0xbbb',
-      '0xaaa',
-    ]);
+    expect(result.incomingDelegations.map((e) => e.address)).toEqual(['0xccc', '0xbbb', '0xaaa']);
   });
 
   it('falls back to the flat delegators list with an unknown amount when no tree is returned', () => {
@@ -79,9 +74,7 @@ describe('toVotingPowerData', () => {
   });
 
   it('coerces numeric fields returned as numbers or strings', () => {
-    const result = toVotingPowerData(
-      response({ votingPower: 1234.5 as unknown as string })
-    );
+    const result = toVotingPowerData(response({ votingPower: 1234.5 as unknown as string }));
 
     expect(result.votingPower).toBe(1234.5);
   });

@@ -14,25 +14,16 @@ export default function Loading() {
       </div>
 
       {/* Table skeleton */}
-      <div className="overflow-hidden card">
+      <div className="card overflow-hidden">
         <div className="grid grid-cols-6 gap-4 border-b border-border p-4">
           {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="h-4 animate-pulse rounded bg-muted/30"
-            />
+            <div key={i} className="h-4 animate-pulse rounded bg-muted/30" />
           ))}
         </div>
         {[...Array(10)].map((_, i) => (
-          <div
-            key={i}
-            className="grid grid-cols-6 gap-4 border-b border-border p-4"
-          >
+          <div key={i} className="grid grid-cols-6 gap-4 border-b border-border p-4">
             {[...Array(6)].map((_, j) => (
-              <div
-                key={j}
-                className="h-4 animate-pulse rounded bg-muted/20"
-              />
+              <div key={j} className="h-4 animate-pulse rounded bg-muted/20" />
             ))}
           </div>
         ))}

@@ -20,16 +20,8 @@
 import { SERIES_LOOKAHEAD_MONTHS, SERIES_LOOKBEHIND_MONTHS } from '../config';
 import { OccurrenceInfo, RecurrenceRule, SerializedEvent } from '../types';
 import { addMonths, endOfDay, formatYMD } from '../utils/date-utils';
-import {
-  DayRange,
-  fromDayOffset,
-  toDayOffset,
-} from './range-brush';
-import {
-  nextOccurrence,
-  parseRRule,
-  previousOccurrence,
-} from './recurrence-expander';
+import { DayRange, fromDayOffset, toDayOffset } from './range-brush';
+import { nextOccurrence, parseRRule, previousOccurrence } from './recurrence-expander';
 
 /** A series event and the parsed rule it carries. */
 interface Series {
@@ -60,7 +52,7 @@ export function resolveAnchor(range: DayRange, today: Date): Date {
 export function collapseSeriesInRange(
   events: SerializedEvent[],
   range: DayRange,
-  today: Date
+  today: Date,
 ): SerializedEvent[] {
   const anchor = resolveAnchor(range, today);
   const floor = fromDayOffset(range.from, today);
@@ -82,7 +74,7 @@ export function collapseSeriesInRange(
  */
 export function collapseSeriesAroundToday(
   events: SerializedEvent[],
-  today: Date
+  today: Date,
 ): SerializedEvent[] {
   return collapse(events, {
     anchor: today,
@@ -105,10 +97,7 @@ interface CollapseOptions {
   keep: (event: SerializedEvent) => boolean;
 }
 
-function collapse(
-  events: SerializedEvent[],
-  options: CollapseOptions
-): SerializedEvent[] {
+function collapse(events: SerializedEvent[], options: CollapseOptions): SerializedEvent[] {
   const result: SerializedEvent[] = [];
 
   for (const event of events) {
@@ -134,13 +123,9 @@ function collapseOne(series: Series, options: CollapseOptions): SerializedEvent[
 
   // The anchor day belongs to the past half: an event earlier today has
   // already happened, and the "next" card should point at the following one.
-  const previous = previousOccurrence(
-    rule,
-    seed,
-    minDate(endOfDay(anchor), ceiling),
-    floor,
-    { exceptions }
-  );
+  const previous = previousOccurrence(rule, seed, minDate(endOfDay(anchor), ceiling), floor, {
+    exceptions,
+  });
   const next = nextOccurrence(rule, seed, endOfDay(anchor), ceiling, {
     exceptions,
   });
@@ -152,7 +137,7 @@ function collapseOne(series: Series, options: CollapseOptions): SerializedEvent[
       materialize(series, previous, {
         role: 'previous',
         siblingDate: next ? next.toISOString() : null,
-      })
+      }),
     );
   }
   if (next) {
@@ -160,7 +145,7 @@ function collapseOne(series: Series, options: CollapseOptions): SerializedEvent[
       materialize(series, next, {
         role: 'next',
         siblingDate: previous ? previous.toISOString() : null,
-      })
+      }),
     );
   }
 
@@ -173,23 +158,16 @@ function collapseOne(series: Series, options: CollapseOptions): SerializedEvent[
  * The id is derived from the series id and the occurrence day so React keys
  * stay stable across re-renders and deduplication still works.
  */
-function materialize(
-  series: Series,
-  date: Date,
-  occurrence: OccurrenceInfo
-): SerializedEvent {
+function materialize(series: Series, date: Date, occurrence: OccurrenceInfo): SerializedEvent {
   const { event, seed } = series;
 
-  const duration = event.endDate
-    ? new Date(event.endDate).getTime() - seed.getTime()
-    : null;
+  const duration = event.endDate ? new Date(event.endDate).getTime() - seed.getTime() : null;
 
   return {
     ...event,
     id: `${event.id}::${formatYMD(date)}`,
     startDate: date.toISOString(),
-    endDate:
-      duration === null ? null : new Date(date.getTime() + duration).toISOString(),
+    endDate: duration === null ? null : new Date(date.getTime() + duration).toISOString(),
     occurrence,
   };
 }
@@ -209,11 +187,7 @@ function asSeries(event: SerializedEvent): Series | null {
   };
 }
 
-function inRange(
-  event: SerializedEvent,
-  range: DayRange,
-  today: Date
-): boolean {
+function inRange(event: SerializedEvent, range: DayRange, today: Date): boolean {
   const offset = toDayOffset(new Date(event.startDate), today);
   return offset >= range.from && offset <= range.to;
 }

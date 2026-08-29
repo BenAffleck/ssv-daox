@@ -55,9 +55,7 @@ const PUBLIC_TERMS = [
 ];
 
 function matches(haystack: string, terms: string[]): boolean {
-  return terms.some((term) =>
-    new RegExp(`\\b${term.replace(/\s+/g, '\\s+')}\\b`).test(haystack)
-  );
+  return terms.some((term) => new RegExp(`\\b${term.replace(/\s+/g, '\\s+')}\\b`).test(haystack));
 }
 
 /**
@@ -101,7 +99,7 @@ export function isTimelineWorthy(event: AIExtractedEvent): boolean {
  * Split events into the ones to show and the count of those dropped.
  */
 export function filterTimelineWorthy<T extends AIExtractedEvent>(
-  events: T[]
+  events: T[],
 ): { kept: T[]; filtered: number } {
   const kept = events.filter(isTimelineWorthy);
   return { kept, filtered: events.length - kept.length };

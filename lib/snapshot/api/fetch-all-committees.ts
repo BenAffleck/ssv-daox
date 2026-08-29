@@ -20,12 +20,11 @@ export interface CommitteeMembers {
  */
 export async function fetchAllCommitteeMembers(): Promise<CommitteeMembers> {
   // Fetch all three committees in parallel for better performance
-  const [grantsCommittee, operatorCommittee, multisigCommittee] =
-    await Promise.all([
-      fetchSpaceMembers(SNAPSHOT_CONFIG.spaces.grantsCommittee),
-      fetchSpaceMembers(SNAPSHOT_CONFIG.spaces.operatorCommittee),
-      fetchSpaceMembers(SNAPSHOT_CONFIG.spaces.multisigCommittee),
-    ]);
+  const [grantsCommittee, operatorCommittee, multisigCommittee] = await Promise.all([
+    fetchSpaceMembers(SNAPSHOT_CONFIG.spaces.grantsCommittee),
+    fetchSpaceMembers(SNAPSHOT_CONFIG.spaces.operatorCommittee),
+    fetchSpaceMembers(SNAPSHOT_CONFIG.spaces.multisigCommittee),
+  ]);
 
   return {
     grantsCommittee,

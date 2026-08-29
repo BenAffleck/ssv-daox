@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
+
+import { buildSeriesInfo } from '../logic/recurrence-expander';
 import {
   collapseSeriesAroundToday,
   collapseSeriesInRange,
   resolveAnchor,
 } from '../logic/series-collapse';
-import { buildSeriesInfo } from '../logic/recurrence-expander';
 import { EventSource, SerializedEvent } from '../types';
 import { formatYMD, startOfDay } from '../utils/date-utils';
 
@@ -41,8 +42,7 @@ function weekly(overrides: Partial<SerializedEvent> = {}): SerializedEvent {
   });
 }
 
-const days = (events: SerializedEvent[]) =>
-  events.map((e) => formatYMD(new Date(e.startDate)));
+const days = (events: SerializedEvent[]) => events.map((e) => formatYMD(new Date(e.startDate)));
 
 describe('resolveAnchor', () => {
   it('anchors at today when the range spans it', () => {
@@ -50,15 +50,11 @@ describe('resolveAnchor', () => {
   });
 
   it('anchors at the range start for a window entirely in the future', () => {
-    expect(resolveAnchor({ from: 60, to: 90 }, TODAY)).toEqual(
-      new Date(2026, 4, 17)
-    );
+    expect(resolveAnchor({ from: 60, to: 90 }, TODAY)).toEqual(new Date(2026, 4, 17));
   });
 
   it('anchors at the range end for a window entirely in the past', () => {
-    expect(resolveAnchor({ from: -90, to: -30 }, TODAY)).toEqual(
-      new Date(2026, 1, 16)
-    );
+    expect(resolveAnchor({ from: -90, to: -30 }, TODAY)).toEqual(new Date(2026, 1, 16));
   });
 });
 
@@ -71,11 +67,7 @@ describe('collapseSeriesInRange', () => {
   });
 
   it('marks each occurrence with its role and its sibling', () => {
-    const [previous, next] = collapseSeriesInRange(
-      [weekly()],
-      { from: -14, to: 30 },
-      TODAY
-    );
+    const [previous, next] = collapseSeriesInRange([weekly()], { from: -14, to: 30 }, TODAY);
 
     expect(previous.occurrence).toEqual({
       role: 'previous',
@@ -97,11 +89,7 @@ describe('collapseSeriesInRange', () => {
   });
 
   it('preserves the seed occurrence duration', () => {
-    const [previous] = collapseSeriesInRange(
-      [weekly()],
-      { from: -14, to: 30 },
-      TODAY
-    );
+    const [previous] = collapseSeriesInRange([weekly()], { from: -14, to: 30 }, TODAY);
 
     const start = new Date(previous.startDate);
     const end = new Date(previous.endDate!);
@@ -118,7 +106,7 @@ describe('collapseSeriesInRange', () => {
     expect(days(result)).toEqual(['2026-05-20']);
   });
 
-  it('pairs the occurrences when one lands on a future window\'s first day', () => {
+  it("pairs the occurrences when one lands on a future window's first day", () => {
     // 63 days out is Wed 20 May, an occurrence — so it anchors the window and
     // the following week supplies the "next" card.
     const result = collapseSeriesInRange([weekly()], { from: 63, to: 90 }, TODAY);
@@ -129,11 +117,7 @@ describe('collapseSeriesInRange', () => {
   it('shows the last occurrence of a window entirely in the past', () => {
     // Anchored at the window's end (Mon 16 Feb), the newest Wednesday behind
     // it is 11 Feb, and nothing follows inside the window.
-    const result = collapseSeriesInRange(
-      [weekly()],
-      { from: -60, to: -30 },
-      TODAY
-    );
+    const result = collapseSeriesInRange([weekly()], { from: -60, to: -30 }, TODAY);
 
     expect(days(result)).toEqual(['2026-02-11']);
   });
@@ -144,9 +128,7 @@ describe('collapseSeriesInRange', () => {
 
     for (const occurrence of result) {
       const offset = Math.round(
-        (startOfDay(new Date(occurrence.startDate)).getTime() -
-          TODAY.getTime()) /
-          86_400_000
+        (startOfDay(new Date(occurrence.startDate)).getTime() - TODAY.getTime()) / 86_400_000,
       );
       expect(offset).toBeGreaterThanOrEqual(range.from);
       expect(offset).toBeLessThanOrEqual(range.to);
@@ -159,9 +141,7 @@ describe('collapseSeriesInRange', () => {
     });
 
     // Three occurrences from 7 Jan, so the series ended on 21 Jan.
-    expect(collapseSeriesInRange([finished], { from: -14, to: 30 }, TODAY)).toEqual(
-      []
-    );
+    expect(collapseSeriesInRange([finished], { from: -14, to: 30 }, TODAY)).toEqual([]);
   });
 
   it('skips an occurrence cancelled by EXDATE', () => {
@@ -172,19 +152,17 @@ describe('collapseSeriesInRange', () => {
       },
     });
 
-    expect(days(collapseSeriesInRange([withException], { from: -14, to: 30 }, TODAY)))
-      .toEqual(['2026-03-18', '2026-04-01']);
+    expect(days(collapseSeriesInRange([withException], { from: -14, to: 30 }, TODAY))).toEqual([
+      '2026-03-18',
+      '2026-04-01',
+    ]);
   });
 
   it('passes one-off events through, filtered to the range', () => {
     const inside = event({ id: 'a', startDate: new Date(2026, 2, 20).toISOString() });
     const outside = event({ id: 'b', startDate: new Date(2026, 6, 1).toISOString() });
 
-    const result = collapseSeriesInRange(
-      [inside, outside],
-      { from: -14, to: 30 },
-      TODAY
-    );
+    const result = collapseSeriesInRange([inside, outside], { from: -14, to: 30 }, TODAY);
 
     expect(result.map((e) => e.id)).toEqual(['a']);
     expect(result[0].occurrence).toBeUndefined();
@@ -197,8 +175,9 @@ describe('collapseSeriesInRange', () => {
       recurrence: { rrule: 'NONSENSE', summary: '', exceptions: [] },
     });
 
-    expect(days(collapseSeriesInRange([broken], { from: -14, to: 30 }, TODAY)))
-      .toEqual(['2026-03-20']);
+    expect(days(collapseSeriesInRange([broken], { from: -14, to: 30 }, TODAY))).toEqual([
+      '2026-03-20',
+    ]);
   });
 });
 
@@ -225,8 +204,6 @@ describe('collapseSeriesAroundToday', () => {
       startDate: new Date(2027, 5, 1).toISOString(),
     });
 
-    expect(collapseSeriesAroundToday([distant], TODAY).map((e) => e.id)).toEqual([
-      'far',
-    ]);
+    expect(collapseSeriesAroundToday([distant], TODAY).map((e) => e.id)).toEqual(['far']);
   });
 });

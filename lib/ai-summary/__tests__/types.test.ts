@@ -2,8 +2,9 @@
  * Unit tests for AI summary types and Zod schemas
  */
 
-import { describe, it, expect } from 'vitest';
-import { ProposalSummarySchema, ChoiceExplanationSchema } from '../types';
+import { describe, expect, it } from 'vitest';
+
+import { ChoiceExplanationSchema, ProposalSummarySchema } from '../types';
 
 describe('AI Summary Types', () => {
   describe('ChoiceExplanationSchema', () => {

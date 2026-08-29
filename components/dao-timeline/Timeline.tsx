@@ -1,37 +1,32 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { EventGroup, SerializedEvent } from '@/lib/dao-timeline/types';
+
+import { AI_EXTRACTION_SOURCE_ID, AI_EXTRACTION_SOURCE_NAME } from '@/lib/ai-extraction/transform';
 import {
-  getDateLabel,
-  isSameDay,
-  startOfDay,
-} from '@/lib/dao-timeline/utils/date-utils';
+  ExtractionStats,
+  filterProposalsByTimeWindow,
+  getProposalCountsByWindow,
+  ProposalForExtraction,
+  TimeWindow,
+} from '@/lib/ai-extraction/types';
 import {
-  DayRange,
   clampRange,
   computeDomain,
+  DayRange,
   resolveInitialRange,
 } from '@/lib/dao-timeline/logic/range-brush';
 import {
   collapseSeriesAroundToday,
   collapseSeriesInRange,
 } from '@/lib/dao-timeline/logic/series-collapse';
-import {
-  ExtractionStats,
-  ProposalForExtraction,
-  TimeWindow,
-  filterProposalsByTimeWindow,
-  getProposalCountsByWindow,
-} from '@/lib/ai-extraction/types';
-import {
-  AI_EXTRACTION_SOURCE_ID,
-  AI_EXTRACTION_SOURCE_NAME,
-} from '@/lib/ai-extraction/transform';
+import { EventGroup, SerializedEvent } from '@/lib/dao-timeline/types';
+import { getDateLabel, isSameDay, startOfDay } from '@/lib/dao-timeline/utils/date-utils';
+
+import AIExtractionPanel from './AIExtractionPanel';
 import TimelineFilterControls from './TimelineFilterControls';
 import TimelineRangeBrush from './TimelineRangeBrush';
 import TimelineView from './TimelineView';
-import AIExtractionPanel from './AIExtractionPanel';
 
 interface SourceMetadata {
   id: string;
@@ -66,8 +61,7 @@ export default function Timeline({
     current: number;
     total: number;
   } | null>(null);
-  const [extractionStats, setExtractionStats] =
-    useState<ExtractionStats | null>(null);
+  const [extractionStats, setExtractionStats] = useState<ExtractionStats | null>(null);
   const [extractionError, setExtractionError] = useState<string | null>(null);
 
   // Time window state for AI extraction
@@ -77,15 +71,12 @@ export default function Timeline({
   const [skipCache, setSkipCache] = useState(false);
 
   // Compute proposal counts for each time window
-  const proposalCounts = useMemo(
-    () => getProposalCountsByWindow(proposals),
-    [proposals]
-  );
+  const proposalCounts = useMemo(() => getProposalCountsByWindow(proposals), [proposals]);
 
   // Filter proposals by selected time window
   const filteredProposals = useMemo(
     () => filterProposalsByTimeWindow(proposals, timeWindow),
-    [proposals, timeWindow]
+    [proposals, timeWindow],
   );
 
   // Combine regular events with AI events
@@ -196,13 +187,9 @@ export default function Timeline({
             }
           }
         } catch (error) {
-          console.error(
-            `Error extracting from proposal ${proposal.id}:`,
-            error
-          );
+          console.error(`Error extracting from proposal ${proposal.id}:`, error);
           stats.errors++;
-          const errorMsg =
-            error instanceof Error ? error.message : 'Unknown error';
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
           // Stop on critical errors
           if (
             errorMsg.toLowerCase().includes('credit') ||
@@ -227,9 +214,7 @@ export default function Timeline({
       }
     } catch (error) {
       console.error('AI extraction failed:', error);
-      setExtractionError(
-        error instanceof Error ? error.message : 'Extraction failed'
-      );
+      setExtractionError(error instanceof Error ? error.message : 'Extraction failed');
     } finally {
       setIsExtracting(false);
     }
@@ -250,48 +235,37 @@ export default function Timeline({
   // histogram tracks the source filter while its axis does not.
   const sourceFilteredEvents = useMemo(() => {
     if (selectedSources.length === 0) return allEvents;
-    return allEvents.filter((event) =>
-      selectedSources.includes(event.sourceId)
-    );
+    return allEvents.filter((event) => selectedSources.includes(event.sourceId));
   }, [allEvents, selectedSources]);
 
   // Series are collapsed around today rather than around the brushed range for
   // anything that feeds the brush itself: the axis and the histogram must not
   // reshape while the user is dragging. This agrees with the list whenever the
   // range spans today, which is the default.
-  const axisEvents = useMemo(
-    () => collapseSeriesAroundToday(allEvents, today),
-    [allEvents, today]
-  );
+  const axisEvents = useMemo(() => collapseSeriesAroundToday(allEvents, today), [allEvents, today]);
 
   const histogramEvents = useMemo(
     () => collapseSeriesAroundToday(sourceFilteredEvents, today),
-    [sourceFilteredEvents, today]
+    [sourceFilteredEvents, today],
   );
 
   // The axis spans every event, so toggling a source never moves it.
-  const domain = useMemo(
-    () => computeDomain(axisEvents, today),
-    [axisEvents, today]
-  );
+  const domain = useMemo(() => computeDomain(axisEvents, today), [axisEvents, today]);
 
   // Resolved once: the near-term window, or the whole domain when that window
   // is empty. Later AI-extracted events must not move a range the user set.
   const [range, setRange] = useState<DayRange>(() =>
-    resolveInitialRange(domain, axisEvents, today)
+    resolveInitialRange(domain, axisEvents, today),
   );
 
   // A stored range can fall outside the domain once new events arrive.
-  const activeRange = useMemo(
-    () => clampRange(range, domain),
-    [range, domain]
-  );
+  const activeRange = useMemo(() => clampRange(range, domain), [range, domain]);
 
   // Recurring series contribute at most their most recent and next occurrence
   // here, so a weekly call cannot bury the one-off events.
   const visibleEvents = useMemo(
     () => collapseSeriesInRange(sourceFilteredEvents, activeRange, today),
-    [sourceFilteredEvents, activeRange, today]
+    [sourceFilteredEvents, activeRange, today],
   );
 
   // Group the visible events by day
@@ -299,10 +273,7 @@ export default function Timeline({
     const filtered = [...visibleEvents];
 
     // Sort by start date
-    filtered.sort(
-      (a, b) =>
-        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-    );
+    filtered.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
     // Group by day
     const groups: EventGroup[] = [];
@@ -358,15 +329,11 @@ export default function Timeline({
         onRangeChange={setRange}
       />
 
-      <TimelineView
-        groups={groupedEvents}
-        sourceColors={sourceColors}
-        today={today}
-      />
+      <TimelineView groups={groupedEvents} sourceColors={sourceColors} today={today} />
 
       <div className="mt-6 text-center text-sm text-muted">
-        Showing {groupedEvents.reduce((acc, g) => acc + g.events.length, 0)} of{' '}
-        {axisEvents.length} events
+        Showing {groupedEvents.reduce((acc, g) => acc + g.events.length, 0)} of {axisEvents.length}{' '}
+        events
         {aiEvents.length > 0 && (
           <span className="text-violet-600 dark:text-violet-400">
             {' '}

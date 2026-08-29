@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { generateICS } from '@/lib/dao-timeline/utils/calendar-export';
+import { describe, expect, it } from 'vitest';
+
 import { EventSource, SerializedEvent } from '@/lib/dao-timeline/types';
+import { generateICS } from '@/lib/dao-timeline/utils/calendar-export';
 
 function makeEvent(overrides: Partial<SerializedEvent> = {}): SerializedEvent {
   return {
@@ -42,7 +43,7 @@ describe('generateICS', () => {
         isAllDay: true,
         startDate: '2025-06-15T00:00:00.000Z',
         endDate: '2025-06-16T00:00:00.000Z',
-      })
+      }),
     );
 
     expect(ics).toContain('DTSTART;VALUE=DATE:20250615');
@@ -55,13 +56,11 @@ describe('generateICS', () => {
       makeEvent({
         title: 'Meeting; with, commas\\and backslash',
         description: 'Line one\nLine two; semicolons, commas',
-      })
+      }),
     );
 
     expect(ics).toContain('SUMMARY:Meeting\\; with\\, commas\\\\and backslash');
-    expect(ics).toContain(
-      'DESCRIPTION:Line one\\nLine two\\; semicolons\\, commas'
-    );
+    expect(ics).toContain('DESCRIPTION:Line one\\nLine two\\; semicolons\\, commas');
   });
 
   it('omits DTEND when endDate is null', () => {
@@ -75,7 +74,7 @@ describe('generateICS', () => {
       makeEvent({
         location: 'Zurich, Switzerland',
         sourceUrl: 'https://example.com/event',
-      })
+      }),
     );
 
     expect(ics).toContain('LOCATION:Zurich\\, Switzerland');
@@ -85,15 +84,15 @@ describe('generateICS', () => {
   it('exports the whole series when the event recurs', () => {
     const ics = generateICS(
       makeEvent({
-      id: 'main-calendar-evt::2026-03-18',
-      isRecurring: true,
-      recurrenceId: 'evt',
-      recurrence: {
-        rrule: 'FREQ=WEEKLY;INTERVAL=2;BYDAY=WE',
-        summary: 'Every 2 weeks on Wed',
-        exceptions: ['2026-03-25'],
-      },
-      })
+        id: 'main-calendar-evt::2026-03-18',
+        isRecurring: true,
+        recurrenceId: 'evt',
+        recurrence: {
+          rrule: 'FREQ=WEEKLY;INTERVAL=2;BYDAY=WE',
+          summary: 'Every 2 weeks on Wed',
+          exceptions: ['2026-03-25'],
+        },
+      }),
     );
 
     // Adding a collapsed occurrence to a calendar should subscribe the user to
@@ -113,12 +112,8 @@ describe('generateICS', () => {
       },
     };
 
-    const first = generateICS(
-      makeEvent({ ...series, id: 'main-calendar-evt::2026-03-18' })
-    );
-    const second = generateICS(
-      makeEvent({ ...series, id: 'main-calendar-evt::2026-03-25' })
-    );
+    const first = generateICS(makeEvent({ ...series, id: 'main-calendar-evt::2026-03-18' }));
+    const second = generateICS(makeEvent({ ...series, id: 'main-calendar-evt::2026-03-25' }));
 
     // Distinct UIDs would make a calendar client file each export as its own
     // separate series.

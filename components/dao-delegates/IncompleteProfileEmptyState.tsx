@@ -1,5 +1,5 @@
-import { Delegate } from '@/lib/dao-delegates/types';
 import { KARMA_PROFILE_BASE_URL } from '@/lib/dao-delegates/config';
+import { Delegate } from '@/lib/dao-delegates/types';
 
 interface IncompleteProfileEmptyStateProps {
   delegate: Delegate;
@@ -39,7 +39,7 @@ export default function IncompleteProfileEmptyState({
       </p>
 
       <div className="mx-auto mb-6 max-w-xs rounded-lg bg-card/50 p-4 text-left">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
+        <p className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">
           Required to complete your profile:
         </p>
         <ul className="space-y-1 text-sm">
@@ -62,12 +62,7 @@ export default function IncompleteProfileEmptyState({
           className="inline-flex items-center gap-2 rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
         >
           Complete Profile on Karma
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"

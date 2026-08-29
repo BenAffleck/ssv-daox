@@ -2,16 +2,18 @@
  * Unit tests for AI extraction transformation functions
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
+import { EventSource } from '@/lib/dao-timeline/types';
+
 import {
-  transformAIExtractedEvent,
-  transformAIExtractedEvents,
-  serializeAIExtractedEvent,
-  serializeAIExtractedEvents,
   AI_EXTRACTION_SOURCE_ID,
   AI_EXTRACTION_SOURCE_NAME,
+  serializeAIExtractedEvent,
+  serializeAIExtractedEvents,
+  transformAIExtractedEvent,
+  transformAIExtractedEvents,
 } from '../transform';
-import { EventSource } from '@/lib/dao-timeline/types';
 import { AIExtractedEventWithSource } from '../types';
 
 describe('AI Extraction Transform', () => {
@@ -181,7 +183,7 @@ describe('AI-extracted recurrence', () => {
           interval: 1,
           count: 6,
         },
-      }).recurrence?.rrule
+      }).recurrence?.rrule,
     ).toBe('FREQ=MONTHLY;COUNT=6');
 
     expect(
@@ -193,7 +195,7 @@ describe('AI-extracted recurrence', () => {
           interval: 1,
           until: '2026-12-31',
         },
-      }).recurrence?.rrule
+      }).recurrence?.rrule,
     ).toBe('FREQ=MONTHLY;UNTIL=20261231');
   });
 

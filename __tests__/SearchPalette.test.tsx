@@ -1,13 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import SearchPalette, { openSearchPalette, SearchTrigger } from '@/components/SearchPalette';
-import {
-  ExternalTool,
-  ExternalToolCategory,
-  Module,
-  ModuleStatus,
-} from '@/lib/types';
+import { ExternalTool, ExternalToolCategory, Module, ModuleStatus } from '@/lib/types';
 
 const pushMock = vi.fn();
 vi.mock('next/navigation', () => ({
@@ -125,11 +121,7 @@ describe('SearchPalette', () => {
     });
     await user.type(screen.getByLabelText('Search query'), 'stake easy');
     await user.keyboard('{Enter}');
-    expect(openSpy).toHaveBeenCalledWith(
-      'https://stakeeasy.xyz',
-      '_blank',
-      'noopener,noreferrer',
-    );
+    expect(openSpy).toHaveBeenCalledWith('https://stakeeasy.xyz', '_blank', 'noopener,noreferrer');
     openSpy.mockRestore();
   });
 });
@@ -158,10 +150,7 @@ describe('SearchPalette votes', () => {
 
   /** Open the palette and let the lazy vote-index fetch settle. */
   async function openWithVotes(payload: unknown = { votes, failedSpaces: [] }) {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: true, json: async () => payload }),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }));
     render(<SearchPalette modules={modules} tools={tools} />);
     await act(async () => {
       fireEvent.keyDown(window, { key: 'k', ctrlKey: true });

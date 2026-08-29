@@ -1,9 +1,5 @@
 import { SNAPSHOT_CONFIG } from '../config';
-import type {
-  SnapshotGraphQLResponse,
-  VotesQueryResponse,
-  SnapshotVote,
-} from '../types';
+import type { SnapshotGraphQLResponse, SnapshotVote, VotesQueryResponse } from '../types';
 
 /**
  * Maximum votes per page (Snapshot API limit is 1000)
@@ -28,10 +24,7 @@ const VOTES_QUERY = `
 /**
  * Fetches a single page of votes
  */
-async function fetchVotesPage(
-  proposalIds: string[],
-  skip: number
-): Promise<SnapshotVote[]> {
+async function fetchVotesPage(proposalIds: string[], skip: number): Promise<SnapshotVote[]> {
   const response = await fetch(SNAPSHOT_CONFIG.apiUrl, {
     method: 'POST',
     headers: {
@@ -45,13 +38,10 @@ async function fetchVotesPage(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Snapshot API error: ${response.status} ${response.statusText}`
-    );
+    throw new Error(`Snapshot API error: ${response.status} ${response.statusText}`);
   }
 
-  const result: SnapshotGraphQLResponse<VotesQueryResponse> =
-    await response.json();
+  const result: SnapshotGraphQLResponse<VotesQueryResponse> = await response.json();
 
   // Check for GraphQL errors
   if (result.errors?.length) {
@@ -68,9 +58,7 @@ async function fetchVotesPage(
  * @returns Array of vote objects
  * @throws Error if the API request fails
  */
-export async function fetchVotes(
-  proposalIds: string[]
-): Promise<SnapshotVote[]> {
+export async function fetchVotes(proposalIds: string[]): Promise<SnapshotVote[]> {
   // Return empty array for empty input
   if (proposalIds.length === 0) {
     return [];

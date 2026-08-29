@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { ExternalTool, ExternalToolCategory } from '@/lib/types';
 
 interface ExternalToolsSectionProps {
@@ -27,7 +28,13 @@ const CATEGORY_BADGE: Record<ExternalToolCategory, string> = {
 };
 
 const ExternalLinkIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -38,13 +45,30 @@ const ExternalLinkIcon = ({ className }: { className?: string }) => (
 );
 
 const ArrowRightIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14m0 0l-6-6m6 6l-6 6" />
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M5 12h14m0 0l-6-6m6 6l-6 6"
+    />
   </svg>
 );
 
 const InfoIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -100,9 +124,7 @@ function ToolRow({ tool, isLast }: { tool: ExternalTool; isLast: boolean }) {
 
 export default function ExternalToolsSection({ tools }: ExternalToolsSectionProps) {
   const [filter, setFilter] = useState<Filter>('All');
-  const visible = tools.filter(
-    (t) => filter === 'All' || t.categories.includes(filter),
-  );
+  const visible = tools.filter((t) => filter === 'All' || t.categories.includes(filter));
 
   return (
     <section className="mt-20">
@@ -112,7 +134,8 @@ export default function ExternalToolsSection({ tools }: ExternalToolsSectionProp
             External Tools
           </h2>
           <p className="text-sm text-muted">
-            Calculators, simulators, dashboards, explorers, and reward claim UIs from across the SSV community.
+            Calculators, simulators, dashboards, explorers, and reward claim UIs from across the SSV
+            community.
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -145,7 +168,8 @@ export default function ExternalToolsSection({ tools }: ExternalToolsSectionProp
         <div className="flex items-center gap-3 text-[13px] text-muted">
           <InfoIcon className="h-4 w-4 flex-shrink-0" />
           <span>
-            Built a tool the DAO would use? Submit it for inclusion — community tools are curated, not auto-listed.
+            Built a tool the DAO would use? Submit it for inclusion — community tools are curated,
+            not auto-listed.
           </span>
         </div>
         <a

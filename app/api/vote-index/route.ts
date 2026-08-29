@@ -11,8 +11,9 @@
  */
 
 import { NextResponse } from 'next/server';
-import { fetchGovernanceProposals } from '@/lib/snapshot/api/fetch-governance-proposals';
+
 import { toVoteIndexEntry, type VoteIndexEntry } from '@/lib/dao-governance/vote-search';
+import { fetchGovernanceProposals } from '@/lib/snapshot/api/fetch-governance-proposals';
 
 export interface VoteIndexResponse {
   votes: VoteIndexEntry[];

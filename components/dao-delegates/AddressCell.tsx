@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
 
 interface AddressCellProps {
@@ -31,20 +32,18 @@ export default function AddressCell({ address }: AddressCellProps) {
         onClick={handleCopy}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        className="cursor-pointer transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 rounded"
+        className="cursor-pointer rounded transition-colors hover:text-primary focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:outline-none"
         aria-label="Copy address to clipboard"
       >
-        <code className="text-xs text-foreground font-mono">
-          {formatAddress(address)}
-        </code>
+        <code className="font-mono text-xs text-foreground">{formatAddress(address)}</code>
       </button>
 
       {/* Tooltip */}
       {showTooltip && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-foreground text-background text-xs rounded whitespace-nowrap pointer-events-none z-10">
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 rounded bg-foreground px-2 py-1 text-xs whitespace-nowrap text-background">
           {tooltipText}
           {/* Arrow */}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-foreground"></div>
+          <div className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-t-4 border-r-4 border-l-4 border-transparent border-t-foreground"></div>
         </div>
       )}
     </div>

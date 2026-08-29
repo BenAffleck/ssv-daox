@@ -2,7 +2,14 @@
  * Unit tests for AI summary generation
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createClient } from '@/lib/ai/client';
+import { getAnthropicApiKey, isAIEnabled } from '@/lib/ai/config';
+
+import { cacheSummary, getCachedSummary } from '../cache';
+import { generateProposalSummary, isAISummaryAvailable } from '../generate-summary';
+import type { SummaryRequest } from '../types';
 
 // Mock the ai modules before imports
 vi.mock('@/lib/ai/config', () => ({
@@ -14,7 +21,7 @@ vi.mock('@/lib/ai/client', () => ({
   createClient: vi.fn(),
   getModelId: vi.fn().mockReturnValue('claude-haiku-4-5-20251001'),
   truncateBody: vi.fn((body: string, _max: number) => body),
-  parseAPIError: vi.fn((e: unknown) => e instanceof Error ? e.message : 'Unknown error'),
+  parseAPIError: vi.fn((e: unknown) => (e instanceof Error ? e.message : 'Unknown error')),
   extractJSONFromResponse: vi.fn((text: string) => {
     const match = text.match(/\{[\s\S]*\}/);
     if (match) return JSON.parse(match[0]);
@@ -26,12 +33,6 @@ vi.mock('../cache', () => ({
   getCachedSummary: vi.fn(),
   cacheSummary: vi.fn(),
 }));
-
-import { generateProposalSummary, isAISummaryAvailable } from '../generate-summary';
-import { isAIEnabled, getAnthropicApiKey } from '@/lib/ai/config';
-import { createClient } from '@/lib/ai/client';
-import { getCachedSummary, cacheSummary } from '../cache';
-import type { SummaryRequest } from '../types';
 
 const mockRequest: SummaryRequest = {
   proposalId: 'proposal-123',
@@ -93,10 +94,12 @@ describe('generateProposalSummary', () => {
     const mockClient = {
       messages: {
         create: vi.fn().mockResolvedValue({
-          content: [{
-            type: 'text',
-            text: JSON.stringify(mockSummaryResponse),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(mockSummaryResponse),
+            },
+          ],
         }),
       },
     };
@@ -136,10 +139,12 @@ describe('generateProposalSummary', () => {
     const mockClient = {
       messages: {
         create: vi.fn().mockResolvedValue({
-          content: [{
-            type: 'text',
-            text: '{"invalid": "response"}',
-          }],
+          content: [
+            {
+              type: 'text',
+              text: '{"invalid": "response"}',
+            },
+          ],
         }),
       },
     };

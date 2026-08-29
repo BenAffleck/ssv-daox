@@ -1,13 +1,13 @@
 'use client';
 
 import { KeyboardEvent, PointerEvent, useMemo, useRef, useState } from 'react';
-import { SerializedEvent } from '@/lib/dao-timeline/types';
+
 import {
   BrushDomain,
-  DayRange,
   buildHistogram,
   buildMonthTicks,
   clampRange,
+  DayRange,
   filterByDayRange,
   formatOffsetLong,
   formatRangeLabel,
@@ -19,6 +19,7 @@ import {
   toFraction,
   toOffset,
 } from '@/lib/dao-timeline/logic/range-brush';
+import { SerializedEvent } from '@/lib/dao-timeline/types';
 
 type DragMode = 'from' | 'to' | 'pan';
 type Edge = 'from' | 'to';
@@ -63,31 +64,21 @@ export default function TimelineRangeBrush({
   onRangeChange,
 }: TimelineRangeBrushProps) {
   const [dragMode, setDragMode] = useState<DragMode | null>(null);
-  const grabRef = useRef<{ offset: number; from: number; to: number } | null>(
-    null
-  );
+  const grabRef = useRef<{ offset: number; from: number; to: number } | null>(null);
 
-  const buckets = useMemo(
-    () => buildHistogram(events, domain, today),
-    [events, domain, today]
-  );
+  const buckets = useMemo(() => buildHistogram(events, domain, today), [events, domain, today]);
   const peak = useMemo(() => peakCount(buckets), [buckets]);
-  const monthTicks = useMemo(
-    () => buildMonthTicks(domain, today),
-    [domain, today]
-  );
+  const monthTicks = useMemo(() => buildMonthTicks(domain, today), [domain, today]);
   const presets = useMemo(() => getPresets(domain), [domain]);
 
   const inRange = useMemo(
     () => visibleEvents ?? filterByDayRange(events, range, today),
-    [visibleEvents, events, range, today]
+    [visibleEvents, events, range, today],
   );
   const pastCount = useMemo(
     () =>
-      inRange.filter((event) =>
-        isPastOffset(toDayOffset(new Date(event.startDate), today))
-      ).length,
-    [inRange, today]
+      inRange.filter((event) => isPastOffset(toDayOffset(new Date(event.startDate), today))).length,
+    [inRange, today],
   );
   const upcomingCount = inRange.length - pastCount;
 
@@ -149,10 +140,7 @@ export default function TimelineRangeBrush({
 
     const width = grab.to - grab.from;
     const shifted = grab.from + (offset - grab.offset);
-    const from = Math.min(
-      Math.max(shifted, domain.min),
-      Math.max(domain.max - width, domain.min)
-    );
+    const from = Math.min(Math.max(shifted, domain.min), Math.max(domain.max - width, domain.min));
     commit({ from, to: from + width });
   };
 
@@ -183,8 +171,7 @@ export default function TimelineRangeBrush({
   const handleClass =
     'absolute -top-1 -bottom-1 w-4 -translate-x-1/2 cursor-ew-resize rounded-[5px] bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground';
 
-  const countLabel =
-    `${upcomingCount} upcoming` + (pastCount > 0 ? ` · ${pastCount} past` : '');
+  const countLabel = `${upcomingCount} upcoming` + (pastCount > 0 ? ` · ${pastCount} past` : '');
 
   return (
     <div className="card mb-8 p-5">
@@ -199,9 +186,7 @@ export default function TimelineRangeBrush({
               key={preset.id}
               type="button"
               onClick={() => commit({ from: preset.from, to: preset.to })}
-              className={
-                isPresetActive(preset, range) ? 'filter-btn-active' : 'filter-btn'
-              }
+              className={isPresetActive(preset, range) ? 'filter-btn-active' : 'filter-btn'}
             >
               {preset.label}
             </button>
@@ -211,7 +196,7 @@ export default function TimelineRangeBrush({
 
       <div className="relative pt-[18px]">
         <span
-          className="absolute top-0 -translate-x-1/2 font-heading text-[10px] font-semibold uppercase tracking-[0.08em] text-foreground"
+          className="absolute top-0 -translate-x-1/2 font-heading text-[10px] font-semibold tracking-[0.08em] text-foreground uppercase"
           style={{ left: `${nowPercent}%` }}
         >
           Now
@@ -236,15 +221,12 @@ export default function TimelineRangeBrush({
 
           {buckets.map((bucket, index) => {
             const midpoint = (bucket.from + bucket.to) / 2;
-            const bucketInRange =
-              midpoint >= range.from && midpoint <= range.to;
+            const bucketInRange = midpoint >= range.from && midpoint <= range.to;
             const bucketIsPast = midpoint < 0;
             const height =
               bucket.count === 0
                 ? BAR_EMPTY_HEIGHT
-                : Math.round(
-                    BAR_BASE_HEIGHT + (bucket.count / peak) * BAR_SCALE_HEIGHT
-                  );
+                : Math.round(BAR_BASE_HEIGHT + (bucket.count / peak) * BAR_SCALE_HEIGHT);
             const tone =
               bucket.count === 0
                 ? 'bg-border'
@@ -292,9 +274,7 @@ export default function TimelineRangeBrush({
             aria-valuenow={range.from}
             aria-valuetext={formatOffsetLong(range.from, today)}
             onKeyDown={(event) => handleKeyDown(event, 'from')}
-            className={`${handleClass} ${
-              dragMode === 'from' ? 'shadow-glow-lg' : 'shadow-glow'
-            }`}
+            className={`${handleClass} ${dragMode === 'from' ? 'shadow-glow-lg' : 'shadow-glow'}`}
             style={{ left: `${fromPercent}%` }}
           >
             <span className="pointer-events-none absolute inset-0 flex items-center justify-center gap-[3px]">
@@ -312,9 +292,7 @@ export default function TimelineRangeBrush({
             aria-valuenow={range.to}
             aria-valuetext={formatOffsetLong(range.to, today)}
             onKeyDown={(event) => handleKeyDown(event, 'to')}
-            className={`${handleClass} ${
-              dragMode === 'to' ? 'shadow-glow-lg' : 'shadow-glow'
-            }`}
+            className={`${handleClass} ${dragMode === 'to' ? 'shadow-glow-lg' : 'shadow-glow'}`}
             style={{ left: `${toPercent}%` }}
           >
             <span className="pointer-events-none absolute inset-0 flex items-center justify-center gap-[3px]">

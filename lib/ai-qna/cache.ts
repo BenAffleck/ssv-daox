@@ -7,11 +7,12 @@
  * cost optimisation, never a source of truth.
  */
 
-import { promises as fs } from 'fs';
 import { createHash } from 'crypto';
+import { promises as fs } from 'fs';
 import path from 'path';
-import type { ProposalAnswer, CachedAnswer, AnswerCache } from './types';
+
 import { AI_QNA_CONFIG } from './config';
+import type { AnswerCache, CachedAnswer, ProposalAnswer } from './types';
 
 /**
  * Normalize a question so trivial rewordings (casing, padding, doubled spaces)
@@ -25,10 +26,7 @@ export function normalizeQuestion(question: string): string {
  * Build the cache key for a proposal + question pair.
  */
 export function buildCacheKey(proposalId: string, question: string): string {
-  const hash = createHash('sha256')
-    .update(normalizeQuestion(question))
-    .digest('hex')
-    .slice(0, 16);
+  const hash = createHash('sha256').update(normalizeQuestion(question)).digest('hex').slice(0, 16);
   return `${proposalId}:${hash}`;
 }
 
@@ -100,7 +98,7 @@ function isCacheEntryValid(entry: CachedAnswer): boolean {
  */
 export async function getCachedAnswer(
   proposalId: string,
-  question: string
+  question: string,
 ): Promise<ProposalAnswer | null> {
   const cache = await loadCache();
   const entry = cache.answers[buildCacheKey(proposalId, question)];
@@ -118,7 +116,7 @@ export async function getCachedAnswer(
 export async function cacheAnswer(
   proposalId: string,
   question: string,
-  answer: ProposalAnswer
+  answer: ProposalAnswer,
 ): Promise<void> {
   const cache = await loadCache();
 

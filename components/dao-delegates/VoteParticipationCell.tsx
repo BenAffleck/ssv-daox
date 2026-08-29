@@ -59,9 +59,7 @@ export default function VoteParticipationCell({
               title={`${vote.title}: ${vote.hasVoted ? 'Voted' : 'Not voted'}`}
             />
           ))}
-          {extraCount > 0 && (
-            <span className="text-[10px] text-muted">+{extraCount}</span>
-          )}
+          {extraCount > 0 && <span className="text-[10px] text-muted">+{extraCount}</span>}
           <span className="ml-0.5 text-[10px] text-muted">Active</span>
         </div>
       )}

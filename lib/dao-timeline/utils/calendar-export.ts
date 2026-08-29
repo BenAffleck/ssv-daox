@@ -15,7 +15,10 @@ function escapeICSText(text: string): string {
  * Format a Date as ICS UTC datetime (YYYYMMDDTHHMMSSZ)
  */
 function formatICSDateTime(date: Date): string {
-  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  return date
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '');
 }
 
 /**
@@ -72,9 +75,7 @@ export function generateICS(event: SerializedEvent): string {
   if (event.recurrence) {
     lines.push(`RRULE:${event.recurrence.rrule}`);
     if (event.recurrence.exceptions.length > 0) {
-      const dates = event.recurrence.exceptions
-        .map((ymd) => ymd.replace(/-/g, ''))
-        .join(',');
+      const dates = event.recurrence.exceptions.map((ymd) => ymd.replace(/-/g, '')).join(',');
       lines.push(`EXDATE;VALUE=DATE:${dates}`);
     }
   }

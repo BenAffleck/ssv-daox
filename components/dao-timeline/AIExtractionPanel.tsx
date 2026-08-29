@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  ExtractionStats,
-  TimeWindow,
-  TIME_WINDOWS,
-} from '@/lib/ai-extraction/types';
+import { ExtractionStats, TIME_WINDOWS, TimeWindow } from '@/lib/ai-extraction/types';
 
 interface AIExtractionPanelProps {
   /** Whether AI extraction is available (API configured) */
@@ -48,9 +44,7 @@ export default function AIExtractionPanel({
 
   // Calculate progress percentage
   const progressPercent =
-    progress && progress.total > 0
-      ? Math.round((progress.current / progress.total) * 100)
-      : 0;
+    progress && progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
 
   // Get proposal count for current window
   const proposalCount = proposalCounts[timeWindow];
@@ -79,8 +73,7 @@ export default function AIExtractionPanel({
                 {stats.eventsFound > 0 ? (
                   <>
                     Found {stats.eventsFound} event
-                    {stats.eventsFound !== 1 ? 's' : ''} from{' '}
-                    {stats.totalProposals} proposal
+                    {stats.eventsFound !== 1 ? 's' : ''} from {stats.totalProposals} proposal
                     {stats.totalProposals !== 1 ? 's' : ''}
                     {stats.proposalsFromCache > 0 && (
                       <span className="text-muted/70">
@@ -91,8 +84,7 @@ export default function AIExtractionPanel({
                     {stats.eventsFiltered > 0 && (
                       <span className="text-muted/70">
                         {' '}
-                        &middot; skipped {stats.eventsFiltered} internal
-                        recurring event
+                        &middot; skipped {stats.eventsFiltered} internal recurring event
                         {stats.eventsFiltered !== 1 ? 's' : ''}
                       </span>
                     )}
@@ -127,14 +119,12 @@ export default function AIExtractionPanel({
       <div className="mb-6 rounded-lg border border-secondary/20 bg-secondary/5 p-4">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <span className="text-lg animate-pulse" role="img" aria-label="sparkles">
+            <span className="animate-pulse text-lg" role="img" aria-label="sparkles">
               ✨
             </span>
           </div>
           <div className="flex-1">
-            <h3 className="font-medium text-foreground">
-              Extracting AI Insights...
-            </h3>
+            <h3 className="font-medium text-foreground">Extracting AI Insights...</h3>
             <p className="text-sm text-muted">
               {progress
                 ? `Analyzing proposal ${progress.current + 1} of ${progress.total}...`
@@ -148,9 +138,7 @@ export default function AIExtractionPanel({
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
-                <p className="mt-1 text-xs text-muted/70">
-                  {progressPercent}% complete
-                </p>
+                <p className="mt-1 text-xs text-muted/70">{progressPercent}% complete</p>
               </>
             )}
           </div>
@@ -163,14 +151,12 @@ export default function AIExtractionPanel({
   return (
     <div className="mb-6 rounded-lg border border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        <span className="text-lg animate-pulse" role="img" aria-label="sparkles">
+        <span className="animate-pulse text-lg" role="img" aria-label="sparkles">
           ✨
         </span>
         <h3 className="font-medium text-foreground">Extract AI Insights</h3>
       </div>
-      <p className="mt-1 text-sm text-muted">
-        Analyze proposals to find milestones and deadlines
-      </p>
+      <p className="mt-1 text-sm text-muted">Analyze proposals to find milestones and deadlines</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-2">
           <label htmlFor="time-window" className="sr-only">
@@ -180,7 +166,7 @@ export default function AIExtractionPanel({
             id="time-window"
             value={timeWindow}
             onChange={(e) => onTimeWindowChange(e.target.value as TimeWindow)}
-            className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
           >
             {TIME_WINDOWS.map((window) => (
               <option key={window.id} value={window.id}>
@@ -204,9 +190,7 @@ export default function AIExtractionPanel({
         </p>
       )}
       {proposalCount === 0 && (
-        <p className="mt-3 text-xs text-warning">
-          No proposals in the selected time range
-        </p>
+        <p className="mt-3 text-xs text-warning">No proposals in the selected time range</p>
       )}
       {error && (
         <div className="mt-3 rounded-md bg-danger/10 p-3">

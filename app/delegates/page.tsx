@@ -1,17 +1,18 @@
 import { Suspense } from 'react';
+
+import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
 import { fetchDelegatesCSV } from '@/lib/dao-delegates/api/fetch-delegates';
 import { parseCSV } from '@/lib/dao-delegates/api/parse-csv';
 import { buildEligibilityLists } from '@/lib/dao-delegates/eligibility/checker';
 import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
-import { calculateRanks } from '@/lib/dao-delegates/logic/rank-calculator';
 import { assignDelegationPrograms } from '@/lib/dao-delegates/logic/program-assigner';
+import { calculateRanks } from '@/lib/dao-delegates/logic/rank-calculator';
+import { fetchVotingPower } from '@/lib/gnosis';
+import { fetchActiveVoteStatus } from '@/lib/snapshot/api/fetch-active-vote-status';
 import { fetchAllCommitteeMembers } from '@/lib/snapshot/api/fetch-all-committees';
 import { fetchConfiguredDelegationRecipients } from '@/lib/snapshot/api/fetch-delegation-recipients';
 import { fetchVoteParticipation } from '@/lib/snapshot/api/fetch-vote-participation';
-import { fetchActiveVoteStatus } from '@/lib/snapshot/api/fetch-active-vote-status';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
-import { fetchVotingPower } from '@/lib/gnosis';
-import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
 
 export const metadata = {
   title: 'DAO Delegates - DAOx',
@@ -33,11 +34,7 @@ export default async function DaoDelegatesPage() {
   const csvDelegates = parseCSV(csvData);
 
   // Build eligibility lists with injected committee, fixed lists, and delegation data
-  const lists = buildEligibilityLists(
-    committees,
-    SNAPSHOT_CONFIG.fixedLists,
-    delegationRecipients
-  );
+  const lists = buildEligibilityLists(committees, SNAPSHOT_CONFIG.fixedLists, delegationRecipients);
 
   // Only fetch voting power for addresses that are already receiving delegation
   // Others can fetch on-demand via the API to reduce initial page load time
@@ -49,7 +46,7 @@ export default async function DaoDelegatesPage() {
     lists,
     voteParticipation,
     votingPower,
-    activeVoteData
+    activeVoteData,
   );
 
   // Calculate ranks based on karma score
@@ -61,9 +58,7 @@ export default async function DaoDelegatesPage() {
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
       <div className="mb-10">
-        <h1 className="mb-2">
-          DAO Delegates
-        </h1>
+        <h1 className="mb-2">DAO Delegates</h1>
         <p className="text-[15px] text-muted">
           Explore potential DAO delegates and delegation program assignments
         </p>

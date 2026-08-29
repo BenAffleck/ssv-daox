@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import type { SnapshotActiveProposal, GovernanceSpace } from '@/lib/snapshot/types';
+import { useCallback, useState } from 'react';
+
 import type { ProposalSummary } from '@/lib/ai-summary/types';
-import { formatTimeRemaining } from '@/lib/snapshot/utils/time-remaining';
 import { getSpaceStyle } from '@/lib/dao-governance/space-style';
-import SpaceBadge from './dao-governance/SpaceBadge';
+import type { GovernanceSpace, SnapshotActiveProposal } from '@/lib/snapshot/types';
+import { formatTimeRemaining } from '@/lib/snapshot/utils/time-remaining';
+
 import AskButton from './dao-governance/AskButton';
+import SpaceBadge from './dao-governance/SpaceBadge';
 
 interface ActiveVoteCardProps {
   proposal: SnapshotActiveProposal;
@@ -30,7 +32,12 @@ function getChoiceColor(choice: string, index: number): string {
   return colors[index % colors.length];
 }
 
-export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false, isQnaAvailable = false, space }: ActiveVoteCardProps) {
+export default function ActiveVoteCard({
+  proposal,
+  isAISummaryAvailable = false,
+  isQnaAvailable = false,
+  space,
+}: ActiveVoteCardProps) {
   const timeRemaining = formatTimeRemaining(proposal.end);
   const isMemberVote = space?.voteType === 'member';
   const accentClass = space ? `border-l-4 ${getSpaceStyle(space.key).accentClass}` : '';
@@ -95,9 +102,7 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
       score: proposal.scores[i] ?? 0,
       color: getChoiceColor(choice, i),
     }));
-    const otherScore = proposal.scores
-      .slice(maxChoices)
-      .reduce((sum, s) => sum + s, 0);
+    const otherScore = proposal.scores.slice(maxChoices).reduce((sum, s) => sum + s, 0);
     top.push({ label: 'Other', score: otherScore, color: 'bg-muted' });
     displayChoices = top;
   }
@@ -109,15 +114,13 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
           href={proposal.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-heading text-[14px] font-semibold leading-snug tracking-tight text-foreground hover:text-primary"
+          className="font-heading text-[14px] leading-snug font-semibold tracking-tight text-foreground hover:text-primary"
         >
           {proposal.title}
         </a>
         <div className="flex shrink-0 items-center gap-2">
           {space && <SpaceBadge space={space} />}
-          <span className="badge-sm-primary">
-            {timeRemaining}
-          </span>
+          <span className="badge-sm-primary">{timeRemaining}</span>
         </div>
       </div>
 
@@ -140,12 +143,14 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
           </div>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
             {displayChoices.map((choice) => {
-              const pct = proposal.scores_total > 0
-                ? ((choice.score / proposal.scores_total) * 100).toFixed(1)
-                : '0.0';
-              const absolute = choice.score >= 1000
-                ? `${(choice.score / 1000).toFixed(1)}k`
-                : choice.score.toLocaleString(undefined, { maximumFractionDigits: 1 });
+              const pct =
+                proposal.scores_total > 0
+                  ? ((choice.score / proposal.scores_total) * 100).toFixed(1)
+                  : '0.0';
+              const absolute =
+                choice.score >= 1000
+                  ? `${(choice.score / 1000).toFixed(1)}k`
+                  : choice.score.toLocaleString(undefined, { maximumFractionDigits: 1 });
               return (
                 <span key={choice.label} className="flex items-center gap-1 text-[11px] text-muted">
                   <span className={`inline-block h-1.5 w-1.5 rounded-full ${choice.color}`} />
@@ -166,9 +171,7 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
               Generating summary...
             </div>
           )}
-          {error && (
-            <p className="text-xs text-danger">{error}</p>
-          )}
+          {error && <p className="text-xs text-danger">{error}</p>}
           {summary && (
             <div className="space-y-2">
               <p className="text-xs leading-relaxed text-foreground">{summary.tldr}</p>
@@ -190,7 +193,9 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
       {/* Stats + Actions */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 text-[12px] text-muted">
-          <span>{proposal.votes} voter{proposal.votes !== 1 ? 's' : ''}</span>
+          <span>
+            {proposal.votes} voter{proposal.votes !== 1 ? 's' : ''}
+          </span>
           {isMemberVote ? (
             <span>No quorum</span>
           ) : proposal.quorum > 0 ? (
@@ -211,7 +216,11 @@ export default function ActiveVoteCard({ proposal, isAISummaryAvailable = false,
                   : 'border-border bg-card text-foreground hover:bg-card-hover'
               }`}
             >
-              <span className={`text-sm leading-none ${showSummary && summary ? '' : 'inline-block animate-pulse'}`}>✨</span>
+              <span
+                className={`text-sm leading-none ${showSummary && summary ? '' : 'inline-block animate-pulse'}`}
+              >
+                ✨
+              </span>
               {showSummary && summary ? 'Hide' : 'TL;DR'}
             </button>
           )}

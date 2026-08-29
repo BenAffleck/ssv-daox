@@ -12,15 +12,9 @@ interface RecurringBadgeProps {
  * The timeline shows a series as only its most recent and next occurrence, so
  * this badge is what tells the reader the rest of the series exists.
  */
-export default function RecurringBadge({
-  summary,
-  className = '',
-}: RecurringBadgeProps) {
+export default function RecurringBadge({ summary, className = '' }: RecurringBadgeProps) {
   return (
-    <span
-      className={`badge-sm-muted gap-1 ${className}`}
-      title={`Recurring event — ${summary}`}
-    >
+    <span className={`badge-sm-muted gap-1 ${className}`} title={`Recurring event — ${summary}`}>
       <Repeat className="h-3 w-3" aria-hidden="true" />
       <span>{summary}</span>
     </span>

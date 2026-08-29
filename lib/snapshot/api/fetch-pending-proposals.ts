@@ -36,16 +36,11 @@ export const PENDING_PROPOSALS_QUERY = `
  * @param spaceId - The Snapshot space ID (e.g., 'ssv.dao.eth')
  * @returns Array of pending proposal objects
  */
-export async function fetchPendingProposals(
-  spaceId: string
-): Promise<SnapshotActiveProposal[]> {
+export async function fetchPendingProposals(spaceId: string): Promise<SnapshotActiveProposal[]> {
   try {
     return await executeProposalsQuery(PENDING_PROPOSALS_QUERY, { spaceId });
   } catch (error) {
-    console.error(
-      `Failed to fetch pending proposals for space ${spaceId}:`,
-      error
-    );
+    console.error(`Failed to fetch pending proposals for space ${spaceId}:`, error);
     return [];
   }
 }

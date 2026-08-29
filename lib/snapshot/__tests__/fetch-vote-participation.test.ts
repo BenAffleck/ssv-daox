@@ -1,18 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fetchVoteParticipation } from '../api/fetch-vote-participation';
+import type { ProposalsQueryResponse, SnapshotGraphQLResponse, VotesQueryResponse } from '../types';
 import { MOCK_PROPOSALS } from './__mocks__/proposal-data';
 import {
   ALL_MOCK_VOTES,
-  VOTER_100_PERCENT,
-  VOTER_40_PERCENT,
   VOTER_0_PERCENT,
+  VOTER_40_PERCENT,
+  VOTER_100_PERCENT,
   VOTER_MIXED_CASE,
 } from './__mocks__/vote-data';
-import type {
-  SnapshotGraphQLResponse,
-  ProposalsQueryResponse,
-  VotesQueryResponse,
-} from '../types';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -144,7 +141,7 @@ describe('fetchVoteParticipation', () => {
 
     expect(participation).toEqual({});
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'No closed proposals found for space: new-space.eth'
+      'No closed proposals found for space: new-space.eth',
     );
 
     consoleWarnSpy.mockRestore();
@@ -158,7 +155,7 @@ describe('fetchVoteParticipation', () => {
     });
 
     await expect(fetchVoteParticipation('ssv.dao.eth')).rejects.toThrow(
-      'Snapshot API error: 500 Internal Server Error'
+      'Snapshot API error: 500 Internal Server Error',
     );
   });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 interface FilterControlsProps {
   searchQuery: string;
@@ -40,7 +40,7 @@ export default function FilterControls({
   const [copiedType, setCopiedType] = useState<'forum' | 'discord' | null>(null);
 
   const copyHandles = useCallback(async (handles: string[], type: 'forum' | 'discord') => {
-    const text = handles.map((h) => h.startsWith('@') ? h : `@${h}`).join('\n');
+    const text = handles.map((h) => (h.startsWith('@') ? h : `@${h}`)).join('\n');
     await navigator.clipboard.writeText(text);
     setCopiedType(type);
     setTimeout(() => setCopiedType(null), 2000);
@@ -49,7 +49,7 @@ export default function FilterControls({
   return (
     <div className="mb-8 flex flex-wrap items-center gap-3">
       {/* Search input */}
-      <div className="flex-1 min-w-[240px]">
+      <div className="min-w-[240px] flex-1">
         <input
           type="text"
           placeholder="Search by name or address..."

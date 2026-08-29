@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useUrlState, booleanParam, stringParam, enumParam } from './useUrlState';
-import type { SortField, SortDirection } from '@/components/dao-delegates/TableHeader';
+
+import type { SortDirection, SortField } from '@/components/dao-delegates/TableHeader';
+
+import { booleanParam, enumParam, stringParam, useUrlState } from './useUrlState';
 
 const SORT_FIELDS: readonly SortField[] = [
   'rank',

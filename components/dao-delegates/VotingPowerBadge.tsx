@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+
 import type { DelegationEntry, VotingPowerData } from '@/lib/gnosis/types';
 
 interface VotingPowerBadgeProps {
@@ -37,13 +38,7 @@ function formatDetailedNumber(value: number): string {
 /**
  * Copies a list of addresses (newline separated) to the clipboard
  */
-function CopyAddressesButton({
-  addresses,
-  label,
-}: {
-  addresses: string[];
-  label: string;
-}) {
+function CopyAddressesButton({ addresses, label }: { addresses: string[]; label: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -59,7 +54,7 @@ function CopyAddressesButton({
   return (
     <button
       onClick={handleCopy}
-      className="inline-flex items-center justify-center w-4 h-4 rounded text-muted hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+      className="inline-flex h-4 w-4 items-center justify-center rounded text-muted transition-colors hover:text-primary focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:outline-none"
       title={copied ? 'Copied' : label}
       aria-label={label}
     >
@@ -68,7 +63,7 @@ function CopyAddressesButton({
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
-          className="w-3.5 h-3.5 text-accent"
+          className="h-3.5 w-3.5 text-accent"
         >
           <path
             fillRule="evenodd"
@@ -81,7 +76,7 @@ function CopyAddressesButton({
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
-          className="w-3.5 h-3.5"
+          className="h-3.5 w-3.5"
         >
           <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z" />
           <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.439A1.5 1.5 0 008.378 6H4.5z" />
@@ -112,26 +107,17 @@ function DelegationList({
   }
 
   return (
-    <div className="mt-2 pt-2 border-t border-border">
-      <div className="flex items-center justify-between gap-2 mb-1">
+    <div className="mt-2 border-t border-border pt-2">
+      <div className="mb-1 flex items-center justify-between gap-2">
         <span className="text-muted">{title}</span>
-        <CopyAddressesButton
-          addresses={entries.map((entry) => entry.address)}
-          label={copyLabel}
-        />
+        <CopyAddressesButton addresses={entries.map((entry) => entry.address)} label={copyLabel} />
       </div>
-      <ul className="space-y-0.5 max-h-32 overflow-y-auto">
+      <ul className="max-h-32 space-y-0.5 overflow-y-auto">
         {entries.map((entry) => (
           <li key={entry.address} className="flex items-baseline justify-between gap-2">
-            <code className="text-foreground font-mono text-[10px] break-all">
-              {entry.address}
-            </code>
-            <span
-              className={`shrink-0 font-medium tabular-nums text-[10px] ${amountClassName}`}
-            >
-              {entry.power === null
-                ? '\u2014'
-                : `${sign}${formatDetailedNumber(entry.power)}`}
+            <code className="font-mono text-[10px] break-all text-foreground">{entry.address}</code>
+            <span className={`shrink-0 text-[10px] font-medium tabular-nums ${amountClassName}`}>
+              {entry.power === null ? '\u2014' : `${sign}${formatDetailedNumber(entry.power)}`}
             </span>
           </li>
         ))}
@@ -243,12 +229,12 @@ export default function VotingPowerBadge({
       <button
         onClick={handleFetch}
         disabled={isLoading}
-        className="inline-flex items-center gap-1 text-xs text-muted hover:text-primary transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-1 text-xs text-muted transition-colors hover:text-primary disabled:opacity-50"
         title="Fetch voting power"
       >
         {isLoading ? (
           <svg
-            className="w-4 h-4 animate-spin"
+            className="h-4 w-4 animate-spin"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -274,7 +260,7 @@ export default function VotingPowerBadge({
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
-            className="w-4 h-4"
+            className="h-4 w-4"
           >
             <path
               fillRule="evenodd"
@@ -310,7 +296,7 @@ export default function VotingPowerBadge({
       <button
         ref={buttonRef}
         onClick={() => setShowPopover(!showPopover)}
-        className="inline-flex items-center justify-center w-4 h-4 rounded-full text-muted hover:text-primary hover:bg-muted/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted transition-colors hover:bg-muted/20 hover:text-primary focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:outline-none"
         aria-label="Show voting power details"
         aria-expanded={showPopover}
       >
@@ -318,7 +304,7 @@ export default function VotingPowerBadge({
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
-          className="w-3.5 h-3.5"
+          className="h-3.5 w-3.5"
         >
           <path
             fillRule="evenodd"
@@ -340,17 +326,15 @@ export default function VotingPowerBadge({
             }}
             className="z-50 w-[min(380px,calc(100vw-2rem))] rounded-lg border border-border bg-card shadow-lg"
           >
-            <div className="p-3 space-y-2">
+            <div className="space-y-2 p-3">
               <h4 className="font-heading text-sm font-semibold text-foreground">
                 Voting Power Breakdown
               </h4>
-              <p className="text-[11px] text-muted">
-                Values shown in SSV + cSSV.
-              </p>
+              <p className="text-[11px] text-muted">Values shown in SSV + cSSV.</p>
 
               <div className="space-y-1.5 text-xs">
                 {/* Total voting power */}
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-muted">Total Voting Power</span>
                   <span className="font-medium text-foreground">
                     {formatDetailedNumber(votingPower)}
@@ -358,7 +342,7 @@ export default function VotingPowerBadge({
                 </div>
 
                 {/* Incoming delegations */}
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-muted">Incoming Delegations</span>
                   <span className="font-medium text-accent">
                     +{formatDetailedNumber(incomingPower)}
@@ -366,7 +350,7 @@ export default function VotingPowerBadge({
                 </div>
 
                 {/* Outgoing delegations */}
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-muted">Outgoing Delegations</span>
                   <span className="font-medium text-danger">
                     -{formatDetailedNumber(outgoingPower)}
@@ -374,10 +358,10 @@ export default function VotingPowerBadge({
                 </div>
 
                 {/* Divider */}
-                <div className="border-t border-border my-2"></div>
+                <div className="my-2 border-t border-border"></div>
 
                 {/* Net delegated power */}
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-muted">Net Delegated</span>
                   <span
                     className={`font-medium ${netDelegatedPower >= 0 ? 'text-accent' : 'text-danger'}`}
@@ -388,7 +372,7 @@ export default function VotingPowerBadge({
                 </div>
 
                 {/* Delegator count */}
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-muted">Delegators</span>
                   <span className="font-medium text-foreground">{delegatorCount}</span>
                 </div>
@@ -411,7 +395,7 @@ export default function VotingPowerBadge({
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );

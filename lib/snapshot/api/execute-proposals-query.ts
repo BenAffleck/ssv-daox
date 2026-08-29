@@ -1,8 +1,8 @@
 import { SNAPSHOT_CONFIG } from '../config';
 import type {
-  SnapshotGraphQLResponse,
   ActiveProposalsQueryResponse,
   SnapshotActiveProposal,
+  SnapshotGraphQLResponse,
 } from '../types';
 
 /**
@@ -20,7 +20,7 @@ import type {
  */
 export async function executeProposalsQuery(
   query: string,
-  variables: Record<string, unknown>
+  variables: Record<string, unknown>,
 ): Promise<SnapshotActiveProposal[]> {
   const response = await fetch(SNAPSHOT_CONFIG.apiUrl, {
     method: 'POST',
@@ -32,13 +32,10 @@ export async function executeProposalsQuery(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Snapshot API error: ${response.status} ${response.statusText}`
-    );
+    throw new Error(`Snapshot API error: ${response.status} ${response.statusText}`);
   }
 
-  const result: SnapshotGraphQLResponse<ActiveProposalsQueryResponse> =
-    await response.json();
+  const result: SnapshotGraphQLResponse<ActiveProposalsQueryResponse> = await response.json();
 
   if (result.errors?.length) {
     throw new Error(`GraphQL error: ${result.errors[0].message}`);

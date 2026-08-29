@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import type { SnapshotActiveProposal, GovernanceSpace } from '@/lib/snapshot/types';
+import { useCallback, useState } from 'react';
+
 import type { ProposalSummary } from '@/lib/ai-summary/types';
-import { formatTimeUntilStart } from '@/lib/snapshot/utils/time-remaining';
 import { getSpaceStyle } from '@/lib/dao-governance/space-style';
-import SpaceBadge from './dao-governance/SpaceBadge';
+import type { GovernanceSpace, SnapshotActiveProposal } from '@/lib/snapshot/types';
+import { formatTimeUntilStart } from '@/lib/snapshot/utils/time-remaining';
+
 import AskButton from './dao-governance/AskButton';
+import SpaceBadge from './dao-governance/SpaceBadge';
 
 interface PendingVoteCardProps {
   proposal: SnapshotActiveProposal;
@@ -16,7 +18,12 @@ interface PendingVoteCardProps {
   space?: GovernanceSpace;
 }
 
-export default function PendingVoteCard({ proposal, isAISummaryAvailable = false, isQnaAvailable = false, space }: PendingVoteCardProps) {
+export default function PendingVoteCard({
+  proposal,
+  isAISummaryAvailable = false,
+  isQnaAvailable = false,
+  space,
+}: PendingVoteCardProps) {
   const timeUntilStart = formatTimeUntilStart(proposal.start);
   const accentClass = space ? `border-l-4 ${getSpaceStyle(space.key).accentClass}` : '';
 
@@ -70,22 +77,23 @@ export default function PendingVoteCard({ proposal, isAISummaryAvailable = false
           href={proposal.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-heading text-[14px] font-semibold leading-snug tracking-tight text-foreground hover:text-primary"
+          className="font-heading text-[14px] leading-snug font-semibold tracking-tight text-foreground hover:text-primary"
         >
           {proposal.title}
         </a>
         <div className="flex shrink-0 items-center gap-2">
           {space && <SpaceBadge space={space} />}
-          <span className="badge-sm-muted">
-            {timeUntilStart}
-          </span>
+          <span className="badge-sm-muted">{timeUntilStart}</span>
         </div>
       </div>
 
       {/* Voting choices preview */}
       <div className="mb-2 flex flex-wrap gap-1.5">
         {proposal.choices.map((choice) => (
-          <span key={choice} className="inline-flex items-center rounded-full bg-muted/10 px-2 py-0.5 text-[11px] text-muted">
+          <span
+            key={choice}
+            className="inline-flex items-center rounded-full bg-muted/10 px-2 py-0.5 text-[11px] text-muted"
+          >
             {choice}
           </span>
         ))}
@@ -100,9 +108,7 @@ export default function PendingVoteCard({ proposal, isAISummaryAvailable = false
               Generating summary...
             </div>
           )}
-          {error && (
-            <p className="text-xs text-danger">{error}</p>
-          )}
+          {error && <p className="text-xs text-danger">{error}</p>}
           {summary && (
             <div className="space-y-2">
               <p className="text-xs leading-relaxed text-foreground">{summary.tldr}</p>
@@ -134,7 +140,11 @@ export default function PendingVoteCard({ proposal, isAISummaryAvailable = false
                 : 'border-border bg-card text-foreground hover:bg-card-hover'
             }`}
           >
-            <span className={`text-sm leading-none ${showSummary && summary ? '' : 'inline-block animate-pulse'}`}>✨</span>
+            <span
+              className={`text-sm leading-none ${showSummary && summary ? '' : 'inline-block animate-pulse'}`}
+            >
+              ✨
+            </span>
             {showSummary && summary ? 'Hide' : 'TL;DR'}
           </button>
         )}

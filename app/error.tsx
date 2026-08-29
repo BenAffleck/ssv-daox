@@ -19,9 +19,7 @@ export default function Error({
         <h1 className="mb-4 font-heading text-4xl font-bold text-foreground">
           Something went wrong
         </h1>
-        <p className="mb-8 font-body text-muted">
-          An error occurred while loading this page.
-        </p>
+        <p className="mb-8 font-body text-muted">An error occurred while loading this page.</p>
         <button
           onClick={reset}
           className="rounded-lg bg-primary px-6 py-3 font-heading text-background transition-colors hover:bg-secondary"

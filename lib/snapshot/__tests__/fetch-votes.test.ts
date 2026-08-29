@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fetchVotes } from '../api/fetch-votes';
-import { ALL_MOCK_VOTES, VOTES_100_PERCENT } from './__mocks__/vote-data';
-import { MOCK_PROPOSAL_IDS } from './__mocks__/proposal-data';
 import type { SnapshotGraphQLResponse, VotesQueryResponse } from '../types';
+import { MOCK_PROPOSAL_IDS } from './__mocks__/proposal-data';
+import { ALL_MOCK_VOTES, VOTES_100_PERCENT } from './__mocks__/vote-data';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -64,7 +65,7 @@ describe('fetchVotes', () => {
     });
 
     await expect(fetchVotes(MOCK_PROPOSAL_IDS)).rejects.toThrow(
-      'Snapshot API error: 500 Internal Server Error'
+      'Snapshot API error: 500 Internal Server Error',
     );
   });
 
@@ -85,9 +86,7 @@ describe('fetchVotes', () => {
       json: async () => mockResponse,
     });
 
-    await expect(fetchVotes(MOCK_PROPOSAL_IDS)).rejects.toThrow(
-      'GraphQL error: Query too complex'
-    );
+    await expect(fetchVotes(MOCK_PROPOSAL_IDS)).rejects.toThrow('GraphQL error: Query too complex');
   });
 
   it('should make POST request with correct query and variables', async () => {
@@ -110,7 +109,7 @@ describe('fetchVotes', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: expect.stringContaining('GetProposalVotes'),
-      })
+      }),
     );
 
     const callArgs = mockFetch.mock.calls[0][1];

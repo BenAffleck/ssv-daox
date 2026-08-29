@@ -3,22 +3,19 @@
  */
 
 import type Anthropic from '@anthropic-ai/sdk';
+
 import {
-  parseAPIError,
-  isCriticalAPIError,
-  getModelId,
-  truncateBody,
   createClient,
+  getModelId,
+  isCriticalAPIError,
+  parseAPIError,
+  truncateBody,
 } from '@/lib/ai/client';
-import { isAIEnabled, getAnthropicApiKey } from '@/lib/ai/config';
-import {
-  AI_EXTRACTION_CONFIG,
-  getExtractionPrompt,
-} from './config';
-import {
-  getCachedExtractions,
-  cacheExtractions,
-} from './cache';
+import { getAnthropicApiKey, isAIEnabled } from '@/lib/ai/config';
+
+import { cacheExtractions, getCachedExtractions } from './cache';
+import { AI_EXTRACTION_CONFIG, getExtractionPrompt } from './config';
+import { filterTimelineWorthy } from './relevance';
 import {
   AIExtractedEvent,
   AIExtractedEventWithSource,
@@ -26,7 +23,6 @@ import {
   ExtractionStats,
   ProposalForExtraction,
 } from './types';
-import { filterTimelineWorthy } from './relevance';
 
 /**
  * Format Unix timestamp as ISO date string
@@ -61,7 +57,7 @@ function extractJSONFromResponse(text: string): unknown {
  */
 async function extractFromProposal(
   client: Anthropic,
-  proposal: ProposalForExtraction
+  proposal: ProposalForExtraction,
 ): Promise<ProposalExtractionResult> {
   const proposalEndDate = formatProposalDate(proposal.end);
   const truncatedBody = truncateBody(proposal.body, AI_EXTRACTION_CONFIG.maxProposalBodyLength);
@@ -70,7 +66,7 @@ async function extractFromProposal(
     proposal.id,
     proposal.title,
     proposalEndDate,
-    truncatedBody
+    truncatedBody,
   );
 
   // Add JSON output instruction
@@ -150,7 +146,7 @@ If no events with specific dates are found, return: {"events": []}`;
  */
 function hydrateEvents(
   events: AIExtractedEvent[],
-  proposal: ProposalForExtraction
+  proposal: ProposalForExtraction,
 ): { events: AIExtractedEventWithSource[]; filtered: number } {
   const { kept, filtered } = filterTimelineWorthy(events);
 
@@ -194,7 +190,7 @@ export interface ExtractEventsOptions {
  */
 export async function extractEventsFromProposals(
   proposals: ProposalForExtraction[],
-  options: ExtractEventsOptions = {}
+  options: ExtractEventsOptions = {},
 ): Promise<{
   events: AIExtractedEventWithSource[];
   stats: ExtractionStats;
@@ -264,10 +260,7 @@ export async function extractEventsFromProposals(
 
     // Report progress
     if (onProgress) {
-      onProgress(
-        stats.proposalsFromCache + i + 1,
-        stats.totalProposals
-      );
+      onProgress(stats.proposalsFromCache + i + 1, stats.totalProposals);
     }
 
     try {

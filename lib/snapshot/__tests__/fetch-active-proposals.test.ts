@@ -1,6 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fetchActiveProposals } from '../api/fetch-active-proposals';
-import type { SnapshotGraphQLResponse, ActiveProposalsQueryResponse, SnapshotActiveProposal } from '../types';
+import type {
+  ActiveProposalsQueryResponse,
+  SnapshotActiveProposal,
+  SnapshotGraphQLResponse,
+} from '../types';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch as any;
@@ -115,7 +120,7 @@ describe('fetchActiveProposals', () => {
       expect.objectContaining({
         method: 'POST',
         body: expect.stringContaining('GetActiveProposals'),
-      })
+      }),
     );
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);

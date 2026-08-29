@@ -1,14 +1,11 @@
-import {
-  fetchAllEvents,
-  getSourcesMetadata,
-} from '@/lib/dao-timeline/api/event-source-registry';
-import { serializeEvents } from '@/lib/dao-timeline/logic/event-transformer';
-import { sortEventsByDate } from '@/lib/dao-timeline/logic/event-aggregator';
 import Timeline from '@/components/dao-timeline/Timeline';
-import { getSnapshotTimelineSpaceId } from '@/lib/dao-timeline/config';
-import { fetchTimelineProposals } from '@/lib/snapshot/api/fetch-timeline-proposals';
 import { isAIExtractionAvailable } from '@/lib/ai-extraction';
 import { ProposalForExtraction } from '@/lib/ai-extraction/types';
+import { fetchAllEvents, getSourcesMetadata } from '@/lib/dao-timeline/api/event-source-registry';
+import { getSnapshotTimelineSpaceId } from '@/lib/dao-timeline/config';
+import { sortEventsByDate } from '@/lib/dao-timeline/logic/event-aggregator';
+import { serializeEvents } from '@/lib/dao-timeline/logic/event-transformer';
+import { fetchTimelineProposals } from '@/lib/snapshot/api/fetch-timeline-proposals';
 
 export const metadata = {
   title: 'DAO Timeline - DAOx',
@@ -54,9 +51,7 @@ export default async function DaoTimelinePage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
       <div className="mb-10">
-        <h1 className="mb-2">
-          DAO Timeline
-        </h1>
+        <h1 className="mb-2">DAO Timeline</h1>
         <p className="text-[15px] text-muted">
           Upcoming events and important dates for the DAO community
         </p>
@@ -79,9 +74,7 @@ export default async function DaoTimelinePage() {
               />
             </svg>
           </div>
-          <p className="font-body text-muted">
-            No calendar sources configured
-          </p>
+          <p className="font-body text-muted">No calendar sources configured</p>
           <p className="mt-2 text-sm text-muted">
             Set the <code className="rounded bg-muted/20 px-1">DAO_CALENDAR_ICS_URL</code>{' '}
             environment variable to add a calendar.

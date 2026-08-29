@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fetchProposals } from '../api/fetch-proposals';
+import type { ProposalsQueryResponse, SnapshotGraphQLResponse } from '../types';
 import { MOCK_PROPOSALS } from './__mocks__/proposal-data';
-import type { SnapshotGraphQLResponse, ProposalsQueryResponse } from '../types';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -56,7 +57,7 @@ describe('fetchProposals', () => {
     });
 
     await expect(fetchProposals('ssv.dao.eth', 5)).rejects.toThrow(
-      'Snapshot API error: 500 Internal Server Error'
+      'Snapshot API error: 500 Internal Server Error',
     );
   });
 
@@ -77,9 +78,7 @@ describe('fetchProposals', () => {
       json: async () => mockResponse,
     });
 
-    await expect(fetchProposals('ssv.dao.eth', 5)).rejects.toThrow(
-      'GraphQL error: Rate limited'
-    );
+    await expect(fetchProposals('ssv.dao.eth', 5)).rejects.toThrow('GraphQL error: Rate limited');
   });
 
   it('should make POST request with correct query and variables', async () => {
@@ -102,7 +101,7 @@ describe('fetchProposals', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: expect.stringContaining('GetLatestProposals'),
-      })
+      }),
     );
 
     const callArgs = mockFetch.mock.calls[0][1];

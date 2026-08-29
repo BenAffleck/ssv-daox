@@ -30,11 +30,7 @@ export const AI_SUMMARY_CONFIG = {
 /**
  * Get the prompt for generating a proposal summary
  */
-export function getSummaryPrompt(
-  title: string,
-  body: string,
-  choices: string[]
-): string {
+export function getSummaryPrompt(title: string, body: string, choices: string[]): string {
   const choicesList = choices.map((c, i) => `${i + 1}. ${c}`).join('\n');
 
   return `You are summarizing a DAO governance proposal for voters who need to quickly understand what they're voting on.

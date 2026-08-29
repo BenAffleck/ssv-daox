@@ -48,9 +48,7 @@ export function checkRateLimit(clientKey: string): RateLimitResult {
 
   const existing = buckets.get(clientKey);
   const bucket =
-    existing && existing.resetAt > now
-      ? existing
-      : { count: 0, resetAt: now + windowMs };
+    existing && existing.resetAt > now ? existing : { count: 0, resetAt: now + windowMs };
 
   if (bucket.count >= maxRequests) {
     buckets.set(clientKey, bucket);

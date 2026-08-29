@@ -1,10 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { EventSource, SerializedEvent } from '../types';
+import { describe, expect, it } from 'vitest';
+
 import {
   BUCKET_COUNT,
-  MAX_MONTH_TICKS,
-  MIN_FUTURE_DAYS,
-  MIN_PAST_DAYS,
   buildHistogram,
   buildMonthTicks,
   clampRange,
@@ -18,12 +15,16 @@ import {
   isImminentOffset,
   isPastOffset,
   isPresetActive,
+  MAX_MONTH_TICKS,
+  MIN_FUTURE_DAYS,
+  MIN_PAST_DAYS,
   peakCount,
   resolveInitialRange,
   toDayOffset,
   toFraction,
   toOffset,
 } from '../logic/range-brush';
+import { EventSource, SerializedEvent } from '../types';
 
 /** Fixed reference so the suite never depends on the wall clock. */
 const TODAY = new Date(2026, 7, 19); // Aug 19, 2026
@@ -168,7 +169,7 @@ describe('range-brush', () => {
       const events = [makeEvent(-12), makeEvent(0), makeEvent(1), makeEvent(96)];
       const total = buildHistogram(events, domain, TODAY).reduce(
         (sum, bucket) => sum + bucket.count,
-        0
+        0,
       );
       expect(total).toBe(events.length);
     });
@@ -176,28 +177,20 @@ describe('range-brush', () => {
     it('drops events outside the domain', () => {
       const total = buildHistogram([makeEvent(500)], domain, TODAY).reduce(
         (sum, bucket) => sum + bucket.count,
-        0
+        0,
       );
       expect(total).toBe(0);
     });
 
     it('puts same-day events in the same bucket', () => {
-      const buckets = buildHistogram(
-        [makeEvent(4, 'a'), makeEvent(4, 'b')],
-        domain,
-        TODAY
-      );
+      const buckets = buildHistogram([makeEvent(4, 'a'), makeEvent(4, 'b')], domain, TODAY);
       const filled = buckets.filter((bucket) => bucket.count > 0);
       expect(filled).toHaveLength(1);
       expect(filled[0].count).toBe(2);
     });
 
     it('spreads events across buckets in date order', () => {
-      const buckets = buildHistogram(
-        [makeEvent(-40), makeEvent(0), makeEvent(120)],
-        domain,
-        TODAY
-      );
+      const buckets = buildHistogram([makeEvent(-40), makeEvent(0), makeEvent(120)], domain, TODAY);
       const filled = buckets
         .map((bucket, index) => ({ index, count: bucket.count }))
         .filter((bucket) => bucket.count > 0)
@@ -219,14 +212,7 @@ describe('range-brush', () => {
   describe('buildMonthTicks', () => {
     it('emits one tick per month inside the domain', () => {
       const ticks = buildMonthTicks({ min: -49, max: 134 }, TODAY);
-      expect(ticks.map((tick) => tick.label)).toEqual([
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ]);
+      expect(ticks.map((tick) => tick.label)).toEqual(['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']);
     });
 
     it('keeps every tick inside the domain', () => {
@@ -356,9 +342,7 @@ describe('range-brush', () => {
 
     it('offers the near, half-year and year windows', () => {
       const wide = { min: -120, max: 400 };
-      expect(
-        getPresets(wide).map((preset) => [preset.label, preset.from, preset.to])
-      ).toEqual([
+      expect(getPresets(wide).map((preset) => [preset.label, preset.from, preset.to])).toEqual([
         ['Past 90d', -90, 0],
         ['Next 30d', 0, 30],
         ['Next 180d', 0, 180],
@@ -377,13 +361,9 @@ describe('range-brush', () => {
 
     it('keeps a clamped preset matchable, so it can read as active', () => {
       const short = { min: -49, max: 103 };
-      const yearly = getPresets(short).find(
-        (preset) => preset.id === 'next-12-months'
-      )!;
+      const yearly = getPresets(short).find((preset) => preset.id === 'next-12-months')!;
       expect(yearly.to).toBe(short.max);
-      expect(
-        isPresetActive(yearly, clampRange({ from: 0, to: 365 }, short))
-      ).toBe(true);
+      expect(isPresetActive(yearly, clampRange({ from: 0, to: 365 }, short))).toBe(true);
     });
   });
 });

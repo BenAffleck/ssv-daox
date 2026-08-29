@@ -1,10 +1,10 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* SSV Network light theme (default) */
 @theme {
   --color-background: #f7f7f7;
   --color-foreground: #171717;
-  --color-primary: #2DB1FF;
+  --color-primary: #2db1ff;
   --color-secondary: #6c588d;
   --color-accent: #22c55e;
   --color-muted: #737373;
@@ -19,17 +19,18 @@
   --font-body: var(--font-body);
 
   /* Brand highlight shadow — use on buttons, cards, or any element to draw attention */
-  --shadow-glow: 0 0 8px 0 oklch(from #2DB1FF l c h / 0.25);
-  --shadow-glow-lg: 0 0 16px 2px oklch(from #2DB1FF l c h / 0.20), 0 0 6px 0 oklch(from #2DB1FF l c h / 0.30);
+  --shadow-glow: 0 0 8px 0 oklch(from #2db1ff l c h / 0.25);
+  --shadow-glow-lg:
+    0 0 16px 2px oklch(from #2db1ff l c h / 0.2), 0 0 6px 0 oklch(from #2db1ff l c h / 0.3);
 }
 
 /* SSV Network dark theme */
-:root[data-theme="ssvdark"] {
+:root[data-theme='ssvdark'] {
   --color-background: #0f0f0f;
   --color-foreground: #f7f7f7;
-  --color-primary: #2DB1FF;
-  --color-secondary: #9B8BB8;
-  --color-accent: #4ADE80;
+  --color-primary: #2db1ff;
+  --color-secondary: #9b8bb8;
+  --color-accent: #4ade80;
   --color-muted: #a1a1a1;
   --color-border: #2a2a2a;
   --color-card: #171717;
@@ -37,8 +38,9 @@
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
 
-  --shadow-glow: 0 0 10px 0 oklch(from #2DB1FF l c h / 0.35);
-  --shadow-glow-lg: 0 0 20px 2px oklch(from #2DB1FF l c h / 0.25), 0 0 8px 0 oklch(from #2DB1FF l c h / 0.40);
+  --shadow-glow: 0 0 10px 0 oklch(from #2db1ff l c h / 0.35);
+  --shadow-glow-lg:
+    0 0 20px 2px oklch(from #2db1ff l c h / 0.25), 0 0 8px 0 oklch(from #2db1ff l c h / 0.4);
 }
 
 /* Smooth scroll & base typography */
@@ -56,7 +58,12 @@ body {
 }
 
 /* Heading typography defaults */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   letter-spacing: -0.025em;
   line-height: 1.2;
 }
@@ -68,57 +75,141 @@ table {
 }
 
 /* Theme transitions for interactive elements */
-a, button, input, select, [class*="bg-card"], [class*="border-"] {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+a,
+button,
+input,
+select,
+[class*='bg-card'],
+[class*='border-'] {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 @layer base {
-  h1 { @apply font-heading text-3xl font-bold tracking-tight text-foreground; }
-  h2 { @apply font-heading text-2xl font-semibold tracking-tight text-foreground; }
-  h3 { @apply font-heading text-lg font-semibold tracking-tight text-foreground; }
-  h4 { @apply font-heading text-base font-semibold tracking-tight text-foreground; }
-  h5, h6 { @apply font-heading text-sm font-semibold tracking-tight text-foreground; }
+  h1 {
+    @apply font-heading text-3xl font-bold tracking-tight text-foreground;
+  }
+  h2 {
+    @apply font-heading text-2xl font-semibold tracking-tight text-foreground;
+  }
+  h3 {
+    @apply font-heading text-lg font-semibold tracking-tight text-foreground;
+  }
+  h4 {
+    @apply font-heading text-base font-semibold tracking-tight text-foreground;
+  }
+  h5,
+  h6 {
+    @apply font-heading text-sm font-semibold tracking-tight text-foreground;
+  }
 }
 
 @layer components {
   /* Badges */
-  .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
-  .badge-primary   { @apply bg-primary/20 text-primary; }
-  .badge-accent    { @apply bg-accent/20 text-accent; }
-  .badge-secondary { @apply bg-secondary/20 text-secondary; }
-  .badge-muted     { @apply bg-muted/30 text-muted; }
-  .badge-warning   { @apply bg-warning/20 text-warning; }
-  .badge-danger    { @apply bg-danger/20 text-danger; }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .badge-primary {
+    @apply bg-primary/20 text-primary;
+  }
+  .badge-accent {
+    @apply bg-accent/20 text-accent;
+  }
+  .badge-secondary {
+    @apply bg-secondary/20 text-secondary;
+  }
+  .badge-muted {
+    @apply bg-muted/30 text-muted;
+  }
+  .badge-warning {
+    @apply bg-warning/20 text-warning;
+  }
+  .badge-danger {
+    @apply bg-danger/20 text-danger;
+  }
 
   /* Small badge (11px) — used in ModuleCard, CommunityCard, ActiveVoteCard */
-  .badge-sm-primary   { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-primary/20 text-primary; font-size: 11px; }
-  .badge-sm-secondary { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-secondary/20 text-secondary; font-size: 11px; }
-  .badge-sm-accent    { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-accent/30 text-accent; font-size: 11px; }
-  .badge-sm-warning   { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-warning/30 text-warning; font-size: 11px; }
-  .badge-sm-danger    { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-danger/20 text-danger; font-size: 11px; }
-  .badge-sm-muted     { @apply inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-muted/30 text-muted; font-size: 11px; }
+  .badge-sm-primary {
+    @apply inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 font-medium text-primary;
+    font-size: 11px;
+  }
+  .badge-sm-secondary {
+    @apply inline-flex items-center rounded-full bg-secondary/20 px-2 py-0.5 font-medium text-secondary;
+    font-size: 11px;
+  }
+  .badge-sm-accent {
+    @apply inline-flex items-center rounded-full bg-accent/30 px-2 py-0.5 font-medium text-accent;
+    font-size: 11px;
+  }
+  .badge-sm-warning {
+    @apply inline-flex items-center rounded-full bg-warning/30 px-2 py-0.5 font-medium text-warning;
+    font-size: 11px;
+  }
+  .badge-sm-danger {
+    @apply inline-flex items-center rounded-full bg-danger/20 px-2 py-0.5 font-medium text-danger;
+    font-size: 11px;
+  }
+  .badge-sm-muted {
+    @apply inline-flex items-center rounded-full bg-muted/30 px-2 py-0.5 font-medium text-muted;
+    font-size: 11px;
+  }
 
   /* Cards */
-  .card       { @apply rounded-lg border border-border bg-card; }
-  .card-empty { @apply rounded-lg border border-border bg-card p-12 text-center; }
+  .card {
+    @apply rounded-lg border border-border bg-card;
+  }
+  .card-empty {
+    @apply rounded-lg border border-border bg-card p-12 text-center;
+  }
 
   /* Filter controls */
-  .filter-label          { @apply flex items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 font-body text-foreground transition-colors hover:bg-card-hover cursor-pointer; font-size: 13px; }
-  .filter-label-disabled { @apply flex items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 font-body transition-colors opacity-60 cursor-not-allowed; font-size: 13px; }
-  .filter-btn            { @apply rounded-lg border border-border bg-card px-3 py-1.5 text-foreground transition-colors hover:bg-card-hover; font-size: 13px; }
-  .filter-btn-active     { @apply rounded-lg border border-primary bg-primary/10 px-3 py-1.5 text-primary transition-colors; font-size: 13px; }
-  .filter-input          { @apply w-full rounded-lg border border-border bg-card px-4 py-2.5 font-body text-foreground placeholder:text-muted/70 transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary; font-size: 13px; }
+  .filter-label {
+    @apply flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 font-body text-foreground transition-colors hover:bg-card-hover;
+    font-size: 13px;
+  }
+  .filter-label-disabled {
+    @apply flex cursor-not-allowed items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 font-body opacity-60 transition-colors;
+    font-size: 13px;
+  }
+  .filter-btn {
+    @apply rounded-lg border border-border bg-card px-3 py-1.5 text-foreground transition-colors hover:bg-card-hover;
+    font-size: 13px;
+  }
+  .filter-btn-active {
+    @apply rounded-lg border border-primary bg-primary/10 px-3 py-1.5 text-primary transition-colors;
+    font-size: 13px;
+  }
+  .filter-input {
+    @apply w-full rounded-lg border border-border bg-card px-4 py-2.5 font-body text-foreground transition-colors placeholder:text-muted/70 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none;
+    font-size: 13px;
+  }
 
   /* Navigation items */
-  .nav-item        { @apply flex items-center gap-2 rounded-lg border border-transparent px-3 py-1.5 font-body text-foreground transition-colors hover:bg-card-hover hover:text-primary cursor-pointer; font-size: 13px; }
-  .nav-item-active { @apply flex items-center gap-2 rounded-lg border border-primary bg-primary/10 px-3 py-1.5 font-body text-primary; font-size: 13px; }
+  .nav-item {
+    @apply flex cursor-pointer items-center gap-2 rounded-lg border border-transparent px-3 py-1.5 font-body text-foreground transition-colors hover:bg-card-hover hover:text-primary;
+    font-size: 13px;
+  }
+  .nav-item-active {
+    @apply flex items-center gap-2 rounded-lg border border-primary bg-primary/10 px-3 py-1.5 font-body text-primary;
+    font-size: 13px;
+  }
 
   /* Table column header typography */
-  .table-col-header { @apply font-heading text-xs font-semibold uppercase tracking-wide text-muted; }
+  .table-col-header {
+    @apply font-heading text-xs font-semibold tracking-wide text-muted uppercase;
+  }
 }
 
 /* Search palette open animation */
 @keyframes palette-in {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

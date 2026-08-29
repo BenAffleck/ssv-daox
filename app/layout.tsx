@@ -1,8 +1,10 @@
-import type { Metadata } from "next";
-import { Poppins, Inter } from "next/font/google";
-import "./globals.css";
-import Header from "@/components/Header";
-import { ThemeProvider } from "@/lib/theme/ThemeProvider";
+import type { Metadata } from 'next';
+import { Inter, Poppins } from 'next/font/google';
+
+import './globals.css';
+
+import Header from '@/components/Header';
+import { ThemeProvider } from '@/lib/theme/ThemeProvider';
 
 const poppins = Poppins({
   weight: ['400', '500', '600', '700'],
@@ -18,8 +20,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "DAOx - SSV Network DAO Hub",
-  description: "Your governance toolkit for the SSV Network — delegate insights, timelines, and more",
+  title: 'DAOx - SSV Network DAO Hub',
+  description:
+    'Your governance toolkit for the SSV Network — delegate insights, timelines, and more',
 };
 
 export default function RootLayout({

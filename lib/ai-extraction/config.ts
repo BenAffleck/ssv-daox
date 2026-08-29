@@ -19,16 +19,13 @@ export const AI_EXTRACTION_CONFIG = {
    * Budget limit per individual proposal (in USD)
    * This ensures no single proposal consumes too much budget
    */
-  perProposalBudgetUsd: 0.10,
+  perProposalBudgetUsd: 0.1,
 
   /**
    * Model to use for extraction
    * haiku is cost-efficient and fast for text extraction
    */
-  model: (process.env.AI_EXTRACTION_MODEL || 'haiku') as
-    | 'haiku'
-    | 'sonnet'
-    | 'opus',
+  model: (process.env.AI_EXTRACTION_MODEL || 'haiku') as 'haiku' | 'sonnet' | 'opus',
 
   /**
    * Delay between processing proposals (ms)
@@ -66,7 +63,7 @@ export function getExtractionPrompt(
   proposalId: string,
   proposalTitle: string,
   proposalEndDate: string,
-  proposalBody: string
+  proposalBody: string,
 ): string {
   return `You are analyzing a DAO governance proposal to extract timeline events.
 

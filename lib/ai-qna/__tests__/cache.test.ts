@@ -2,7 +2,11 @@
  * Unit tests for the AI Q&A cache
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { buildCacheKey, cacheAnswer, getCachedAnswer, normalizeQuestion } from '../cache';
+import { AI_QNA_CONFIG } from '../config';
+import type { AnswerCache, ProposalAnswer } from '../types';
 
 // vi.mock factories are hoisted above module scope, so the fns must be too.
 const { readFile, writeFile, mkdir } = vi.hoisted(() => ({
@@ -21,15 +25,6 @@ vi.mock('fs', async (importOriginal) => {
   };
 });
 
-import {
-  normalizeQuestion,
-  buildCacheKey,
-  getCachedAnswer,
-  cacheAnswer,
-} from '../cache';
-import { AI_QNA_CONFIG } from '../config';
-import type { AnswerCache, ProposalAnswer } from '../types';
-
 const ANSWER: ProposalAnswer = {
   answer: 'The multisig executes it.',
   answered: true,
@@ -41,7 +36,7 @@ function cacheFileWith(
   proposalId: string,
   question: string,
   daysAgo: number,
-  version = AI_QNA_CONFIG.cacheVersion
+  version = AI_QNA_CONFIG.cacheVersion,
 ): string {
   const cachedAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
   const cache: AnswerCache = {
@@ -67,19 +62,19 @@ describe('normalizeQuestion', () => {
 describe('buildCacheKey', () => {
   it('gives trivially reworded questions the same key', () => {
     expect(buildCacheKey('p1', 'Who executes this?')).toBe(
-      buildCacheKey('p1', '  who   EXECUTES this?  ')
+      buildCacheKey('p1', '  who   EXECUTES this?  '),
     );
   });
 
   it('separates different questions on the same proposal', () => {
     expect(buildCacheKey('p1', 'Who executes this?')).not.toBe(
-      buildCacheKey('p1', 'When does it start?')
+      buildCacheKey('p1', 'When does it start?'),
     );
   });
 
   it('separates the same question across different proposals', () => {
     expect(buildCacheKey('p1', 'Who executes this?')).not.toBe(
-      buildCacheKey('p2', 'Who executes this?')
+      buildCacheKey('p2', 'Who executes this?'),
     );
   });
 });
@@ -98,14 +93,12 @@ describe('getCachedAnswer', () => {
   it('matches a cached answer through question normalization', async () => {
     readFile.mockResolvedValue(cacheFileWith('p1', 'Who executes this?', 1));
 
-    await expect(getCachedAnswer('p1', '  WHO   executes this? ')).resolves.toEqual(
-      ANSWER
-    );
+    await expect(getCachedAnswer('p1', '  WHO   executes this? ')).resolves.toEqual(ANSWER);
   });
 
   it('ignores an entry past the TTL', async () => {
     readFile.mockResolvedValue(
-      cacheFileWith('p1', 'Who executes this?', AI_QNA_CONFIG.maxCacheAgeDays + 1)
+      cacheFileWith('p1', 'Who executes this?', AI_QNA_CONFIG.maxCacheAgeDays + 1),
     );
 
     await expect(getCachedAnswer('p1', 'Who executes this?')).resolves.toBeNull();
@@ -113,7 +106,7 @@ describe('getCachedAnswer', () => {
 
   it('discards the whole cache on a version mismatch', async () => {
     readFile.mockResolvedValue(
-      cacheFileWith('p1', 'Who executes this?', 1, AI_QNA_CONFIG.cacheVersion + 1)
+      cacheFileWith('p1', 'Who executes this?', 1, AI_QNA_CONFIG.cacheVersion + 1),
     );
 
     await expect(getCachedAnswer('p1', 'Who executes this?')).resolves.toBeNull();

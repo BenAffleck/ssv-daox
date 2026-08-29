@@ -23,7 +23,7 @@ function toNumber(value: string | number | undefined): number {
  */
 function toDelegationEntries(
   nodes: Array<GnosisDelegatorTreeNode | GnosisDelegateTreeNode> | undefined,
-  addressOf: (node: GnosisDelegatorTreeNode | GnosisDelegateTreeNode) => string | undefined
+  addressOf: (node: GnosisDelegatorTreeNode | GnosisDelegateTreeNode) => string | undefined,
 ): DelegationEntry[] {
   if (!nodes) {
     return [];
@@ -41,12 +41,10 @@ function toDelegationEntries(
 /**
  * Converts a pin endpoint response into the shape consumed by the UI
  */
-export function toVotingPowerData(
-  data: GnosisDelegationResponse
-): VotingPowerData {
+export function toVotingPowerData(data: GnosisDelegationResponse): VotingPowerData {
   let incomingDelegations = toDelegationEntries(
     data.delegatorTree,
-    (node) => (node as GnosisDelegatorTreeNode).delegator
+    (node) => (node as GnosisDelegatorTreeNode).delegator,
   );
 
   // Older/partial responses can list delegators without the weighted tree;
@@ -60,7 +58,7 @@ export function toVotingPowerData(
 
   const outgoingDelegations = toDelegationEntries(
     data.delegateTree,
-    (node) => (node as GnosisDelegateTreeNode).delegate
+    (node) => (node as GnosisDelegateTreeNode).delegate,
   );
 
   return {

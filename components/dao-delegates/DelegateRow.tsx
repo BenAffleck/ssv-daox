@@ -1,12 +1,13 @@
 import { Delegate } from '@/lib/dao-delegates/types';
-import EligibilityBadge from './EligibilityBadge';
-import ProgramBadge from './ProgramBadge';
+import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
+
+import AddressCell from './AddressCell';
 import DelegationStatusBadge from './DelegationStatusBadge';
+import EligibilityBadge from './EligibilityBadge';
+import NameCell from './NameCell';
+import ProgramBadge from './ProgramBadge';
 import VoteParticipationCell from './VoteParticipationCell';
 import VotingPowerBadge from './VotingPowerBadge';
-import AddressCell from './AddressCell';
-import NameCell from './NameCell';
-import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 
 interface DelegateRowProps {
   delegate: Delegate;
@@ -35,11 +36,13 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
   }
 
   return (
-    <tr className={`border-b border-border transition-colors hover:bg-card-hover ${isWithdrawn ? 'opacity-60' : ''}`}>
-      <td className="px-4 py-3 text-center font-medium tabular-nums text-foreground">
+    <tr
+      className={`border-b border-border transition-colors hover:bg-card-hover ${isWithdrawn ? 'opacity-60' : ''}`}
+    >
+      <td className="px-4 py-3 text-center font-medium text-foreground tabular-nums">
         {delegate.rank}
       </td>
-      <td className="px-4 py-3 text-center tabular-nums text-foreground">
+      <td className="px-4 py-3 text-center text-foreground tabular-nums">
         {delegate.karmaScore.toLocaleString()}
       </td>
       <td className="px-4 py-3">
@@ -56,13 +59,9 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
       </td>
       <td className="px-4 py-3">
         {isWithdrawn ? (
-          <span className="badge badge-muted">
-            Withdrawn
-          </span>
+          <span className="badge badge-muted">Withdrawn</span>
         ) : (
-          <DelegationStatusBadge
-            isAlreadyDelegated={delegate.isAlreadyDelegated}
-          />
+          <DelegationStatusBadge isAlreadyDelegated={delegate.isAlreadyDelegated} />
         )}
       </td>
       <td className="px-4 py-3">
@@ -73,13 +72,9 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
       </td>
       <td className="px-4 py-3">
         {delegate.isProfileComplete ? (
-          <span className="badge badge-accent">
-            Complete
-          </span>
+          <span className="badge badge-accent">Complete</span>
         ) : (
-          <span className="badge badge-muted">
-            Incomplete
-          </span>
+          <span className="badge badge-muted">Incomplete</span>
         )}
       </td>
       <td className="px-4 py-3">
@@ -91,9 +86,7 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
       </td>
       <td className="px-4 py-3">
         {nextRoundAction ? (
-          <span className={`badge ${nextRoundBadgeClass}`}>
-            {nextRoundAction}
-          </span>
+          <span className={`badge ${nextRoundBadgeClass}`}>{nextRoundAction}</span>
         ) : (
           <span className="text-xs text-muted">-</span>
         )}

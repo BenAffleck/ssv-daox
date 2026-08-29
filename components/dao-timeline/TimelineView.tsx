@@ -1,10 +1,8 @@
 'use client';
 
+import { isPastOffset, toDayOffset } from '@/lib/dao-timeline/logic/range-brush';
 import { EventGroup } from '@/lib/dao-timeline/types';
-import {
-  isPastOffset,
-  toDayOffset,
-} from '@/lib/dao-timeline/logic/range-brush';
+
 import EventCard from './EventCard';
 
 interface TimelineViewProps {
@@ -14,11 +12,7 @@ interface TimelineViewProps {
   today: Date;
 }
 
-export default function TimelineView({
-  groups,
-  sourceColors,
-  today,
-}: TimelineViewProps) {
+export default function TimelineView({ groups, sourceColors, today }: TimelineViewProps) {
   if (groups.length === 0) {
     return (
       <div className="card-empty">

@@ -64,7 +64,7 @@ export function parsePropertyLine(line: string): {
  */
 export function parseICSDate(
   value: string,
-  params: Record<string, string>
+  params: Record<string, string>,
 ): { date: Date; isAllDay: boolean } {
   // Check if it's a DATE (all-day) value
   const isAllDay = params.VALUE === 'DATE' || value.length === 8;
@@ -120,10 +120,7 @@ export function unescapeText(value: string): string {
 /**
  * Extract component blocks from ICS content
  */
-export function extractComponents(
-  content: string,
-  componentName: string
-): string[] {
+export function extractComponents(content: string, componentName: string): string[] {
   const components: string[] = [];
   const startTag = `BEGIN:${componentName}`;
   const endTag = `END:${componentName}`;
@@ -133,10 +130,7 @@ export function extractComponents(
     const endIndex = content.indexOf(endTag, startIndex);
     if (endIndex === -1) break;
 
-    const block = content.substring(
-      startIndex + startTag.length,
-      endIndex
-    );
+    const block = content.substring(startIndex + startTag.length, endIndex);
     components.push(block.trim());
 
     startIndex = content.indexOf(startTag, endIndex);

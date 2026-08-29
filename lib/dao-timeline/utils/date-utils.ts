@@ -71,11 +71,7 @@ export function formatTime(date: Date): string {
 /**
  * Format a date range for display
  */
-export function formatDateRange(
-  startDate: Date,
-  endDate: Date | null,
-  isAllDay: boolean
-): string {
+export function formatDateRange(startDate: Date, endDate: Date | null, isAllDay: boolean): string {
   if (isAllDay) {
     if (!endDate || isSameDay(startDate, endDate)) {
       return 'All day';

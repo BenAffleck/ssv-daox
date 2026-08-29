@@ -30,27 +30,17 @@ export interface FixedListsData {
 export function buildEligibilityLists(
   committees: CommitteeData,
   fixedLists: FixedListsData,
-  alreadyDelegatedAddresses: string[] = []
+  alreadyDelegatedAddresses: string[] = [],
 ): EligibilityLists {
   return {
     vipWallets: new Set(fixedLists.vipWallets.map((addr) => addr.toLowerCase())),
-    grantsCommittee: new Set(
-      committees.grantsCommittee.map((addr) => addr.toLowerCase())
-    ),
-    operatorCommittee: new Set(
-      committees.operatorCommittee.map((addr) => addr.toLowerCase())
-    ),
-    multisigCommittee: new Set(
-      committees.multisigCommittee.map((addr) => addr.toLowerCase())
-    ),
-    verifiedOperators: new Set(
-      fixedLists.verifiedOperators.map((addr) => addr.toLowerCase())
-    ),
+    grantsCommittee: new Set(committees.grantsCommittee.map((addr) => addr.toLowerCase())),
+    operatorCommittee: new Set(committees.operatorCommittee.map((addr) => addr.toLowerCase())),
+    multisigCommittee: new Set(committees.multisigCommittee.map((addr) => addr.toLowerCase())),
+    verifiedOperators: new Set(fixedLists.verifiedOperators.map((addr) => addr.toLowerCase())),
     grantees: new Set(fixedLists.grantees.map((addr) => addr.toLowerCase())),
     professional: new Set(fixedLists.professional.map((addr) => addr.toLowerCase())),
-    alreadyDelegated: new Set(
-      alreadyDelegatedAddresses.map((addr) => addr.toLowerCase())
-    ),
+    alreadyDelegated: new Set(alreadyDelegatedAddresses.map((addr) => addr.toLowerCase())),
   };
 }
 
@@ -58,10 +48,7 @@ export function buildEligibilityLists(
  * Checks if an address is eligible for delegation programs
  * Returns eligibility status and reasons for ineligibility
  */
-export function checkEligibility(
-  address: string,
-  lists: EligibilityLists
-): EligibilityResult {
+export function checkEligibility(address: string, lists: EligibilityLists): EligibilityResult {
   const addr = address.toLowerCase();
 
   // Check VIP status
@@ -110,9 +97,6 @@ export function checkEligibility(
 /**
  * Checks if an address is already delegated
  */
-export function isAlreadyDelegated(
-  address: string,
-  lists: EligibilityLists
-): boolean {
+export function isAlreadyDelegated(address: string, lists: EligibilityLists): boolean {
   return lists.alreadyDelegated.has(address.toLowerCase());
 }

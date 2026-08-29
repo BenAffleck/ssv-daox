@@ -1,17 +1,19 @@
 'use client';
 
 import { useCallback, useMemo } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import type { GovernanceProposal, GovernanceSpace } from '@/lib/snapshot/types';
-import { getSpaceStyle } from '@/lib/dao-governance/space-style';
-import { filterProposalsByQuery } from '@/lib/dao-governance/vote-search';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+
 import ActiveVoteCard from '@/components/ActiveVoteCard';
 import PendingVoteCard from '@/components/PendingVoteCard';
+import { getSpaceStyle } from '@/lib/dao-governance/space-style';
+import { filterProposalsByQuery } from '@/lib/dao-governance/vote-search';
+import type { GovernanceProposal, GovernanceSpace } from '@/lib/snapshot/types';
+
+import AskProposalDialog from './AskProposalDialog';
 import ClosedVoteCard from './ClosedVoteCard';
 import FilterChips, { ALL_VALUE } from './FilterChips';
 import StatusFilter, { type StatusValue } from './StatusFilter';
 import VoteSearchInput from './VoteSearchInput';
-import AskProposalDialog from './AskProposalDialog';
 
 interface GovernanceViewProps {
   proposals: GovernanceProposal[];
@@ -79,7 +81,7 @@ export default function GovernanceView({
         scroll: false,
       });
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams],
   );
 
   const closeAsk = useCallback(() => {
@@ -95,20 +97,17 @@ export default function GovernanceView({
   // the command palette opens regardless of the active space/status/search.
   const askProposal = useMemo(
     () => (askId ? proposals.find((p) => p.id === askId) : undefined),
-    [askId, proposals]
+    [askId, proposals],
   );
 
-  const matching = useMemo(
-    () => filterProposalsByQuery(proposals, query),
-    [proposals, query]
-  );
+  const matching = useMemo(() => filterProposalsByQuery(proposals, query), [proposals, query]);
 
   const bySpace = useMemo(
     () =>
       selectedSpace === ALL_VALUE
         ? matching
         : matching.filter((p) => p.space.key === selectedSpace),
-    [matching, selectedSpace]
+    [matching, selectedSpace],
   );
   const showActive = status === 'all' || status === 'active';
   const showPending = status === 'all' || status === 'pending';
@@ -155,10 +154,7 @@ export default function GovernanceView({
 
       <div className="mb-8 flex flex-col gap-3 border-b border-border pb-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <StatusFilter
-            value={status}
-            onChange={(next) => commit(selectedSpace, next, query)}
-          />
+          <StatusFilter value={status} onChange={(next) => commit(selectedSpace, next, query)} />
           <FilterChips
             items={spaceItems}
             value={selectedSpace}

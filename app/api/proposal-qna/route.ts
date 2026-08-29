@@ -11,14 +11,16 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+
 import {
-  answerProposalQuestion,
-  isProposalQnaAvailable,
   AI_QNA_CONFIG,
+  answerProposalQuestion,
   checkRateLimit,
   getClientKey,
+  isProposalQnaAvailable,
+  type QnaRequest,
+  type QnaResponse,
 } from '@/lib/ai-qna';
-import type { QnaRequest, QnaResponse } from '@/lib/ai-qna';
 import { fetchGovernanceProposals } from '@/lib/snapshot/api/fetch-governance-proposals';
 
 /**
@@ -46,9 +48,7 @@ function validateRequest(body: unknown): body is QnaRequest {
 /**
  * Handle POST request for a proposal question
  */
-export async function POST(
-  request: NextRequest
-): Promise<NextResponse<QnaResponse>> {
+export async function POST(request: NextRequest): Promise<NextResponse<QnaResponse>> {
   if (!isProposalQnaAvailable()) {
     return NextResponse.json(
       {
@@ -56,7 +56,7 @@ export async function POST(
         fromCache: false,
         error: 'Proposal Q&A is not available. Check configuration.',
       },
-      { status: 503 }
+      { status: 503 },
     );
   }
 
@@ -66,7 +66,7 @@ export async function POST(
   } catch {
     return NextResponse.json(
       { answer: null, fromCache: false, error: 'Invalid JSON in request body' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -77,7 +77,7 @@ export async function POST(
         fromCache: false,
         error: `Invalid request body. Expected { proposalId, question } with a question of 1-${AI_QNA_CONFIG.maxQuestionLength} characters.`,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -89,7 +89,7 @@ export async function POST(
         fromCache: false,
         error: 'Too many questions. Please wait a moment and try again.',
       },
-      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } },
     );
   }
 
@@ -102,7 +102,7 @@ export async function POST(
     if (!proposal) {
       return NextResponse.json(
         { answer: null, fromCache: false, error: 'Proposal not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -113,7 +113,7 @@ export async function POST(
         title: proposal.title,
         body: proposal.body,
         choices: proposal.choices,
-      }
+      },
     );
 
     return NextResponse.json(result);
@@ -125,7 +125,7 @@ export async function POST(
         fromCache: false,
         error: error instanceof Error ? error.message : 'Failed to answer question',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

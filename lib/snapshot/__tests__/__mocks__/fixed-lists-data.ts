@@ -20,9 +20,7 @@ export const MOCK_GRANTEES: string[] = [
   '0x833982274afc3909f0fff48e92546ec21ae5ad6b',
 ];
 
-export const MOCK_PROFESSIONAL: string[] = [
-  '0x58b1b454dbe5156acc8fc2139e7238451b59f432',
-];
+export const MOCK_PROFESSIONAL: string[] = ['0x58b1b454dbe5156acc8fc2139e7238451b59f432'];
 
 /**
  * Helper function to get all mock fixed lists data

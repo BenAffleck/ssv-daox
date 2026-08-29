@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fetchGovernanceProposals } from '../api/fetch-governance-proposals';
 import type { GovernanceSpace, SnapshotActiveProposal } from '../types';
 
@@ -19,7 +20,7 @@ const OC: GovernanceSpace = {
 };
 
 function proposal(
-  overrides: Partial<SnapshotActiveProposal> & { id: string }
+  overrides: Partial<SnapshotActiveProposal> & { id: string },
 ): SnapshotActiveProposal {
   return {
     title: `Proposal ${overrides.id}`,
@@ -82,7 +83,7 @@ describe('fetchGovernanceProposals', () => {
       routeFetch({
         [MAIN.spaceId]: { active: [proposal({ id: 'm1' })], pending: [] },
         [OC.spaceId]: { active: [proposal({ id: 'o1' })], pending: [] },
-      })
+      }),
     );
 
     const { proposals, failedSpaces } = await fetchGovernanceProposals([MAIN, OC]);
@@ -103,7 +104,7 @@ describe('fetchGovernanceProposals', () => {
           ],
           pending: [proposal({ id: 'pend', state: 'pending', start: 5000 })],
         },
-      })
+      }),
     );
 
     const { proposals } = await fetchGovernanceProposals([MAIN]);
@@ -116,7 +117,7 @@ describe('fetchGovernanceProposals', () => {
       routeFetch({
         [MAIN.spaceId]: { active: [proposal({ id: 'm1' })], pending: [] },
         [OC.spaceId]: { fail: true },
-      })
+      }),
     );
 
     const { proposals, failedSpaces } = await fetchGovernanceProposals([MAIN, OC]);
@@ -136,7 +137,7 @@ describe('fetchGovernanceProposals', () => {
             proposal({ id: 'c-new', state: 'closed', end: 900 }),
           ],
         },
-      })
+      }),
     );
 
     const { proposals } = await fetchGovernanceProposals([MAIN]);
@@ -153,7 +154,7 @@ describe('fetchGovernanceProposals', () => {
           pending: [],
           closed: [proposal({ id: 'c', state: 'closed' })],
         },
-      })
+      }),
     );
 
     const { proposals } = await fetchGovernanceProposals([MAIN], { includeClosed: false });

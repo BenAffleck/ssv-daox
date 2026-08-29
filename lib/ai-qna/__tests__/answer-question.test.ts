@@ -2,7 +2,14 @@
  * Unit tests for AI proposal Q&A
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createClient } from '@/lib/ai/client';
+import { getAnthropicApiKey, isAIEnabled } from '@/lib/ai/config';
+
+import { answerProposalQuestion, isProposalQnaAvailable } from '../answer-question';
+import { cacheAnswer, getCachedAnswer } from '../cache';
+import type { QnaProposalContext, QnaRequest } from '../types';
 
 // Mock the ai modules before imports
 vi.mock('@/lib/ai/config', () => ({
@@ -26,12 +33,6 @@ vi.mock('../cache', () => ({
   getCachedAnswer: vi.fn(),
   cacheAnswer: vi.fn(),
 }));
-
-import { answerProposalQuestion, isProposalQnaAvailable } from '../answer-question';
-import { isAIEnabled, getAnthropicApiKey } from '@/lib/ai/config';
-import { createClient } from '@/lib/ai/client';
-import { getCachedAnswer, cacheAnswer } from '../cache';
-import type { QnaRequest, QnaProposalContext } from '../types';
 
 const mockRequest: QnaRequest = {
   proposalId: 'proposal-123',
@@ -100,9 +101,7 @@ describe('answerProposalQuestion', () => {
     vi.mocked(getCachedAnswer).mockResolvedValue(null);
     vi.mocked(isAIEnabled).mockReturnValue(true);
     vi.mocked(getAnthropicApiKey).mockReturnValue('test-key');
-    vi.mocked(createClient).mockReturnValue(
-      mockClientReturning(JSON.stringify(mockAnswer)) as any
-    );
+    vi.mocked(createClient).mockReturnValue(mockClientReturning(JSON.stringify(mockAnswer)) as any);
 
     const result = await answerProposalQuestion(mockRequest, mockProposal);
 
@@ -111,7 +110,7 @@ describe('answerProposalQuestion', () => {
     expect(cacheAnswer).toHaveBeenCalledWith(
       'proposal-123',
       'Who executes this if it passes?',
-      mockAnswer
+      mockAnswer,
     );
   });
 
@@ -124,9 +123,7 @@ describe('answerProposalQuestion', () => {
     vi.mocked(getCachedAnswer).mockResolvedValue(null);
     vi.mocked(isAIEnabled).mockReturnValue(true);
     vi.mocked(getAnthropicApiKey).mockReturnValue('test-key');
-    vi.mocked(createClient).mockReturnValue(
-      mockClientReturning(JSON.stringify(declined)) as any
-    );
+    vi.mocked(createClient).mockReturnValue(mockClientReturning(JSON.stringify(declined)) as any);
 
     const result = await answerProposalQuestion(mockRequest, mockProposal);
 
@@ -139,7 +136,7 @@ describe('answerProposalQuestion', () => {
     vi.mocked(isAIEnabled).mockReturnValue(true);
     vi.mocked(getAnthropicApiKey).mockReturnValue('test-key');
     vi.mocked(createClient).mockReturnValue(
-      mockClientReturning('{"answer": "Yes.", "answered": true}') as any
+      mockClientReturning('{"answer": "Yes.", "answered": true}') as any,
     );
 
     const result = await answerProposalQuestion(mockRequest, mockProposal);
@@ -166,9 +163,7 @@ describe('answerProposalQuestion', () => {
     vi.mocked(getCachedAnswer).mockResolvedValue(null);
     vi.mocked(isAIEnabled).mockReturnValue(true);
     vi.mocked(getAnthropicApiKey).mockReturnValue('test-key');
-    vi.mocked(createClient).mockReturnValue(
-      mockClientReturning('{"invalid": "response"}') as any
-    );
+    vi.mocked(createClient).mockReturnValue(mockClientReturning('{"invalid": "response"}') as any);
 
     const result = await answerProposalQuestion(mockRequest, mockProposal);
 

@@ -1,17 +1,18 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-  fetchDelegationRecipients,
   fetchConfiguredDelegationRecipients,
+  fetchDelegationRecipients,
 } from '../api/fetch-delegation-recipients';
 import {
+  MOCK_ALREADY_DELEGATED,
+  MOCK_DELEGATION_SOURCE_ADDRESSES,
+} from './__mocks__/delegation-data';
+import {
+  MOCK_DELEGATION_ERROR_RESPONSE,
   MOCK_DELEGATIONS_RESPONSE,
   MOCK_EMPTY_DELEGATIONS_RESPONSE,
-  MOCK_DELEGATION_ERROR_RESPONSE,
 } from './__mocks__/snapshot-responses';
-import {
-  MOCK_DELEGATION_SOURCE_ADDRESSES,
-  MOCK_ALREADY_DELEGATED,
-} from './__mocks__/delegation-data';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -45,9 +46,7 @@ describe('fetchDelegationRecipients', () => {
       json: async () => MOCK_DELEGATIONS_RESPONSE,
     });
 
-    const recipients = await fetchDelegationRecipients(
-      MOCK_DELEGATION_SOURCE_ADDRESSES
-    );
+    const recipients = await fetchDelegationRecipients(MOCK_DELEGATION_SOURCE_ADDRESSES);
 
     // Should return 3 unique delegates (4 delegations but 1 duplicate)
     expect(recipients).toHaveLength(3);
@@ -93,9 +92,7 @@ describe('fetchDelegationRecipients', () => {
     const recipients = await fetchDelegationRecipients([]);
 
     expect(recipients).toEqual([]);
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'No delegation source addresses configured'
-    );
+    expect(consoleWarnSpy).toHaveBeenCalledWith('No delegation source addresses configured');
     expect(mockFetch).not.toHaveBeenCalled();
 
     consoleWarnSpy.mockRestore();
@@ -115,16 +112,16 @@ describe('fetchDelegationRecipients', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: expect.stringContaining('GetDelegationsFromSources'),
-      })
+      }),
     );
   });
 
   it('should throw on network error', async () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-    await expect(
-      fetchDelegationRecipients(MOCK_DELEGATION_SOURCE_ADDRESSES)
-    ).rejects.toThrow('Network error');
+    await expect(fetchDelegationRecipients(MOCK_DELEGATION_SOURCE_ADDRESSES)).rejects.toThrow(
+      'Network error',
+    );
   });
 
   it('should throw on HTTP error', async () => {
@@ -134,9 +131,9 @@ describe('fetchDelegationRecipients', () => {
       statusText: 'Internal Server Error',
     });
 
-    await expect(
-      fetchDelegationRecipients(MOCK_DELEGATION_SOURCE_ADDRESSES)
-    ).rejects.toThrow('Snapshot API error: 500 Internal Server Error');
+    await expect(fetchDelegationRecipients(MOCK_DELEGATION_SOURCE_ADDRESSES)).rejects.toThrow(
+      'Snapshot API error: 500 Internal Server Error',
+    );
   });
 
   it('should throw on GraphQL error', async () => {
@@ -145,9 +142,9 @@ describe('fetchDelegationRecipients', () => {
       json: async () => MOCK_DELEGATION_ERROR_RESPONSE,
     });
 
-    await expect(
-      fetchDelegationRecipients(MOCK_DELEGATION_SOURCE_ADDRESSES)
-    ).rejects.toThrow('GraphQL error: Failed to fetch delegations');
+    await expect(fetchDelegationRecipients(MOCK_DELEGATION_SOURCE_ADDRESSES)).rejects.toThrow(
+      'GraphQL error: Failed to fetch delegations',
+    );
   });
 
   it('should handle no active delegations gracefully', async () => {
@@ -158,13 +155,11 @@ describe('fetchDelegationRecipients', () => {
       json: async () => MOCK_EMPTY_DELEGATIONS_RESPONSE,
     });
 
-    const recipients = await fetchDelegationRecipients(
-      MOCK_DELEGATION_SOURCE_ADDRESSES
-    );
+    const recipients = await fetchDelegationRecipients(MOCK_DELEGATION_SOURCE_ADDRESSES);
 
     expect(recipients).toEqual([]);
     expect(consoleInfoSpy).toHaveBeenCalledWith(
-      expect.stringContaining('No active delegations found')
+      expect.stringContaining('No active delegations found'),
     );
 
     consoleInfoSpy.mockRestore();
@@ -220,13 +215,13 @@ describe('fetchDelegationRecipients', () => {
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-      })
+      }),
     );
 
     const callArgs = mockFetch.mock.calls[0][1];
     const body = JSON.parse(callArgs.body);
     expect(body.variables.delegators).toEqual(
-      MOCK_DELEGATION_SOURCE_ADDRESSES.map((addr) => addr.toLowerCase())
+      MOCK_DELEGATION_SOURCE_ADDRESSES.map((addr) => addr.toLowerCase()),
     );
     expect(body.query).toContain('GetDelegationsFromSources');
     expect(body.query).toContain('delegations');
@@ -242,12 +237,8 @@ describe('fetchDelegationRecipients', () => {
 
     await fetchDelegationRecipients(MOCK_DELEGATION_SOURCE_ADDRESSES);
 
-    expect(consoleInfoSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Found')
-    );
-    expect(consoleInfoSpy).toHaveBeenCalledWith(
-      expect.stringContaining('delegation recipient')
-    );
+    expect(consoleInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Found'));
+    expect(consoleInfoSpy).toHaveBeenCalledWith(expect.stringContaining('delegation recipient'));
 
     consoleInfoSpy.mockRestore();
   });
@@ -280,9 +271,7 @@ describe('fetchConfiguredDelegationRecipients', () => {
     const recipients = await fetchConfiguredDelegationRecipients();
 
     expect(recipients).toEqual([]);
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('not configured')
-    );
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('not configured'));
     expect(mockFetch).not.toHaveBeenCalled();
 
     consoleWarnSpy.mockRestore();
@@ -294,7 +283,7 @@ describe('fetchConfiguredDelegationRecipients', () => {
     await fetchConfiguredDelegationRecipients();
 
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'SNAPSHOT_DELEGATION_SOURCE_ADDRESSES not configured. Skipping delegation fetch.'
+      'SNAPSHOT_DELEGATION_SOURCE_ADDRESSES not configured. Skipping delegation fetch.',
     );
 
     consoleWarnSpy.mockRestore();
@@ -310,7 +299,7 @@ describe('fetchConfiguredDelegationRecipients', () => {
 
     expect(recipients).toEqual([]);
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('THEGRAPH_API_KEY not configured')
+      expect.stringContaining('THEGRAPH_API_KEY not configured'),
     );
     expect(mockFetch).not.toHaveBeenCalled();
 

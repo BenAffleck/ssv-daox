@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import AskProposalDialog from '../AskProposalDialog';
 
 const PROPOSAL = {
@@ -66,7 +67,7 @@ describe('AskProposalDialog', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/proposal-qna',
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({ method: 'POST' }),
     );
     const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
     expect(body).toEqual({ proposalId: 'p1', question: 'Who executes this?' });
@@ -156,9 +157,7 @@ describe('AskProposalDialog', () => {
 
     expect(await screen.findByText(second.answer)).toBeInTheDocument();
     // The first answer is gone rather than accumulating into a thread.
-    await waitFor(() =>
-      expect(screen.queryByText(ANSWER.answer)).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByText(ANSWER.answer)).not.toBeInTheDocument());
   });
 
   it('closes on Escape and on a scrim click', async () => {

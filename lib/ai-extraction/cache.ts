@@ -5,12 +5,9 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import {
-  AIExtractedEvent,
-  CachedExtraction,
-  ExtractionCache,
-} from './types';
+
 import { AI_EXTRACTION_CONFIG } from './config';
+import { AIExtractedEvent, CachedExtraction, ExtractionCache } from './types';
 
 /**
  * Get the full path to the cache file
@@ -85,9 +82,7 @@ function isCacheEntryValid(entry: CachedExtraction): boolean {
 /**
  * Get cached extraction for a proposal if available and valid
  */
-export async function getCachedExtraction(
-  proposalId: string
-): Promise<AIExtractedEvent[] | null> {
+export async function getCachedExtraction(proposalId: string): Promise<AIExtractedEvent[] | null> {
   const cache = await loadCache();
   const entry = cache.extractions[proposalId];
 
@@ -103,7 +98,7 @@ export async function getCachedExtraction(
  */
 export async function cacheExtraction(
   proposalId: string,
-  events: AIExtractedEvent[]
+  events: AIExtractedEvent[],
 ): Promise<void> {
   const cache = await loadCache();
 
@@ -121,7 +116,7 @@ export async function cacheExtraction(
  * Returns a map of proposalId -> events (or null if not cached)
  */
 export async function getCachedExtractions(
-  proposalIds: string[]
+  proposalIds: string[],
 ): Promise<Map<string, AIExtractedEvent[] | null>> {
   const cache = await loadCache();
   const results = new Map<string, AIExtractedEvent[] | null>();
@@ -142,7 +137,7 @@ export async function getCachedExtractions(
  * Batch save multiple extractions
  */
 export async function cacheExtractions(
-  extractions: Array<{ proposalId: string; events: AIExtractedEvent[] }>
+  extractions: Array<{ proposalId: string; events: AIExtractedEvent[] }>,
 ): Promise<void> {
   const cache = await loadCache();
   const now = new Date().toISOString();

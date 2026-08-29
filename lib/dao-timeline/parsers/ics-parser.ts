@@ -3,14 +3,14 @@
  */
 
 import { RawICSEvent } from '../types';
-import {
-  unfoldLines,
-  parsePropertyLine,
-  parseICSDate,
-  unescapeText,
-  extractComponents,
-} from '../utils/ics-utils';
 import { formatYMD } from '../utils/date-utils';
+import {
+  extractComponents,
+  parseICSDate,
+  parsePropertyLine,
+  unescapeText,
+  unfoldLines,
+} from '../utils/ics-utils';
 
 /**
  * Parse ICS content into an array of raw events
@@ -41,10 +41,7 @@ function parseVEvent(block: string): RawICSEvent | null {
   const lines = block.split('\n').filter((line) => line.trim());
 
   // Build a map of properties
-  const properties: Record<
-    string,
-    { params: Record<string, string>; value: string }
-  > = {};
+  const properties: Record<string, { params: Record<string, string>; value: string }> = {};
 
   // EXDATE may repeat, so it is accumulated rather than folded into the
   // last-value-wins map below. A cancelled occurrence must not surface as the
@@ -88,10 +85,7 @@ function parseVEvent(block: string): RawICSEvent | null {
   if (!dtstartProp) {
     return null;
   }
-  const { date: dtstart, isAllDay } = parseICSDate(
-    dtstartProp.value,
-    dtstartProp.params
-  );
+  const { date: dtstart, isAllDay } = parseICSDate(dtstartProp.value, dtstartProp.params);
 
   // DTEND is optional
   let dtend: Date | null = null;
@@ -104,9 +98,7 @@ function parseVEvent(block: string): RawICSEvent | null {
   }
 
   // LOCATION
-  const location = properties.LOCATION?.value
-    ? unescapeText(properties.LOCATION.value)
-    : null;
+  const location = properties.LOCATION?.value ? unescapeText(properties.LOCATION.value) : null;
 
   // URL
   const url = properties.URL?.value || null;
@@ -136,9 +128,7 @@ function parseDuration(start: Date, duration: string): Date {
   const result = new Date(start);
 
   // Simple parsing for common formats
-  const match = duration.match(
-    /P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/
-  );
+  const match = duration.match(/P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/);
 
   if (!match) {
     return result;

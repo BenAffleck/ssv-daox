@@ -9,14 +9,9 @@ import { fetchVotes } from './fetch-votes';
  * @param spaceId - The Snapshot space ID (e.g., 'ssv.dao.eth')
  * @returns Map of voter addresses to their participation rate (0-100)
  */
-export async function fetchVoteParticipation(
-  spaceId: string
-): Promise<VoteParticipationMap> {
+export async function fetchVoteParticipation(spaceId: string): Promise<VoteParticipationMap> {
   // Fetch recent closed proposals
-  const proposals = await fetchProposals(
-    spaceId,
-    SNAPSHOT_CONFIG.voteParticipation.proposalCount
-  );
+  const proposals = await fetchProposals(spaceId, SNAPSHOT_CONFIG.voteParticipation.proposalCount);
 
   if (proposals.length === 0) {
     console.warn(`No closed proposals found for space: ${spaceId}`);
@@ -44,9 +39,7 @@ export async function fetchVoteParticipation(
 
   for (const [address, proposalSet] of voterProposals) {
     const votedCount = proposalSet.size;
-    participationMap[address] = Math.round(
-      (votedCount / totalProposals) * 100
-    );
+    participationMap[address] = Math.round((votedCount / totalProposals) * 100);
   }
 
   return participationMap;

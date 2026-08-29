@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
+
+import GovernanceView from '@/components/dao-governance/GovernanceView';
+import { isProposalQnaAvailable } from '@/lib/ai-qna';
+import { isAISummaryAvailable } from '@/lib/ai-summary';
 import { fetchGovernanceProposals } from '@/lib/snapshot/api/fetch-governance-proposals';
 import { getGovernanceSpaces } from '@/lib/snapshot/config';
-import { isAISummaryAvailable } from '@/lib/ai-summary';
-import { isProposalQnaAvailable } from '@/lib/ai-qna';
-import GovernanceView from '@/components/dao-governance/GovernanceView';
 
 export const metadata = {
   title: 'Governance Votes - DAOx',

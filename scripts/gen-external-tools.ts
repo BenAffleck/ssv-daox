@@ -14,6 +14,7 @@
  */
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+
 import { parseExternalTool } from '../lib/external-tool.schema';
 import { ExternalToolCategory, type ExternalTool } from '../lib/types';
 
@@ -50,7 +51,9 @@ function loadTools(): ExternalTool[] {
     try {
       tool = parseExternalTool(raw, index);
     } catch (err) {
-      throw new Error(`Schema validation failed for data/external-tools/${file}:\n${(err as Error).message}`);
+      throw new Error(
+        `Schema validation failed for data/external-tools/${file}:\n${(err as Error).message}`,
+      );
     }
 
     const expectedFile = `${tool.id}.json`;
@@ -71,9 +74,7 @@ function loadTools(): ExternalTool[] {
 }
 
 function renderTool(tool: ExternalTool): string {
-  const categories = tool.categories
-    .map((c) => CATEGORY_TO_ENUM.get(c) ?? `'${c}'`)
-    .join(', ');
+  const categories = tool.categories.map((c) => CATEGORY_TO_ENUM.get(c) ?? `'${c}'`).join(', ');
   return `  {
     id: ${JSON.stringify(tool.id)},
     name: ${JSON.stringify(tool.name)},

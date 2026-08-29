@@ -1,8 +1,5 @@
 import { SNAPSHOT_CONFIG } from '../config';
-import type {
-  SnapshotGraphQLResponse,
-  SpaceQueryResponse,
-} from '../types';
+import type { SnapshotGraphQLResponse, SpaceQueryResponse } from '../types';
 
 /**
  * GraphQL query to fetch space strategies with member addresses
@@ -43,13 +40,10 @@ export async function fetchSpaceMembers(spaceId: string): Promise<string[]> {
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Snapshot API error: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Snapshot API error: ${response.status} ${response.statusText}`);
     }
 
-    const result: SnapshotGraphQLResponse<SpaceQueryResponse> =
-      await response.json();
+    const result: SnapshotGraphQLResponse<SpaceQueryResponse> = await response.json();
 
     // Check for GraphQL errors
     if (result.errors?.length) {
@@ -73,19 +67,14 @@ export async function fetchSpaceMembers(spaceId: string): Promise<string[]> {
     const addresses = firstStrategy.params?.addresses;
 
     if (!addresses || !Array.isArray(addresses)) {
-      console.warn(
-        `No addresses found in strategy params for space: ${spaceId}`
-      );
+      console.warn(`No addresses found in strategy params for space: ${spaceId}`);
       return [];
     }
 
     // Normalize addresses to lowercase for consistent comparison
     return addresses.map((addr) => addr.toLowerCase());
   } catch (error) {
-    console.error(
-      `Failed to fetch Snapshot space members for ${spaceId}:`,
-      error
-    );
+    console.error(`Failed to fetch Snapshot space members for ${spaceId}:`, error);
     throw error;
   }
 }

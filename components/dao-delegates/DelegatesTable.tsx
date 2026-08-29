@@ -1,12 +1,14 @@
 'use client';
 
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { Delegate } from '@/lib/dao-delegates/types';
 import { useDelegateFilters } from '@/lib/hooks/useDelegateFilters';
-import FilterControls from './FilterControls';
-import TableHeader, { SortField, SortDirection } from './TableHeader';
+
 import DelegateRow from './DelegateRow';
+import FilterControls from './FilterControls';
 import IncompleteProfileEmptyState from './IncompleteProfileEmptyState';
+import TableHeader, { SortDirection, SortField } from './TableHeader';
 
 interface DelegatesTableProps {
   delegates: Delegate[];
@@ -42,7 +44,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
         setFilter.searchQuery(value);
       }, 300);
     },
-    [setFilter]
+    [setFilter],
   );
 
   // Cleanup debounce timer
@@ -98,8 +100,8 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
     // Apply status filter (active by default, optionally show withdrawn)
     if (showWithdrawn) {
       // Show both active and withdrawn
-      filtered = filtered.filter((d) =>
-        d.status.toLowerCase() === 'active' || d.status.toLowerCase() === 'withdrawn'
+      filtered = filtered.filter(
+        (d) => d.status.toLowerCase() === 'active' || d.status.toLowerCase() === 'withdrawn',
       );
     } else {
       // Show only active
@@ -114,7 +116,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
           d.displayName.toLowerCase().includes(query) ||
           d.publicAddress.toLowerCase().includes(query) ||
           d.name.toLowerCase().includes(query) ||
-          d.ensName.toLowerCase().includes(query)
+          d.ensName.toLowerCase().includes(query),
       );
     }
 
@@ -180,7 +182,17 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
     });
 
     return filtered;
-  }, [delegates, searchQuery, showEligibleOnly, showWithdrawn, showChangesOnly, showCurrentOnly, showIncompleteProfile, sortField, sortDirection]);
+  }, [
+    delegates,
+    searchQuery,
+    showEligibleOnly,
+    showWithdrawn,
+    showChangesOnly,
+    showCurrentOnly,
+    showIncompleteProfile,
+    sortField,
+    sortDirection,
+  ]);
 
   // Detect if the search matches a delegate with an incomplete profile that was filtered out
   const hiddenIncompleteDelegate = useMemo(() => {
@@ -200,7 +212,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
           (d.displayName.toLowerCase().includes(query) ||
             d.publicAddress.toLowerCase().includes(query) ||
             d.name.toLowerCase().includes(query) ||
-            d.ensName.toLowerCase().includes(query))
+            d.ensName.toLowerCase().includes(query)),
       ) || null
     );
   }, [delegates, filteredDelegates.length, searchQuery, showIncompleteProfile]);
@@ -208,11 +220,11 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
   // Collect non-empty handles from filtered delegates
   const forumHandles = useMemo(
     () => filteredDelegates.map((d) => d.forumHandle).filter(Boolean),
-    [filteredDelegates]
+    [filteredDelegates],
   );
   const discordHandles = useMemo(
     () => filteredDelegates.map((d) => d.discordUsername).filter(Boolean),
-    [filteredDelegates]
+    [filteredDelegates],
   );
 
   return (
@@ -247,19 +259,15 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
               {searchQuery
                 ? 'No delegates match your search'
                 : showEligibleOnly
-                ? 'No eligible delegates found'
-                : 'No delegates found'}
+                  ? 'No eligible delegates found'
+                  : 'No delegates found'}
             </p>
           </div>
         )
       ) : (
-        <div className="overflow-x-auto card">
+        <div className="card overflow-x-auto">
           <table className="w-full">
-            <TableHeader
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-            />
+            <TableHeader sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
             <tbody>
               {filteredDelegates.map((delegate) => (
                 <DelegateRow key={delegate.publicAddress} delegate={delegate} />

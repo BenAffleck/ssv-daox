@@ -1,8 +1,9 @@
 import { z } from 'zod';
+
 // Relative import (not the @/ alias) so the build-time generator can run this
 // module under tsx without alias resolution. App/test code still imports this
 // file via the @/ alias as usual.
-import { ExternalToolCategory, ExternalTool } from './types';
+import { ExternalTool, ExternalToolCategory } from './types';
 
 /**
  * Validation schema for a community-contributed external tool.
@@ -25,7 +26,9 @@ export const externalToolSchema = z.object({
   /** One- or two-sentence description of what the tool does and for whom. */
   description: z.string().min(1),
   /** One or more categories; drives the filter and the auto-selected icon. */
-  categories: z.array(z.nativeEnum(ExternalToolCategory)).min(1, 'at least one category is required'),
+  categories: z
+    .array(z.nativeEnum(ExternalToolCategory))
+    .min(1, 'at least one category is required'),
   /** Short formula-style inputs string, segments separated by " · ". */
   inputs: z.string().min(1),
   /** Short formula-style outputs string, segments separated by " · ". */

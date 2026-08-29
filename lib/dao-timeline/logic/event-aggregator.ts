@@ -2,36 +2,21 @@
  * Aggregate, filter, and group events for display
  */
 
-import {
-  EventGroup,
-  SerializedEvent,
-  TimelineFilters,
-  UnifiedEvent,
-} from '../types';
-import {
-  getDateLabel,
-  isPastDate,
-  isSameDay,
-  startOfDay,
-} from '../utils/date-utils';
+import { EventGroup, SerializedEvent, TimelineFilters, UnifiedEvent } from '../types';
+import { getDateLabel, isPastDate, isSameDay, startOfDay } from '../utils/date-utils';
 import { serializeEvents } from './event-transformer';
 
 /**
  * Sort events by start date (ascending)
  */
 export function sortEventsByDate(events: UnifiedEvent[]): UnifiedEvent[] {
-  return [...events].sort(
-    (a, b) => a.startDate.getTime() - b.startDate.getTime()
-  );
+  return [...events].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 }
 
 /**
  * Filter events by source IDs
  */
-export function filterBySource(
-  events: UnifiedEvent[],
-  sourceIds: string[]
-): UnifiedEvent[] {
+export function filterBySource(events: UnifiedEvent[], sourceIds: string[]): UnifiedEvent[] {
   if (!sourceIds.length) return events;
 
   return events.filter((event) => sourceIds.includes(event.sourceId));
@@ -43,7 +28,7 @@ export function filterBySource(
 export function filterByDateRange(
   events: UnifiedEvent[],
   startDate?: Date | null,
-  endDate?: Date | null
+  endDate?: Date | null,
 ): UnifiedEvent[] {
   return events.filter((event) => {
     if (startDate && event.startDate < startDate) {
@@ -59,10 +44,7 @@ export function filterByDateRange(
 /**
  * Filter out past events
  */
-export function filterPastEvents(
-  events: UnifiedEvent[],
-  showPast: boolean
-): UnifiedEvent[] {
+export function filterPastEvents(events: UnifiedEvent[], showPast: boolean): UnifiedEvent[] {
   if (showPast) return events;
   return events.filter((event) => !isPastDate(event.startDate));
 }
@@ -70,10 +52,7 @@ export function filterPastEvents(
 /**
  * Apply all filters to events
  */
-export function applyFilters(
-  events: UnifiedEvent[],
-  filters: TimelineFilters
-): UnifiedEvent[] {
+export function applyFilters(events: UnifiedEvent[], filters: TimelineFilters): UnifiedEvent[] {
   let filtered = [...events];
 
   // Filter by source
@@ -140,10 +119,7 @@ export function deduplicateEvents(events: UnifiedEvent[]): UnifiedEvent[] {
 /**
  * Process events through full pipeline: merge, dedupe, filter, sort, group
  */
-export function processEvents(
-  events: UnifiedEvent[],
-  filters: TimelineFilters
-): EventGroup[] {
+export function processEvents(events: UnifiedEvent[], filters: TimelineFilters): EventGroup[] {
   const deduped = deduplicateEvents(events);
   const filtered = applyFilters(deduped, filters);
   return groupEventsByDay(filtered);

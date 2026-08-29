@@ -9,11 +9,7 @@ interface AISourceBadgeProps {
  */
 export default function AISourceBadge({ confidence }: AISourceBadgeProps) {
   const confidenceOpacity =
-    confidence === 'high'
-      ? ''
-      : confidence === 'medium'
-        ? 'opacity-90'
-        : 'opacity-75';
+    confidence === 'high' ? '' : confidence === 'medium' ? 'opacity-90' : 'opacity-75';
 
   return (
     <span

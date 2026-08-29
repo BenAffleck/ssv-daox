@@ -1,5 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { fetchActiveProposals } from '../api/fetch-active-proposals';
 import { fetchActiveVoteStatus } from '../api/fetch-active-vote-status';
+import { fetchVotes } from '../api/fetch-votes';
 import type { SnapshotActiveProposal } from '../types';
 
 // Mock the dependencies
@@ -10,9 +13,6 @@ vi.mock('../api/fetch-active-proposals', () => ({
 vi.mock('../api/fetch-votes', () => ({
   fetchVotes: vi.fn(),
 }));
-
-import { fetchActiveProposals } from '../api/fetch-active-proposals';
-import { fetchVotes } from '../api/fetch-votes';
 
 const mockFetchActiveProposals = fetchActiveProposals as ReturnType<typeof vi.fn>;
 const mockFetchVotes = fetchVotes as ReturnType<typeof vi.fn>;

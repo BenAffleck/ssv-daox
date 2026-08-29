@@ -5,6 +5,7 @@
 Next.js 16 App Router application with TypeScript strict mode. Modular design where each feature is an isolated module.
 
 **Core Principles:**
+
 - Server components for data fetching, client components for interactivity
 - Semantic color tokens for theming (never hardcode colors)
 - Dependency injection for external data (testable)
@@ -120,11 +121,13 @@ ssv-daox/
 ### 1. Server/Client Component Split
 
 **Server components** handle:
+
 - Data fetching from external APIs
 - Heavy computation (transformations, eligibility checks)
 - Static rendering (badges, rows)
 
 **Client components** handle:
+
 - User interaction state (filters, sort)
 - Browser APIs (clipboard, localStorage)
 - Real-time UI updates
@@ -136,12 +139,14 @@ ssv-daox/
 Uses CSS variables + `data-theme` attribute on `<html>`.
 
 **Files involved:**
+
 - `lib/theme/types.ts` - Theme type union
 - `app/globals.css` - CSS variable definitions per theme
 - `lib/theme/ThemeProvider.tsx` - React Context + localStorage
 - `app/layout.tsx` - FOUC prevention script
 
 **Adding a theme:**
+
 1. Add to type in `lib/theme/types.ts`
 2. Add CSS variables in `app/globals.css` under `:root[data-theme="name"]`
 3. Add to `themes` array in `ThemeProvider.tsx`
@@ -156,6 +161,7 @@ The header (`components/Header.tsx`) is a `'use client'` component providing a t
 **Layout:** `[Logo Container] — [Home | Module Nav Items | More ▾] — [ThemeToggle | Guest Pill]`
 
 **Features:**
+
 - Logo in bordered container linking to `/`
 - Nav items for each active module with Lucide React icons, active route detection via `usePathname()`
 - "More" dropdown listing coming-soon modules (dimmed, with badge)
@@ -173,11 +179,13 @@ The header (`components/Header.tsx`) is a `'use client'` component providing a t
 All external data uses dependency injection for testability.
 
 **Data sources:**
+
 - **Karma API** - Delegate CSV data (5-min cache)
 - **Snapshot Hub API** - Committee member addresses
 - **The Graph Subgraph** - Delegation relationships (requires `THEGRAPH_API_KEY`)
 
 **Pattern:**
+
 ```
 page.tsx → Promise.all([fetchA(), fetchB()]) → buildLists(data) → transform → render
 ```
@@ -189,6 +197,7 @@ Mock data for tests lives in `lib/*/___tests__/__mocks__/`.
 Modules are registered in `lib/data/modules.ts` with status (ACTIVE/COMING_SOON).
 
 **Adding a module:**
+
 1. Add entry to `lib/data/modules.ts`
 2. Create `app/[module-slug]/page.tsx` (or directory for complex modules)
 3. Module-specific components go in `components/[module-slug]/`
@@ -199,6 +208,7 @@ Modules are registered in `lib/data/modules.ts` with status (ACTIVE/COMING_SOON)
 External community-built tools (calculators, simulators, dashboards, explorers, claim UIs) displayed in a list-style section on the landing page below the modules grid. This is the only home for external tools — there is no separate "Featured DAO Community" section; featured items are pinned to the top of this list via the `featured` flag.
 
 **Data model:** `ExternalTool` interface in `lib/types.ts`:
+
 - `id`, `name`, `description`, `host`, `url`, `sortOrder`
 - `categories`: `ExternalToolCategory[]` — a tool can belong to more than one category (e.g. `[CALCULATOR, DASHBOARD]`); the filter matches when any category is selected
 - `inputs`, `outputs`: short formula-style strings (e.g. `Validators · Fee % · APR` → `Net SSV · USD/yr`)
@@ -222,6 +232,7 @@ the committed generated file is in sync. See `CONTRIBUTING.md` and the
 `.github/` scaffolding (CI, Claude review workflows, CODEOWNERS, PR/issue templates).
 
 **Files:**
+
 - `data/external-tools/<id>.json` — one file per tool (the contribution surface)
 - `lib/external-tool.schema.ts` — Zod schema + `parseExternalTool()` (single source of truth)
 - `data/external-tool.schema.json` — JSON Schema mirror for editor autocomplete
@@ -231,6 +242,7 @@ the committed generated file is in sync. See `CONTRIBUTING.md` and the
 - `components/ExternalToolsSection.tsx` — client component with filter state, list rows, submit footer
 
 **Category → badge mapping (semantic tonal tints, no new colors):**
+
 - `Simulator` → `badge-sm-secondary` (purple)
 - `Calculator` → `badge-sm-primary` (blue)
 - `Dashboard` → `badge-sm-accent` (green)
@@ -240,6 +252,7 @@ the committed generated file is in sync. See `CONTRIBUTING.md` and the
 The "Featured" pill uses solid `bg-primary text-white` to read as a callout rather than a category.
 
 **Adding an external tool:**
+
 1. Create `data/external-tools/<id>.json` (copy an existing file as a template)
 2. Fill the required fields: `id`, `name`, `description`, `categories` (one or more), `inputs`, `outputs`, `url` (`host` is derived from `url`)
 3. Run `npm run gen:tools` (validates + regenerates) and commit the generated file, then `npm test`
@@ -250,6 +263,7 @@ The "Featured" pill uses solid `bg-primary text-white` to read as a callout rath
 A global search palette indexes all modules and external tools and is reachable from anywhere on the page via `Ctrl+K` / `Cmd+K`. The trigger button lives in the header (desktop right section + mobile menu).
 
 **Files:**
+
 - `lib/search/index.ts` — `buildSearchIndex(modules, tools)`, `searchItems(index, q)`, and `scoreSearchItem`. Pure functions, no React. Searches across name, description, host, and category strings; ranks direct name hits highest, then any direct substring, then subsequence matches.
 - `components/SearchPalette.tsx` — client component exporting:
   - default `SearchPalette` — modal + global keyboard listener; mounted once inside `Header`.
@@ -257,6 +271,7 @@ A global search palette indexes all modules and external tools and is reachable 
   - `openSearchPalette()` — helper that dispatches the `daox:open-search` window event so any caller can open the modal.
 
 **Behavior:**
+
 - `Ctrl+K` / `Cmd+K` toggles the palette; `Esc` closes it; `↑` / `↓` move the active row; `Enter` opens it.
 - Active modules navigate via `next/navigation` `router.push`; coming-soon modules are listed but not navigable. External tools open in a new tab with `noopener,noreferrer`.
 - Results are grouped by **Modules** and **External tools**. Featured tools render with the same solid-primary "Featured" pill used in `ExternalToolsSection`.
@@ -299,6 +314,7 @@ Shows each delegate's voting activity in two sections:
 **Historical Participation** — Color-coded badge showing voting rate across the N most recent closed proposals (configurable via `SNAPSHOT_CONFIG.voteParticipation.proposalCount`, default: 5), with a "Last N closed" label clarifying scope.
 
 **Data flow (historical):**
+
 1. `fetchProposals()` - Get latest closed, non-flagged proposals from Snapshot Hub
 2. `fetchVotes()` - Get all votes for those proposals (paginated, 1000/page)
 3. `fetchVoteParticipation()` - Build map: `address → participation %`
@@ -308,11 +324,13 @@ All proposal queries use `flagged: false` to exclude moderator-deleted spam prop
 **Active Vote Status** — Colored dots showing whether a delegate has voted on each currently active proposal (accent=voted, danger=not voted). Capped at 3 dots with "+N" overflow.
 
 **Data flow (active):**
+
 1. `fetchActiveProposals()` - Get active proposals with scores/quorum/choices
 2. `fetchActiveVoteStatus()` - Combines active proposals + `fetchVotes()` into a `voterMap: Map<address, Set<proposalId>>`
 3. `transformDelegates()` - Populates `delegate.activeVoteStatus[]` per delegate
 
 **Display:** `VoteParticipationCell` component (replaces `VoteParticipationBadge`)
+
 - Historical badge colors: 90-100% `accent`, 80-89% `warning`, 0-79% `danger`
 - Active dots: `accent` (voted) / `danger` (not voted), with `title` tooltips
 - Column header: "Vote Activity"
@@ -334,11 +352,13 @@ The pin response carries both flat address lists (`delegators`, `delegates`) and
 The landing page displays currently active governance proposals when any exist (renders nothing when none).
 
 **Data flow:**
+
 1. `fetchActiveProposals()` called in `app/page.tsx` (async server component)
 2. `isAISummaryAvailable()` checked server-side and passed as prop
 3. `ActiveVotes` section renders `ActiveVoteCard` for each proposal
 
 **ActiveVoteCard displays:**
+
 - Proposal title (linked to Snapshot)
 - Time remaining badge (e.g., "2d 5h left")
 - Stacked progress bar with score distribution per choice (semantic colors)
@@ -347,6 +367,7 @@ The landing page displays currently active governance proposals when any exist (
 - **"AI TL;DR" button** (when AI is available) - Fetches/toggles AI-generated summary with choice explanations via `/api/ai-summary`
 
 **AI Summary flow:**
+
 1. User clicks "AI TL;DR" on an ActiveVoteCard (client component)
 2. Client POSTs `{ proposalId, title, body, choices }` to `/api/ai-summary`
 3. Server checks file cache (`.cache/ai-summaries.json`), returns cached if valid
@@ -355,6 +376,7 @@ The landing page displays currently active governance proposals when any exist (
 6. Card displays summary inline; subsequent clicks toggle visibility
 
 **Files:**
+
 - `lib/snapshot/api/fetch-active-proposals.ts` - GraphQL query for active proposals (includes `body`)
 - `lib/snapshot/api/fetch-active-vote-status.ts` - Orchestrator combining proposals + votes
 - `lib/snapshot/utils/time-remaining.ts` - Time formatting utility
@@ -399,17 +421,20 @@ Displays events from multiple calendar sources in a chronological timeline view.
 ### Event Sources
 
 **ICS Calendar** (`EventSource.ICS`)
+
 - Custom RFC 5545 parser (no external dependency)
 - Handles line folding, all-day events, timezones
 - Expands RRULE recurrence (DAILY, WEEKLY, MONTHLY, YEARLY)
 
 **Snapshot Proposals** (`EventSource.SNAPSHOT_PROPOSALS`)
+
 - Fetches from Snapshot Hub GraphQL API
 - Shows voting period (start → end) as timeline events
 - Links directly to proposal on Snapshot
 - Auto-enabled when `SNAPSHOT_DELEGATION_SPACE_FILTER` is set
 
 **AI Extracted Events** (`EventSource.AI_EXTRACTED`)
+
 - Uses Anthropic Claude API to extract milestones and deadlines from proposal text
 - Client-triggered extraction via button in Timeline UI
 - Time window selection (30d/90d/6m/all) to control costs
@@ -437,7 +462,7 @@ Displays events from multiple calendar sources in a chronological timeline view.
   most valuable recurring events the timeline carries and the easiest to
   misread, because the body producing them is always a specific one (DIP-43's
   report is described entirely in terms of the Foundation, yet the DAO is who
-  it is for). The rule requires a reporting term *and* a public-recipient term,
+  it is for). The rule requires a reporting term _and_ a public-recipient term,
   so "the security lead reports privately to the multisig" stays internal. It
   is deliberately an allowlist: a false positive keeps one extra event, a false
   negative loses a report the DAO is owed.
@@ -469,7 +494,7 @@ Displays events from multiple calendar sources in a chronological timeline view.
 ```typescript
 interface UnifiedEvent {
   id: string;
-  sourceId: string;           // For filtering
+  sourceId: string; // For filtering
   title: string;
   description: string | null;
   startDate: Date;
@@ -477,17 +502,17 @@ interface UnifiedEvent {
   isAllDay: boolean;
   source: EventSource;
   sourceName: string;
-  sourceUrl: string | null;   // Link to external event
+  sourceUrl: string | null; // Link to external event
   location: string | null;
   isRecurring: boolean;
   recurrenceId: string | null;
-  recurrence: SeriesInfo | null;  // The cadence, when this is a series
+  recurrence: SeriesInfo | null; // The cadence, when this is a series
   metadata: Record<string, unknown>;
 }
 
 interface SeriesInfo {
-  rrule: string;        // RFC 5545 RRULE — the source of truth for the cadence
-  summary: string;      // "Every 2 weeks on Tue", for the badge
+  rrule: string; // RFC 5545 RRULE — the source of truth for the cadence
+  summary: string; // "Every 2 weeks on Tue", for the badge
   exceptions: string[]; // Cancelled dates (ICS EXDATE), as YYYY-MM-DD
 }
 
@@ -508,11 +533,11 @@ next one. A weekly call therefore costs two rows instead of twenty-six, and the
 
 **Anchoring.** The split point is today, clamped into the brushed range:
 
-| Brushed range | Anchor | Shows |
-|---|---|---|
-| Spans today (the default) | today | most recent + next occurrence |
-| Entirely in the future | range start | the first occurrence(s) in the window |
-| Entirely in the past | range end | the last occurrence in the window |
+| Brushed range             | Anchor      | Shows                                 |
+| ------------------------- | ----------- | ------------------------------------- |
+| Spans today (the default) | today       | most recent + next occurrence         |
+| Entirely in the future    | range start | the first occurrence(s) in the window |
+| Entirely in the past      | range end   | the last occurrence in the window     |
 
 Every card the collapse returns falls inside the brushed range, so the brush
 contract holds: what the range says is showing is what shows.
@@ -634,7 +659,7 @@ offsets keep the geometry integer-safe and let presets ("Next 30") be plain
 numbers. Conversion happens only at the edges (`toDayOffset` / `fromDayOffset`).
 
 **Domain.** `computeDomain` spans every event, never narrower than 30 days back
-and 90 days forward, snapped to whole months. It is derived from *all* events,
+and 90 days forward, snapped to whole months. It is derived from _all_ events,
 not the source-filtered set, so toggling a source never moves the axis; the
 histogram behind the brush does track the source filter.
 
@@ -686,6 +711,7 @@ The home page (`app/page.tsx`) reuses `fetchGovernanceProposals(undefined,
 ### Filtering, States & Outcomes
 
 Two **single-select**, URL-synced filters:
+
 - **Status** — `StatusFilter` segmented control (All / Active / Upcoming / Past), `?status=`.
 - **Space** — `FilterChips` single-select chips with color dots (All spaces, or one
   of DAO / Leads / Operators / Grants / Multisig), `?space=`.
@@ -759,6 +785,7 @@ where a member asks a single question about that proposal. One question in, one 
 out — asking again replaces the previous answer rather than building a thread.
 
 **Flow:**
+
 1. User clicks "Ask" on any vote card → `AskProposalDialog` opens (portal modal).
 2. Client POSTs `{ proposalId, question }` to `/api/proposal-qna`.
 3. Route validates the body, then rate-limits per client (fixed window, default 10 per
@@ -784,6 +811,7 @@ and rendered as plain text (never `dangerouslySetInnerHTML`).
 ### Vote search
 
 Text search across every aggregated proposal, on two surfaces sharing one scorer:
+
 - **Page search bar** — debounced (300 ms) input on `/governance`, synced to `?q=`
   alongside the existing `?space=` / `?status=` params, with a "N of M votes match" count.
 - **Global Ctrl+K palette** — a "Votes" group in `SearchPalette`, lazily fetching
@@ -795,7 +823,7 @@ Text search across every aggregated proposal, on two surfaces sharing one scorer
 so both surfaces rank identically off `lib/search/index.ts` rather than growing a second
 matching implementation. Selecting a vote in the palette routes to `/governance?ask=<id>`,
 which opens that proposal's Ask dialog directly — the path from "find a proposal" to "ask
-a question". The `?ask=` target resolves against the *unfiltered* list, so a deep link
+a question". The `?ask=` target resolves against the _unfiltered_ list, so a deep link
 works regardless of the active space/status/search filters.
 
 > **Scorer note:** `searchItems` previously separated direct-substring from
@@ -805,6 +833,7 @@ works regardless of the active space/status/search filters.
 > threshold was always standing in for.
 
 **Files:**
+
 - `lib/ai-qna/` — Q&A module (types, config/prompt, cache, rate-limit, answer-question)
 - `app/api/proposal-qna/route.ts` — POST endpoint + GET availability probe
 - `app/api/vote-index/route.ts` — GET slim vote index for the palette
@@ -848,4 +877,4 @@ npm run type-check # TypeScript check
 
 ---
 
-*Last Updated: 2026-06-29*
+_Last Updated: 2026-06-29_

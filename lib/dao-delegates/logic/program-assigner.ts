@@ -1,5 +1,5 @@
-import { Delegate } from '../types';
 import { getDelegationPrograms } from '../config';
+import { Delegate } from '../types';
 
 /**
  * Assigns delegates to delegation programs based on rank and eligibility
@@ -39,10 +39,7 @@ export function assignDelegationPrograms(delegates: Delegate[]): Delegate[] {
     else if (delegate.isEligible && delegate.isProfileComplete) {
       for (const program of programs) {
         // Check if program requires eligibility and has available competitive seats
-        if (
-          program.requiresEligibility &&
-          assignments[program.id] < program.availableSeats
-        ) {
+        if (program.requiresEligibility && assignments[program.id] < program.availableSeats) {
           assignedPrograms.push(program.displayName);
           assignments[program.id]++;
         }

@@ -61,7 +61,7 @@ export function getQnaPrompt(
   title: string,
   body: string,
   choices: string[],
-  question: string
+  question: string,
 ): string {
   const choicesList = choices.map((c, i) => `${i + 1}. ${c}`).join('\n');
 

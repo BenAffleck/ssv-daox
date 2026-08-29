@@ -29,9 +29,7 @@ export const MAX_OCCURRENCE_ITERATIONS = 2000;
  */
 export function getSnapshotTimelineSpaceId(): string | null {
   return (
-    process.env.SNAPSHOT_TIMELINE_SPACE_ID ||
-    process.env.SNAPSHOT_DELEGATION_SPACE_FILTER ||
-    null
+    process.env.SNAPSHOT_TIMELINE_SPACE_ID || process.env.SNAPSHOT_DELEGATION_SPACE_FILTER || null
   );
 }
 
@@ -99,7 +97,5 @@ export const SOURCE_COLORS: Record<string, string> = {
  * Get color class for a source
  */
 export function getSourceColorClass(color?: string): string {
-  return color && SOURCE_COLORS[color]
-    ? SOURCE_COLORS[color]
-    : 'bg-muted text-muted-foreground';
+  return color && SOURCE_COLORS[color] ? SOURCE_COLORS[color] : 'bg-muted text-muted-foreground';
 }

@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { modules, getModulesSorted, getModuleBySlug } from '@/lib/data/modules';
+import { describe, expect, it } from 'vitest';
+
+import { getModuleBySlug, getModulesSorted, modules } from '@/lib/data/modules';
 import { ModuleStatus } from '@/lib/types';
 
 describe('Module Data', () => {
@@ -30,7 +31,7 @@ describe('Module Data', () => {
   });
 
   it('should have dao-delegates as first active module', () => {
-    const daoModule = modules.find(m => m.slug === 'delegates');
+    const daoModule = modules.find((m) => m.slug === 'delegates');
 
     expect(daoModule?.status).toBe(ModuleStatus.ACTIVE);
     expect(daoModule?.sortOrder).toBe(1);

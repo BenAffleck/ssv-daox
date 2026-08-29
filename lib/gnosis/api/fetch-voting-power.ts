@@ -4,20 +4,14 @@
 
 import { GNOSIS_CONFIG } from '../config';
 import { toVotingPowerData } from '../logic/transform-voting-power';
-import type {
-  GnosisDelegationResponse,
-  VotingPowerData,
-  VotingPowerMap,
-} from '../types';
+import type { GnosisDelegationResponse, VotingPowerData, VotingPowerMap } from '../types';
 
 /**
  * Fetches voting power for a single address
  * @param address - The delegate address to fetch voting power for
  * @returns VotingPowerData or null if fetch fails
  */
-async function fetchSingleVotingPower(
-  address: string
-): Promise<VotingPowerData | null> {
+async function fetchSingleVotingPower(address: string): Promise<VotingPowerData | null> {
   const url = `${GNOSIS_CONFIG.apiBaseUrl}/${GNOSIS_CONFIG.spaceId}/pin/${address}`;
 
   try {
@@ -31,9 +25,7 @@ async function fetchSingleVotingPower(
     });
 
     if (!response.ok) {
-      console.warn(
-        `[Gnosis API] Failed to fetch voting power for ${address}: ${response.status}`
-      );
+      console.warn(`[Gnosis API] Failed to fetch voting power for ${address}: ${response.status}`);
       return null;
     }
 
@@ -56,7 +48,7 @@ async function processBatch(addresses: string[]): Promise<VotingPowerMap> {
     addresses.map(async (address) => {
       const data = await fetchSingleVotingPower(address);
       return { address: address.toLowerCase(), data };
-    })
+    }),
   );
 
   const map: VotingPowerMap = {};
@@ -73,9 +65,7 @@ async function processBatch(addresses: string[]): Promise<VotingPowerMap> {
  * @param addresses - Array of delegate addresses
  * @returns Map of lowercase addresses to their voting power data
  */
-export async function fetchVotingPower(
-  addresses: string[]
-): Promise<VotingPowerMap> {
+export async function fetchVotingPower(addresses: string[]): Promise<VotingPowerMap> {
   if (addresses.length === 0) {
     return {};
   }

@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import { getGovernanceSpaces } from '../config';
 
 const ENV_KEYS = [
@@ -34,13 +35,7 @@ describe('getGovernanceSpaces', () => {
     process.env.SNAPSHOT_MULTISIG_SPACE_ID = 'msig.ssvnetwork.eth';
 
     const spaces = getGovernanceSpaces();
-    expect(spaces.map((s) => s.key)).toEqual([
-      'main',
-      'leads',
-      'operator',
-      'grants',
-      'multisig',
-    ]);
+    expect(spaces.map((s) => s.key)).toEqual(['main', 'leads', 'operator', 'grants', 'multisig']);
     expect(spaces.find((s) => s.key === 'main')?.voteType).toBe('token');
     expect(spaces.find((s) => s.key === 'operator')?.voteType).toBe('member');
   });

@@ -1,5 +1,5 @@
-import type { GovernanceSpace } from '@/lib/snapshot/types';
 import { getSpaceStyle } from '@/lib/dao-governance/space-style';
+import type { GovernanceSpace } from '@/lib/snapshot/types';
 
 interface SpaceBadgeProps {
   space: GovernanceSpace;

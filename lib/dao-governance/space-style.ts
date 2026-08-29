@@ -17,9 +17,21 @@ export interface SpaceStyle {
 
 const STYLES: Record<string, SpaceStyle> = {
   main: { badgeClass: 'badge-sm-primary', accentClass: 'border-l-primary', dotClass: 'bg-primary' },
-  leads: { badgeClass: 'badge-sm-secondary', accentClass: 'border-l-secondary', dotClass: 'bg-secondary' },
-  operator: { badgeClass: 'badge-sm-accent', accentClass: 'border-l-accent', dotClass: 'bg-accent' },
-  grants: { badgeClass: 'badge-sm-warning', accentClass: 'border-l-warning', dotClass: 'bg-warning' },
+  leads: {
+    badgeClass: 'badge-sm-secondary',
+    accentClass: 'border-l-secondary',
+    dotClass: 'bg-secondary',
+  },
+  operator: {
+    badgeClass: 'badge-sm-accent',
+    accentClass: 'border-l-accent',
+    dotClass: 'bg-accent',
+  },
+  grants: {
+    badgeClass: 'badge-sm-warning',
+    accentClass: 'border-l-warning',
+    dotClass: 'bg-warning',
+  },
   multisig: { badgeClass: 'badge-sm-muted', accentClass: 'border-l-muted', dotClass: 'bg-muted' },
 };
 

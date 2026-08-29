@@ -3,13 +3,13 @@
  * Provides Anthropic client creation and common helpers
  */
 
-import Anthropic from '@anthropic-ai/sdk';
-import {
+import Anthropic, {
   APIError,
   AuthenticationError,
-  RateLimitError,
   BadRequestError,
+  RateLimitError,
 } from '@anthropic-ai/sdk';
+
 import { AI_MODEL_CONFIG } from './config';
 
 /**

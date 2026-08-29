@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
+
 import { GNOSIS_CONFIG } from '@/lib/gnosis/config';
 import { toVotingPowerData } from '@/lib/gnosis/logic/transform-voting-power';
 import type { GnosisDelegationResponse, VotingPowerData } from '@/lib/gnosis/types';
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ address: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ address: string }> }) {
   const { address } = await params;
 
   if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
@@ -27,7 +25,7 @@ export async function GET(
     if (!response.ok) {
       return NextResponse.json(
         { error: `Gnosis API error: ${response.status}` },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -38,9 +36,6 @@ export async function GET(
     return NextResponse.json(votingPowerData);
   } catch (error) {
     console.error(`[Voting Power API] Error fetching for ${address}:`, error);
-    return NextResponse.json(
-      { error: 'Failed to fetch voting power' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch voting power' }, { status: 500 });
   }
 }

@@ -4,8 +4,9 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { ProposalSummary, CachedSummary, SummaryCache } from './types';
+
 import { AI_SUMMARY_CONFIG } from './config';
+import type { CachedSummary, ProposalSummary, SummaryCache } from './types';
 
 /**
  * Get the full path to the cache file
@@ -75,9 +76,7 @@ function isCacheEntryValid(entry: CachedSummary): boolean {
 /**
  * Get cached summary for a proposal if available and valid
  */
-export async function getCachedSummary(
-  proposalId: string
-): Promise<ProposalSummary | null> {
+export async function getCachedSummary(proposalId: string): Promise<ProposalSummary | null> {
   const cache = await loadCache();
   const entry = cache.summaries[proposalId];
 
@@ -91,10 +90,7 @@ export async function getCachedSummary(
 /**
  * Store a summary in cache
  */
-export async function cacheSummary(
-  proposalId: string,
-  summary: ProposalSummary
-): Promise<void> {
+export async function cacheSummary(proposalId: string, summary: ProposalSummary): Promise<void> {
   const cache = await loadCache();
 
   cache.summaries[proposalId] = {

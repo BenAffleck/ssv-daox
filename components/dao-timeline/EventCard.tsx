@@ -1,14 +1,15 @@
-import { EventSource, SerializedEvent } from '@/lib/dao-timeline/types';
 import {
   formatRelativeLabel,
   isImminentOffset,
   isPastOffset,
 } from '@/lib/dao-timeline/logic/range-brush';
-import { formatDateRange } from '@/lib/dao-timeline/utils/date-utils';
+import { EventSource, SerializedEvent } from '@/lib/dao-timeline/types';
 import { downloadICS } from '@/lib/dao-timeline/utils/calendar-export';
-import SourceBadge from './SourceBadge';
-import RecurringBadge from './RecurringBadge';
+import { formatDateRange } from '@/lib/dao-timeline/utils/date-utils';
+
 import AISourceBadge from './AISourceBadge';
+import RecurringBadge from './RecurringBadge';
+import SourceBadge from './SourceBadge';
 
 interface EventCardProps {
   event: SerializedEvent;
@@ -36,27 +37,17 @@ function getAIMetadata(event: SerializedEvent): {
   return {
     excerpt: typeof meta.excerpt === 'string' ? meta.excerpt : undefined,
     confidence:
-      meta.confidence === 'high' ||
-      meta.confidence === 'medium' ||
-      meta.confidence === 'low'
+      meta.confidence === 'high' || meta.confidence === 'medium' || meta.confidence === 'low'
         ? meta.confidence
         : undefined,
     sourceProposalTitle:
-      typeof meta.sourceProposalTitle === 'string'
-        ? meta.sourceProposalTitle
-        : undefined,
+      typeof meta.sourceProposalTitle === 'string' ? meta.sourceProposalTitle : undefined,
     sourceProposalUrl:
-      typeof meta.sourceProposalUrl === 'string'
-        ? meta.sourceProposalUrl
-        : undefined,
+      typeof meta.sourceProposalUrl === 'string' ? meta.sourceProposalUrl : undefined,
   };
 }
 
-export default function EventCard({
-  event,
-  sourceColor,
-  dayOffset,
-}: EventCardProps) {
+export default function EventCard({ event, sourceColor, dayOffset }: EventCardProps) {
   const startDate = new Date(event.startDate);
   const endDate = event.endDate ? new Date(event.endDate) : null;
   const timeDisplay = formatDateRange(startDate, endDate, event.isAllDay);
@@ -87,17 +78,14 @@ export default function EventCard({
       month: 'short',
       day: 'numeric',
     });
-    return event.occurrence?.role === 'previous'
-      ? `Next: ${label}`
-      : `Previous: ${label}`;
+    return event.occurrence?.role === 'previous' ? `Next: ${label}` : `Previous: ${label}`;
   })();
 
   // Past events keep their content but lose the card surface, so upcoming
   // events read as the foreground of the list.
   const isPast = dayOffset !== undefined && isPastOffset(dayOffset);
   const isImminent = dayOffset !== undefined && isImminentOffset(dayOffset);
-  const relativeLabel =
-    dayOffset === undefined ? null : formatRelativeLabel(dayOffset);
+  const relativeLabel = dayOffset === undefined ? null : formatRelativeLabel(dayOffset);
 
   return (
     <div
@@ -111,27 +99,19 @@ export default function EventCard({
         <div className="min-w-0 flex-1">
           {/* Time, with a countdown that sharpens as the event approaches */}
           <div className="mb-1 flex flex-wrap items-center gap-2">
-            <span
-              className={`text-[13px] font-medium ${
-                isPast ? 'text-muted' : 'text-primary'
-              }`}
-            >
+            <span className={`text-[13px] font-medium ${isPast ? 'text-muted' : 'text-primary'}`}>
               {timeDisplay}
             </span>
             {relativeLabel &&
               (isImminent ? (
-                <span className="badge-sm-primary uppercase tracking-wide">
-                  {relativeLabel}
-                </span>
+                <span className="badge-sm-primary tracking-wide uppercase">{relativeLabel}</span>
               ) : (
                 <span className="text-xs text-muted">&middot; {relativeLabel}</span>
               ))}
           </div>
 
           {/* The other half of a collapsed series */}
-          {siblingLabel && (
-            <div className="mb-1 text-xs text-muted">{siblingLabel}</div>
-          )}
+          {siblingLabel && <div className="mb-1 text-xs text-muted">{siblingLabel}</div>}
 
           {/* Title */}
           <h3 className="text-base">
@@ -151,7 +131,9 @@ export default function EventCard({
 
           {/* Description or Excerpt for AI events */}
           {truncatedDesc && (
-            <p className={`mt-1.5 text-[13px] leading-relaxed ${isAIEvent ? 'italic text-muted/80' : 'text-muted'}`}>
+            <p
+              className={`mt-1.5 text-[13px] leading-relaxed ${isAIEvent ? 'text-muted/80 italic' : 'text-muted'}`}
+            >
               {truncatedDesc}
             </p>
           )}
@@ -221,35 +203,29 @@ export default function EventCard({
           ) : (
             <SourceBadge name={event.sourceName} color={sourceColor} />
           )}
-          {event.recurrence && (
-            <RecurringBadge summary={event.recurrence.summary} />
-          )}
+          {event.recurrence && <RecurringBadge summary={event.recurrence.summary} />}
           {!isPast && (
-          <button
-            type="button"
-            onClick={() => downloadICS(event)}
-            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted transition-colors hover:bg-border hover:text-foreground"
-          >
-            <svg
-              className="h-3.5 w-3.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
+            <button
+              type="button"
+              onClick={() => downloadICS(event)}
+              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted transition-colors hover:bg-border hover:text-foreground"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 10.5v6m3-3h-6"
-              />
-            </svg>
-            Add to calendar
-          </button>
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10.5v6m3-3h-6" />
+              </svg>
+              Add to calendar
+            </button>
           )}
         </div>
       </div>

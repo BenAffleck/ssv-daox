@@ -2,23 +2,21 @@
  * Transform raw events into unified events
  */
 
+import { SnapshotTimelineProposal } from '@/lib/snapshot/types';
+
 import {
   EventSource,
   EventSourceConfig,
   RawICSEvent,
-  UnifiedEvent,
   SerializedEvent,
+  UnifiedEvent,
 } from '../types';
-import { SnapshotTimelineProposal } from '@/lib/snapshot/types';
 import { buildSeriesInfo } from './recurrence-expander';
 
 /**
  * Transform a raw ICS event into a UnifiedEvent
  */
-export function transformICSEvent(
-  raw: RawICSEvent,
-  source: EventSourceConfig
-): UnifiedEvent {
+export function transformICSEvent(raw: RawICSEvent, source: EventSourceConfig): UnifiedEvent {
   const recurrence = buildSeriesInfo(raw.rrule, raw.exdates);
 
   return {
@@ -47,7 +45,7 @@ export function transformICSEvent(
  */
 export function transformICSEvents(
   rawEvents: RawICSEvent[],
-  source: EventSourceConfig
+  source: EventSourceConfig,
 ): UnifiedEvent[] {
   return rawEvents.map((raw) => transformICSEvent(raw, source));
 }
@@ -67,12 +65,10 @@ function truncateText(text: string | null, maxLength: number): string | null {
 export function transformSnapshotProposal(
   proposal: SnapshotTimelineProposal,
   source: EventSourceConfig,
-  spaceId: string
+  spaceId: string,
 ): UnifiedEvent {
   // Use the link from Snapshot if available, otherwise construct it
-  const proposalUrl =
-    proposal.link ||
-    `https://snapshot.org/#/${spaceId}/proposal/${proposal.id}`;
+  const proposalUrl = proposal.link || `https://snapshot.org/#/${spaceId}/proposal/${proposal.id}`;
 
   return {
     id: `${source.id}-${proposal.id}`,
@@ -103,11 +99,9 @@ export function transformSnapshotProposal(
 export function transformSnapshotProposals(
   proposals: SnapshotTimelineProposal[],
   source: EventSourceConfig,
-  spaceId: string
+  spaceId: string,
 ): UnifiedEvent[] {
-  return proposals.map((proposal) =>
-    transformSnapshotProposal(proposal, source, spaceId)
-  );
+  return proposals.map((proposal) => transformSnapshotProposal(proposal, source, spaceId));
 }
 
 /**

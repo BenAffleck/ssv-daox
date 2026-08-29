@@ -85,11 +85,11 @@ Each module has the following structure:
 
 ```typescript
 {
-  id: string;           // Unique identifier
-  slug: string;         // URL-friendly identifier
-  name: string;         // Display name
+  id: string; // Unique identifier
+  slug: string; // URL-friendly identifier
+  name: string; // Display name
   status: 'active' | 'coming_soon';
-  sortOrder: number;    // Display order
+  sortOrder: number; // Display order
 }
 ```
 

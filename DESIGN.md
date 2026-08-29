@@ -10,29 +10,29 @@ omitted:
     reason: "Spacing is Tailwind's default 4px scale; only the non-default values below are documented in prose."
 colors:
   # Light theme (default)
-  background: "#f7f7f7"
-  foreground: "#171717"
-  primary: "#2DB1FF"
-  secondary: "#6c588d"
-  accent: "#22c55e"
-  muted: "#737373"
-  border: "#e5e5e5"
-  card: "#ffffff"
-  card-hover: "#fafafa"
-  warning: "#d97706"
-  danger: "#dc2626"
+  background: '#f7f7f7'
+  foreground: '#171717'
+  primary: '#2DB1FF'
+  secondary: '#6c588d'
+  accent: '#22c55e'
+  muted: '#737373'
+  border: '#e5e5e5'
+  card: '#ffffff'
+  card-hover: '#fafafa'
+  warning: '#d97706'
+  danger: '#dc2626'
   # Dark theme (:root[data-theme="ssvdark"])
-  dark-background: "#0f0f0f"
-  dark-foreground: "#f7f7f7"
-  dark-primary: "#2DB1FF"
-  dark-secondary: "#9B8BB8"
-  dark-accent: "#4ADE80"
-  dark-muted: "#a1a1a1"
-  dark-border: "#2a2a2a"
-  dark-card: "#171717"
-  dark-card-hover: "#1f1f1f"
-  dark-warning: "#f59e0b"
-  dark-danger: "#ef4444"
+  dark-background: '#0f0f0f'
+  dark-foreground: '#f7f7f7'
+  dark-primary: '#2DB1FF'
+  dark-secondary: '#9B8BB8'
+  dark-accent: '#4ADE80'
+  dark-muted: '#a1a1a1'
+  dark-border: '#2a2a2a'
+  dark-card: '#171717'
+  dark-card-hover: '#1f1f1f'
+  dark-warning: '#f59e0b'
+  dark-danger: '#ef4444'
 typography:
   h1:
     fontFamily: Poppins
@@ -96,71 +96,71 @@ rounded:
   full: 9999px
 components:
   button-primary:
-    backgroundColor: "{colors.secondary}"
-    textColor: "#ffffff"
-    typography: "{typography.body-sm}"
-    rounded: "{rounded.lg}"
+    backgroundColor: '{colors.secondary}'
+    textColor: '#ffffff'
+    typography: '{typography.body-sm}'
+    rounded: '{rounded.lg}'
     padding: 8px
   button-primary-hover:
-    backgroundColor: "{colors.secondary}"
+    backgroundColor: '{colors.secondary}'
   button-ghost:
-    backgroundColor: "{colors.card}"
-    textColor: "{colors.foreground}"
-    rounded: "{rounded.lg}"
+    backgroundColor: '{colors.card}'
+    textColor: '{colors.foreground}'
+    rounded: '{rounded.lg}'
     padding: 8px
   button-ghost-hover:
-    backgroundColor: "{colors.card-hover}"
+    backgroundColor: '{colors.card-hover}'
   filter-btn:
-    backgroundColor: "{colors.card}"
-    textColor: "{colors.foreground}"
-    typography: "{typography.body-sm}"
-    rounded: "{rounded.lg}"
+    backgroundColor: '{colors.card}'
+    textColor: '{colors.foreground}'
+    typography: '{typography.body-sm}'
+    rounded: '{rounded.lg}'
     padding: 6px
   filter-btn-active:
-    backgroundColor: "{colors.card}"
-    textColor: "{colors.primary}"
+    backgroundColor: '{colors.card}'
+    textColor: '{colors.primary}'
   filter-input:
-    backgroundColor: "{colors.card}"
-    textColor: "{colors.foreground}"
-    typography: "{typography.body-sm}"
-    rounded: "{rounded.lg}"
+    backgroundColor: '{colors.card}'
+    textColor: '{colors.foreground}'
+    typography: '{typography.body-sm}'
+    rounded: '{rounded.lg}'
     padding: 10px
   card:
-    backgroundColor: "{colors.card}"
-    textColor: "{colors.foreground}"
-    rounded: "{rounded.lg}"
+    backgroundColor: '{colors.card}'
+    textColor: '{colors.foreground}'
+    rounded: '{rounded.lg}'
   card-hover:
-    backgroundColor: "{colors.card-hover}"
+    backgroundColor: '{colors.card-hover}'
   badge:
-    typography: "{typography.label-badge}"
-    rounded: "{rounded.full}"
+    typography: '{typography.label-badge}'
+    rounded: '{rounded.full}'
     padding: 2px
   badge-accent:
-    textColor: "{colors.accent}"
-    typography: "{typography.label-badge}"
-    rounded: "{rounded.full}"
+    textColor: '{colors.accent}'
+    typography: '{typography.label-badge}'
+    rounded: '{rounded.full}'
   badge-warning:
-    textColor: "{colors.warning}"
-    typography: "{typography.label-badge}"
-    rounded: "{rounded.full}"
+    textColor: '{colors.warning}'
+    typography: '{typography.label-badge}'
+    rounded: '{rounded.full}'
   badge-danger:
-    textColor: "{colors.danger}"
-    typography: "{typography.label-badge}"
-    rounded: "{rounded.full}"
+    textColor: '{colors.danger}'
+    typography: '{typography.label-badge}'
+    rounded: '{rounded.full}'
   badge-muted:
-    textColor: "{colors.muted}"
-    typography: "{typography.label-badge}"
-    rounded: "{rounded.full}"
+    textColor: '{colors.muted}'
+    typography: '{typography.label-badge}'
+    rounded: '{rounded.full}'
   badge-sm:
-    typography: "{typography.label-badge-sm}"
-    rounded: "{rounded.full}"
+    typography: '{typography.label-badge-sm}'
+    rounded: '{rounded.full}'
     padding: 2px
   table-col-header:
-    textColor: "{colors.muted}"
-    typography: "{typography.label-caps}"
+    textColor: '{colors.muted}'
+    typography: '{typography.label-caps}'
   header:
-    backgroundColor: "{colors.background}"
-    textColor: "{colors.foreground}"
+    backgroundColor: '{colors.background}'
+    textColor: '{colors.foreground}'
 ---
 
 # DESIGN.md — SSV DAOx
@@ -180,7 +180,7 @@ grid of outlined boxes.
 - **The aesthetic:** clean, professional, trustworthy; dense rather than airy.
 - **The signature:** SSV Network Blue (`#2DB1FF`) anchors every interactive
   element — links, active filters, focused inputs, CTAs — creating one coherent
-  data-navigation language. Brand-coloured *glow* shadows, never drop shadows,
+  data-navigation language. Brand-coloured _glow_ shadows, never drop shadows,
   signal interactivity.
 
 Two themes ship: light (default) and dark (`data-theme="ssvdark"`). Components
@@ -226,7 +226,7 @@ The geometric warmth of **Poppins** is contrasted with the neutral precision of
 - **Data and controls:** table text, filter controls, buttons and inline UI
   drop to 13px with `line-height: 1.4` for density.
 - **Metadata labels:** `text-xs font-semibold uppercase tracking-wide
-  text-muted` in Poppins — table column headers (`.table-col-header`) and info
+text-muted` in Poppins — table column headers (`.table-col-header`) and info
   card labels. This tier exists to separate labels from values at a glance.
 
 ## Layout

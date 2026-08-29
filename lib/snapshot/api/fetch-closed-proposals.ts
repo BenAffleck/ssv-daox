@@ -43,15 +43,12 @@ export const CLOSED_PROPOSALS_QUERY = `
  */
 export async function fetchClosedProposals(
   spaceId: string,
-  limit: number
+  limit: number,
 ): Promise<SnapshotActiveProposal[]> {
   try {
     return await executeProposalsQuery(CLOSED_PROPOSALS_QUERY, { spaceId, limit });
   } catch (error) {
-    console.error(
-      `Failed to fetch closed proposals for space ${spaceId}:`,
-      error
-    );
+    console.error(`Failed to fetch closed proposals for space ${spaceId}:`, error);
     return [];
   }
 }

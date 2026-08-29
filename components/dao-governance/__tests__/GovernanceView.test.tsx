@@ -1,7 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import GovernanceView from '../GovernanceView';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { GovernanceProposal, GovernanceSpace } from '@/lib/snapshot/types';
+
+import GovernanceView from '../GovernanceView';
 
 // --- next/navigation mock (controllable search params) ---
 let searchParamsValue = new URLSearchParams();
@@ -31,7 +33,7 @@ const SPACES = [DAO, OPERATORS];
 function proposal(
   id: string,
   space: GovernanceSpace,
-  state: 'active' | 'pending' | 'closed'
+  state: 'active' | 'pending' | 'closed',
 ): GovernanceProposal {
   return {
     id,
@@ -66,7 +68,7 @@ function renderView(props: Partial<React.ComponentProps<typeof GovernanceView>> 
       failedSpaces={[]}
       isAISummaryAvailable={false}
       {...props}
-    />
+    />,
   );
 }
 
@@ -220,9 +222,7 @@ describe('GovernanceView', () => {
     it('opens the Q&A dialog for the ?ask= proposal', () => {
       searchParamsValue = new URLSearchParams('ask=m-active');
       renderView({ isQnaAvailable: true });
-      expect(screen.getByRole('dialog')).toHaveAccessibleName(
-        'Ask about Proposal m-active'
-      );
+      expect(screen.getByRole('dialog')).toHaveAccessibleName('Ask about Proposal m-active');
     });
 
     it('opens even when the active filters would hide that card', () => {
@@ -231,12 +231,8 @@ describe('GovernanceView', () => {
       renderView({ isQnaAvailable: true });
       // The card is filtered out — match the card's title link, since the
       // dialog header also renders the same text.
-      expect(
-        screen.queryByRole('link', { name: 'Proposal m-active' })
-      ).not.toBeInTheDocument();
-      expect(screen.getByRole('dialog')).toHaveAccessibleName(
-        'Ask about Proposal m-active'
-      );
+      expect(screen.queryByRole('link', { name: 'Proposal m-active' })).not.toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toHaveAccessibleName('Ask about Proposal m-active');
     });
 
     it('ignores an unknown ?ask= id', () => {

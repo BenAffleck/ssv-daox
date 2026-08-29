@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fetchTimelineProposals } from '../api/fetch-timeline-proposals';
 import { SNAPSHOT_CONFIG } from '../config';
 
@@ -54,7 +55,7 @@ describe('fetchTimelineProposals', () => {
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-      })
+      }),
     );
 
     expect(result).toHaveLength(2);

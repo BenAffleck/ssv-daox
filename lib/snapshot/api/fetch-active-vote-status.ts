@@ -14,9 +14,7 @@ export interface ActiveVoteData {
  * @param spaceId - The Snapshot space ID
  * @returns Active proposals and a map of address → Set of proposal IDs they voted on
  */
-export async function fetchActiveVoteStatus(
-  spaceId: string
-): Promise<ActiveVoteData> {
+export async function fetchActiveVoteStatus(spaceId: string): Promise<ActiveVoteData> {
   const proposals = await fetchActiveProposals(spaceId);
 
   if (proposals.length === 0) {

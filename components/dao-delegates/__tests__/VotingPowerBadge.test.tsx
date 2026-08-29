@@ -1,7 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within, act } from '@testing-library/react';
-import VotingPowerBadge from '../VotingPowerBadge';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { VotingPowerData } from '@/lib/gnosis/types';
+
+import VotingPowerBadge from '../VotingPowerBadge';
 
 const DELEGATOR_A = '0xaaa1111111111111111111111111111111111111';
 const DELEGATOR_B = '0xbbb2222222222222222222222222222222222222';
@@ -61,16 +63,12 @@ describe('VotingPowerBadge breakdown', () => {
     openPopover();
 
     await act(async () => {
-      fireEvent.click(
-        screen.getByRole('button', { name: 'Copy incoming delegator addresses' })
-      );
+      fireEvent.click(screen.getByRole('button', { name: 'Copy incoming delegator addresses' }));
     });
     expect(writeText).toHaveBeenCalledWith(`${DELEGATOR_B}\n${DELEGATOR_A}`);
 
     await act(async () => {
-      fireEvent.click(
-        screen.getByRole('button', { name: 'Copy outgoing delegate addresses' })
-      );
+      fireEvent.click(screen.getByRole('button', { name: 'Copy outgoing delegate addresses' }));
     });
     expect(writeText).toHaveBeenLastCalledWith(DELEGATE_C);
   });

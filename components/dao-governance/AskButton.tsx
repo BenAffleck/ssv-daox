@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { MessageCircleQuestion } from 'lucide-react';
+
 import AskProposalDialog, { type AskDialogProposal } from './AskProposalDialog';
 
 interface AskButtonProps {
@@ -28,11 +29,7 @@ export default function AskButton({ proposal }: AskButtonProps) {
         <MessageCircleQuestion size={13} />
         Ask
       </button>
-      <AskProposalDialog
-        proposal={proposal}
-        open={open}
-        onClose={() => setOpen(false)}
-      />
+      <AskProposalDialog proposal={proposal} open={open} onClose={() => setOpen(false)} />
     </>
   );
 }

@@ -1,9 +1,10 @@
-import { Delegate, KarmaDelegateCSV, EligibilityLists } from '../types';
-import { checkEligibility, isAlreadyDelegated } from '../eligibility/checker';
-import { formatAddress } from '../utils/address';
-import type { VoteParticipationMap } from '@/lib/snapshot/types';
 import type { VotingPowerMap } from '@/lib/gnosis/types';
 import type { ActiveVoteData } from '@/lib/snapshot/api/fetch-active-vote-status';
+import type { VoteParticipationMap } from '@/lib/snapshot/types';
+
+import { checkEligibility, isAlreadyDelegated } from '../eligibility/checker';
+import { Delegate, EligibilityLists, KarmaDelegateCSV } from '../types';
+import { formatAddress } from '../utils/address';
 
 /**
  * Transforms CSV delegate data into Delegate objects
@@ -14,7 +15,7 @@ export function transformDelegates(
   lists: EligibilityLists,
   voteParticipation?: VoteParticipationMap,
   votingPower?: VotingPowerMap,
-  activeVoteData?: ActiveVoteData
+  activeVoteData?: ActiveVoteData,
 ): Delegate[] {
   return csvDelegates.map((csv) => {
     // Parse numeric fields
@@ -29,8 +30,7 @@ export function transformDelegates(
     const alreadyDelegated = isAlreadyDelegated(csv.publicAddress, lists);
 
     // Determine display name (priority: ensName > name > truncated address)
-    const displayName =
-      csv.ensName || csv.name || formatAddress(csv.publicAddress);
+    const displayName = csv.ensName || csv.name || formatAddress(csv.publicAddress);
 
     // Check if profile is complete (forumHandle and discordUsername set)
     const isProfileComplete =
@@ -38,12 +38,10 @@ export function transformDelegates(
       Boolean(csv.discordUsername && csv.discordUsername.trim());
 
     // Get vote participation rate (normalize address to lowercase for lookup)
-    const voteParticipationRate =
-      voteParticipation?.[csv.publicAddress.toLowerCase()] ?? 0;
+    const voteParticipationRate = voteParticipation?.[csv.publicAddress.toLowerCase()] ?? 0;
 
     // Get voting power data (normalize address to lowercase for lookup)
-    const votingPowerData =
-      votingPower?.[csv.publicAddress.toLowerCase()] ?? null;
+    const votingPowerData = votingPower?.[csv.publicAddress.toLowerCase()] ?? null;
 
     // Build active vote status for this delegate
     const addressLower = csv.publicAddress.toLowerCase();

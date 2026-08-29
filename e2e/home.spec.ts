@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Landing Page', () => {
   test('loads and displays modules', async ({ page }) => {
@@ -18,15 +18,13 @@ test.describe('Landing Page', () => {
 
     // Check section heading
     await expect(
-      page.getByRole('heading', { name: 'Featured DAO Community', level: 2 })
+      page.getByRole('heading', { name: 'Featured DAO Community', level: 2 }),
     ).toBeVisible();
     await expect(page.getByText('Tools built by the SSV community')).toBeVisible();
 
     // Check Stake Easy card is displayed
     await expect(page.getByText('Stake Easy')).toBeVisible();
-    await expect(
-      page.getByText('Simplified staking experience for SSV Network')
-    ).toBeVisible();
+    await expect(page.getByText('Simplified staking experience for SSV Network')).toBeVisible();
 
     // Check Community badge (the small badge inside the card)
     const communityBadge = page.locator('span', { hasText: 'Community' }).first();
