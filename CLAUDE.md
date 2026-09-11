@@ -8,4 +8,4 @@
 - `docs/architecture.md` - Module layout, data pipelines, per-feature design. Read before adding or changing a module, data source, or API route.
 - `docs/techstack.md` - Chosen technologies and their rationale. Read before adding a dependency or build step.
 - `DESIGN.md` - Design system: colors, typography, components, do's and don'ts. Read before writing UI.
-- `CODING_STANDARDS.md` - Coding standards: Read before writing code.
+- `CODING_STANDARDS.md` - Coding standards: Always read before writing any code or comments.
