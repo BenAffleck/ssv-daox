@@ -26,8 +26,8 @@ export const AI_QNA_CONFIG = {
    */
   maxCacheAgeDays: 7,
 
-  /** Maximum proposal body length to send (characters) */
-  maxBodyLength: 10000,
+  /** Maximum proposal body length to send. Matches Snapshot's 50,000-character cap. */
+  maxBodyLength: 50000,
 
   /** Maximum accepted question length (characters, after trimming) */
   maxQuestionLength: 500,

@@ -22,9 +22,10 @@ export const AI_SUMMARY_CONFIG = {
   maxCacheAgeDays: 7,
 
   /**
-   * Maximum proposal body length to process (characters)
+   * Maximum proposal body length to process.
+   * Matches Snapshot's 50,000-character cap.
    */
-  maxBodyLength: 10000,
+  maxBodyLength: 50000,
 } as const;
 
 /**

@@ -34,10 +34,10 @@ export const AI_EXTRACTION_CONFIG = {
   processingDelayMs: 100,
 
   /**
-   * Maximum proposal body length to process (characters)
-   * Longer bodies are truncated to manage costs
+   * Maximum proposal body length to process.
+   * Matches Snapshot's 50,000-character cap.
    */
-  maxProposalBodyLength: 10000,
+  maxProposalBodyLength: 50000,
 
   /**
    * Cache file path (relative to project root)
