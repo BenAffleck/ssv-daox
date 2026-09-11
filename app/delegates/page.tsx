@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 
 import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
-import { fetchDelegatesCSV } from '@/lib/dao-delegates/api/fetch-delegates';
+import { loadDelegatesCSV } from '@/lib/dao-delegates/api/load-delegates';
 import { parseCSV } from '@/lib/dao-delegates/api/parse-csv';
 import { buildEligibilityLists } from '@/lib/dao-delegates/eligibility/checker';
 import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
@@ -20,15 +20,15 @@ export const metadata = {
 };
 
 export default async function DaoDelegatesPage() {
-  // Fetch external data in parallel (CSV, committee data, delegation recipients, and vote participation)
-  const [csvData, committees, delegationRecipients, voteParticipation, activeVoteData] =
-    await Promise.all([
-      fetchDelegatesCSV(),
-      fetchAllCommitteeMembers(),
-      fetchConfiguredDelegationRecipients(),
-      fetchVoteParticipation(SNAPSHOT_CONFIG.delegation.spaceFilter),
-      fetchActiveVoteStatus(SNAPSHOT_CONFIG.delegation.spaceFilter),
-    ]);
+  // Delegate data is a frozen local snapshot; the rest is fetched in parallel
+  const csvData = loadDelegatesCSV();
+
+  const [committees, delegationRecipients, voteParticipation, activeVoteData] = await Promise.all([
+    fetchAllCommitteeMembers(),
+    fetchConfiguredDelegationRecipients(),
+    fetchVoteParticipation(SNAPSHOT_CONFIG.delegation.spaceFilter),
+    fetchActiveVoteStatus(SNAPSHOT_CONFIG.delegation.spaceFilter),
+  ]);
 
   // Parse CSV into objects
   const csvDelegates = parseCSV(csvData);
@@ -61,6 +61,10 @@ export default async function DaoDelegatesPage() {
         <h1 className="mb-2">DAO Delegates</h1>
         <p className="text-[15px] text-muted">
           Explore potential DAO delegates and delegation program assignments
+        </p>
+        <p className="mt-2 text-[13px] text-muted">
+          Delegate profile and karma data is a frozen snapshot — the upstream provider has been
+          retired and a replacement source is pending.
         </p>
       </div>
 

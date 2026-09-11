@@ -70,7 +70,7 @@ ssv-daox/
 │   ├── dao-delegates/        # DAO Delegates logic
 │   │   ├── types.ts          # Delegate types
 │   │   ├── config.ts         # Program configuration
-│   │   ├── api/              # Data fetching
+│   │   ├── api/              # Frozen CSV loader + parser
 │   │   ├── eligibility/      # Eligibility rules
 │   │   └── logic/            # Business logic
 │   ├── dao-timeline/         # DAO Timeline logic
@@ -180,7 +180,7 @@ All external data uses dependency injection for testability.
 
 **Data sources:**
 
-- **Karma API** - Delegate CSV data (5-min cache)
+- **Frozen delegate CSV** - `data/delegates/karma-delegates.csv`, the last snapshot from the retired Karma API; read from disk, not fetched
 - **Snapshot Hub API** - Committee member addresses
 - **The Graph Subgraph** - Delegation relationships (requires `THEGRAPH_API_KEY`)
 
@@ -288,7 +288,7 @@ The primary implemented module. Shows a ranked delegate leaderboard with eligibi
 ### Data Pipeline
 
 ```
-1. Fetch CSV from Karma API
+1. Read the frozen delegate CSV from disk
 2. Fetch committee members from Snapshot (parallel)
 3. Fetch delegation recipients from The Graph (parallel)
 4. Fetch vote participation from Snapshot (parallel)
@@ -306,6 +306,18 @@ The primary implemented module. Shows a ranked delegate leaderboard with eligibi
 3. **Phase 2:** Competitive allocation for eligible + complete profile delegates
 
 Configuration in `lib/dao-delegates/config.ts`.
+
+### Frozen Delegate Data
+
+The Karma API that supplied delegate rows is retired (the endpoint and the
+`delegate.ssv.network` profile site both return 404). The last successful
+response is checked in at `data/delegates/karma-delegates.csv` and read by
+`lib/dao-delegates/api/load-delegates.ts`; `next.config.ts` traces the file into
+the deployment bundle. Karma score, delegated tokens, delegator count, and
+profile handles are therefore static. Everything else on the page (committees,
+delegation recipients, vote participation, voting power) is still fetched live.
+Replacing the source means swapping `load-delegates.ts` for a new fetcher that
+produces `KarmaDelegateCSV[]`.
 
 ### Vote Participation & Active Vote Status
 

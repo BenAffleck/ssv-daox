@@ -1,9 +1,12 @@
 import { DelegationProgram } from './types';
 
-export const KARMA_API_URL = process.env.KARMA_API_URL || '';
-
-export const KARMA_PROFILE_BASE_URL =
-  process.env.KARMA_PROFILE_BASE_URL || 'https://delegate.ssv.network/profile';
+/**
+ * Repo-relative path of the frozen Karma delegate snapshot.
+ *
+ * The upstream Karma API is retired; delegate data is static until a new
+ * source replaces it.
+ */
+export const FROZEN_DELEGATES_CSV_PATH = 'data/delegates/karma-delegates.csv';
 
 export const DELEGATION_PROGRAMS: DelegationProgram[] = [
   {
