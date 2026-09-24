@@ -325,9 +325,18 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   the table. The page revalidates every 5 minutes so a later-configured URL is
   picked up.
 
+- Every scored address is its own row. Its `identity` groups it with the other
+  addresses of one person (linked on HighSignal) and carries the forum and
+  Discord handles and each address's ENS name. Handles are current values, not
+  as of the run.
+- Search matches display name, address, ENS name and handles. The Copy Forum
+  and Copy Discord buttons copy the handles of the filtered rows, once per
+  handle (`logic/collect-handles.ts`), since addresses of one identity share
+  them.
+
 Karma features the API does not cover yet are removed from the UI: delegate
-status (withdrawn), profile completeness and its empty state, forum/Discord
-handle copy, delegated tokens and delegator count sorting.
+status (withdrawn), profile completeness and its empty state, delegated tokens
+and delegator count sorting.
 
 ### Vote Participation & Active Vote Status
 

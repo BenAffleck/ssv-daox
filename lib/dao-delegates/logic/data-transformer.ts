@@ -22,6 +22,7 @@ export function transformDelegates(
 ): Delegate[] {
   return rows.map((row) => {
     const address = row.address;
+    const { identity } = row;
     const eligibility = checkEligibility(address, lists);
 
     const activeVoteStatus = activeVoteData
@@ -36,6 +37,10 @@ export function transformDelegates(
     return {
       publicAddress: address,
       displayName: row.display_name,
+      identityId: identity.id,
+      ensName: identity.addresses.find((a) => a.address === address)?.ens_name ?? null,
+      forumHandle: identity.forum_handle,
+      discordHandle: identity.discord_handle,
 
       rank: row.rank,
       score: row.score,

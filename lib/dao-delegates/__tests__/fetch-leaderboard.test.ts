@@ -26,8 +26,14 @@ function row(address: string): ScoreRow {
     community_raw: null,
     voted_count: null,
     proposal_count: null,
-    hs_username: null,
     hs_rank: null,
+    identity: {
+      id: address,
+      hs_username: null,
+      forum_handle: null,
+      discord_handle: null,
+      addresses: [{ address, ens_name: null }],
+    },
     cohort: null,
     power: 0,
   };

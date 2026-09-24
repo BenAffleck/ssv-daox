@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { collectHandles } from '@/lib/dao-delegates/logic/collect-handles';
 import { Delegate } from '@/lib/dao-delegates/types';
 import { useDelegateFilters } from '@/lib/hooks/useDelegateFilters';
 
@@ -97,10 +98,10 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (d) =>
-          d.displayName.toLowerCase().includes(query) ||
-          d.publicAddress.toLowerCase().includes(query),
+      filtered = filtered.filter((d) =>
+        [d.displayName, d.publicAddress, d.ensName, d.forumHandle, d.discordHandle].some((value) =>
+          value?.toLowerCase().includes(query),
+        ),
       );
     }
 
@@ -132,6 +133,15 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
     sortDirection,
   ]);
 
+  const forumHandles = useMemo(
+    () => collectHandles(filteredDelegates, 'forumHandle'),
+    [filteredDelegates],
+  );
+  const discordHandles = useMemo(
+    () => collectHandles(filteredDelegates, 'discordHandle'),
+    [filteredDelegates],
+  );
+
   return (
     <div>
       <FilterControls
@@ -143,6 +153,8 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
         onShowChangesOnlyChange={setFilter.showChangesOnly}
         showCurrentOnly={showCurrentOnly}
         onShowCurrentOnlyChange={setFilter.showCurrentOnly}
+        forumHandles={forumHandles}
+        discordHandles={discordHandles}
       />
 
       {filteredDelegates.length === 0 ? (

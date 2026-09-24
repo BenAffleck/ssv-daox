@@ -14,7 +14,15 @@ export interface PillarScore {
 
 export interface Delegate {
   publicAddress: string;
+  /** Not unique across rows. */
   displayName: string;
+  /** Shared by every address of one person. */
+  identityId: string;
+  /** ENS reverse record of this address. */
+  ensName: string | null;
+  /** Identity-level handles, current rather than as of the run. */
+  forumHandle: string | null;
+  discordHandle: string | null;
 
   // Delegate Score API
   /** `null` when unscored. */
@@ -67,10 +75,19 @@ export interface ScoreRow {
   community_raw: number | null;
   voted_count: number | null;
   proposal_count: number | null;
-  hs_username: string | null;
   hs_rank: number | null;
+  identity: Identity;
   cohort: Cohort | null;
   power: number | null;
+}
+
+/** The person an address belongs to, as linked on HighSignal. */
+export interface Identity {
+  id: string;
+  hs_username: string | null;
+  forum_handle: string | null;
+  discord_handle: string | null;
+  addresses: { address: string; ens_name: string | null }[];
 }
 
 /** The run a response was read from. */
