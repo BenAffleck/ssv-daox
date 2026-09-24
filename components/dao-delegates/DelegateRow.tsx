@@ -4,7 +4,6 @@ import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 import AddressCell from './AddressCell';
 import CohortBadge from './CohortBadge';
 import DelegationStatusBadge from './DelegationStatusBadge';
-import EligibilityBadge from './EligibilityBadge';
 import NameCell from './NameCell';
 import ScoreCell from './ScoreCell';
 import VoteParticipationCell from './VoteParticipationCell';
@@ -17,24 +16,6 @@ interface DelegateRowProps {
 
 export default function DelegateRow({ delegate, livePillars }: DelegateRowProps) {
   const hasCohort = delegate.cohort !== null;
-
-  // Calculate next round action
-  let nextRoundAction: 'Delegate' | 'Undelegate' | 'Keep' | null = null;
-  let nextRoundBadgeClass = '';
-
-  if (hasCohort && !delegate.isAlreadyDelegated) {
-    // Should be added
-    nextRoundAction = 'Delegate';
-    nextRoundBadgeClass = 'badge-accent';
-  } else if (!hasCohort && delegate.isAlreadyDelegated) {
-    // Should be removed
-    nextRoundAction = 'Undelegate';
-    nextRoundBadgeClass = 'badge-primary';
-  } else if (hasCohort && delegate.isAlreadyDelegated) {
-    // Should be kept
-    nextRoundAction = 'Keep';
-    nextRoundBadgeClass = 'badge-secondary';
-  }
 
   return (
     <tr className="border-b border-border transition-colors hover:bg-card-hover">
@@ -65,13 +46,13 @@ export default function DelegateRow({ delegate, livePillars }: DelegateRowProps)
         <AddressCell address={delegate.publicAddress} />
       </td>
       <td className="px-4 py-3">
-        <DelegationStatusBadge isAlreadyDelegated={delegate.isAlreadyDelegated} />
-      </td>
-      <td className="px-4 py-3">
-        <EligibilityBadge delegate={delegate} />
-      </td>
-      <td className="px-4 py-3">
         <CohortBadge cohort={delegate.cohort} />
+      </td>
+      <td className="px-4 py-3">
+        <DelegationStatusBadge
+          isAlreadyDelegated={delegate.isAlreadyDelegated}
+          hasCohort={hasCohort}
+        />
       </td>
       <td className="px-4 py-3 text-foreground tabular-nums">
         {delegate.allocatedPower ? (
@@ -86,13 +67,6 @@ export default function DelegateRow({ delegate, livePillars }: DelegateRowProps)
           proposalCount={SNAPSHOT_CONFIG.voteParticipation.proposalCount}
           activeVoteStatus={delegate.activeVoteStatus}
         />
-      </td>
-      <td className="px-4 py-3">
-        {nextRoundAction ? (
-          <span className={`badge ${nextRoundBadgeClass}`}>{nextRoundAction}</span>
-        ) : (
-          <span className="text-xs text-muted">-</span>
-        )}
       </td>
     </tr>
   );

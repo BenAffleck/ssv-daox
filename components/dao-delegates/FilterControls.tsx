@@ -5,8 +5,6 @@ import { useCallback, useState } from 'react';
 interface FilterControlsProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  showEligibleOnly: boolean;
-  onEligibleOnlyChange: (value: boolean) => void;
   showChangesOnly: boolean;
   onShowChangesOnlyChange: (value: boolean) => void;
   showCurrentOnly: boolean;
@@ -18,8 +16,6 @@ interface FilterControlsProps {
 export default function FilterControls({
   searchQuery,
   onSearchChange,
-  showEligibleOnly,
-  onEligibleOnlyChange,
   showChangesOnly,
   onShowChangesOnlyChange,
   showCurrentOnly,
@@ -49,17 +45,6 @@ export default function FilterControls({
           aria-label="Search delegates"
         />
       </div>
-
-      {/* Eligible only filter */}
-      <label className="filter-label">
-        <input
-          type="checkbox"
-          checked={showEligibleOnly}
-          onChange={(e) => onEligibleOnlyChange(e.target.checked)}
-          className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
-        />
-        <span>Eligible Only</span>
-      </label>
 
       {/* Show changes only filter */}
       <label className="filter-label">

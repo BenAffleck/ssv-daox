@@ -72,7 +72,6 @@ ssv-daox/
 │   │   ├── types.ts          # Delegate types
 │   │   ├── config.ts         # Delegate Score API config, cohort labels
 │   │   ├── api/              # Delegate Score API fetcher
-│   │   ├── eligibility/      # Eligibility rules
 │   │   └── logic/            # Business logic
 │   ├── dao-timeline/         # DAO Timeline logic
 │   │   ├── types.ts          # Event types, sources
@@ -124,7 +123,7 @@ ssv-daox/
 **Server components** handle:
 
 - Data fetching from external APIs
-- Heavy computation (transformations, eligibility checks)
+- Heavy computation (transformations)
 - Static rendering (badges, rows)
 
 **Client components** handle:
@@ -182,7 +181,7 @@ All external data uses dependency injection for testability.
 **Data sources:**
 
 - **Delegate Score API** - Ranked delegates, scores and cohort allocation (requires `DELEGATE_SCORE_API_URL`)
-- **Snapshot Hub API** - Committee member addresses
+- **Snapshot Hub API** - Proposals, votes and vote participation
 - **The Graph Subgraph** - Delegation relationships (requires `THEGRAPH_API_KEY`)
 
 **Pattern:**
@@ -284,23 +283,21 @@ A global search palette indexes all modules and external tools and is reachable 
 
 ## DAO Delegates Module
 
-The primary implemented module. Shows a ranked delegate leaderboard with Delegate Score, eligibility and cohort allocation.
+The primary implemented module. Shows a ranked delegate leaderboard with Delegate Score and cohort allocation.
 
 ### Data Pipeline
 
 ```
 1. Fetch the leaderboard + health from the Delegate Score API (parallel)
-2. Fetch committee members from Snapshot (parallel)
-3. Fetch delegation recipients from The Graph (parallel)
-4. Fetch vote participation from Snapshot (parallel)
-5. Build eligibility Sets (O(1) lookups)
-6. Transform score rows → Delegate objects (inject participation rates)
-7. Pass to client for filtering/sorting
+2. Fetch delegation recipients from The Graph (parallel)
+3. Fetch vote participation from Snapshot (parallel)
+4. Transform score rows → Delegate objects (inject delegation status, participation rates)
+5. Pass to client for filtering/sorting
 ```
 
 Rank, score and cohort come from the API; the app no longer ranks, assigns
-programs or keeps fixed delegation lists itself. The only local eligibility rule
-is committee membership: committee members are shown as ineligible.
+programs or keeps fixed delegation lists itself. Every delegate is eligible, so
+the app has no eligibility rules.
 
 ### Delegate Score API
 
@@ -322,8 +319,9 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   a pillar that is `null` for every row is not live and its column is hidden.
 - The Cohort column shows the delegate's cohort; the sortable Allocated Power
   column shows the voting power the run assigns to the address (its share of
-  its identity's cohort seat). "Next Round" compares the cohort with live
-  delegation status (The Graph).
+  its identity's cohort seat). "Delegation Status" compares the cohort with live
+  delegation (The Graph): Active (delegated, keeps a cohort), Add (gains a
+  cohort), Remove (delegated, loses its cohort).
 - When `DELEGATE_SCORE_API_URL` is unset the page renders a notice instead of
   the table. The page revalidates every 5 minutes so a later-configured URL is
   picked up.
@@ -422,7 +420,7 @@ The landing page displays currently active governance proposals when any exist (
 ### Key Environment Variables
 
 ```bash
-# Snapshot committee spaces (have defaults)
+# Snapshot committee spaces (governance views)
 SNAPSHOT_GRANTS_SPACE_ID=grants.ssvnetwork.eth
 SNAPSHOT_OPERATOR_SPACE_ID=vo.ssvnetwork.eth
 SNAPSHOT_MULTISIG_SPACE_ID=msig.ssvnetwork.eth

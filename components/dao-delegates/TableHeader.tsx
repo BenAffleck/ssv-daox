@@ -61,9 +61,8 @@ export default function TableHeader({
         ))}
         <SortableHeader field="votingPower">Voting Power</SortableHeader>
         <th className="table-col-header px-4 py-3 text-left">Wallet Address</th>
-        <th className="table-col-header px-4 py-3 text-left">Delegation Status</th>
-        <th className="table-col-header px-4 py-3 text-left">Eligibility</th>
         <th className="table-col-header px-4 py-3 text-left">Cohort</th>
+        <th className="table-col-header px-4 py-3 text-left">Delegation Status</th>
         <SortableHeader field="allocatedPower">Allocated Power</SortableHeader>
         <th className="table-col-header px-4 py-3 text-left">
           <div>Vote Activity</div>
@@ -71,7 +70,6 @@ export default function TableHeader({
             Last 5 closed
           </div>
         </th>
-        <th className="table-col-header px-4 py-3 text-left">Next Round</th>
       </tr>
     </thead>
   );

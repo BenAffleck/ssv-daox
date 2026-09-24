@@ -40,10 +40,6 @@ export interface Delegate {
   // Computed
   isAlreadyDelegated: boolean;
 
-  // Eligibility
-  isOnCommittee: boolean;
-  committeeNames: string[];
-
   // Vote participation
   voteParticipationRate: number;
   activeVoteStatus: { proposalId: string; title: string; hasVoted: boolean; end: number }[];
@@ -100,11 +96,4 @@ export interface ScoreHealth {
   as_of: string | null;
   latest_published_as_of: string | null;
   age_hours: number | null;
-}
-
-export interface EligibilityLists {
-  grantsCommittee: Set<string>;
-  operatorCommittee: Set<string>;
-  multisigCommittee: Set<string>;
-  alreadyDelegated: Set<string>;
 }

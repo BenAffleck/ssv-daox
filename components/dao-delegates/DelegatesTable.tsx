@@ -54,14 +54,7 @@ function compareDelegates(
 
 export default function DelegatesTable({ delegates }: DelegatesTableProps) {
   const [filters, setFilter, setMultiple] = useDelegateFilters();
-  const {
-    searchQuery,
-    showEligibleOnly,
-    showChangesOnly,
-    showCurrentOnly,
-    sortField,
-    sortDirection,
-  } = filters;
+  const { searchQuery, showChangesOnly, showCurrentOnly, sortField, sortDirection } = filters;
 
   // Debounced search: local state for input, synced to URL after delay
   const [searchInput, setSearchInput] = useState(searchQuery);
@@ -113,12 +106,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
       );
     }
 
-    // Apply eligible only filter
-    if (showEligibleOnly) {
-      filtered = filtered.filter((d) => !d.isOnCommittee);
-    }
-
-    // Apply changes only filter (show only Delegate or Undelegate)
+    // Apply changes only filter (show only Add or Remove)
     if (showChangesOnly) {
       filtered = filtered.filter((d) => (d.cohort !== null) !== d.isAlreadyDelegated);
     }
@@ -131,15 +119,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
     filtered.sort((a, b) => compareDelegates(a, b, sortField, sortDirection));
 
     return filtered;
-  }, [
-    delegates,
-    searchQuery,
-    showEligibleOnly,
-    showChangesOnly,
-    showCurrentOnly,
-    sortField,
-    sortDirection,
-  ]);
+  }, [delegates, searchQuery, showChangesOnly, showCurrentOnly, sortField, sortDirection]);
 
   // A pillar that is null for everyone is not live in this run
   const livePillars = useMemo(
@@ -164,8 +144,6 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
       <FilterControls
         searchQuery={searchInput}
         onSearchChange={handleSearchChange}
-        showEligibleOnly={showEligibleOnly}
-        onEligibleOnlyChange={setFilter.showEligibleOnly}
         showChangesOnly={showChangesOnly}
         onShowChangesOnlyChange={setFilter.showChangesOnly}
         showCurrentOnly={showCurrentOnly}
@@ -177,11 +155,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
       {filteredDelegates.length === 0 ? (
         <div className="card p-14 text-center">
           <p className="font-body text-[15px] text-muted">
-            {searchQuery
-              ? 'No delegates match your search'
-              : showEligibleOnly
-                ? 'No eligible delegates found'
-                : 'No delegates found'}
+            {searchQuery ? 'No delegates match your search' : 'No delegates found'}
           </p>
         </div>
       ) : (

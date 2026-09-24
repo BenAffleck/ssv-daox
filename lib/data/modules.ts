@@ -6,7 +6,7 @@ export const modules: Module[] = [
     slug: 'delegates',
     name: 'DAO Delegates',
     description:
-      'Ranked leaderboard of active delegates with voting power, eligibility, and delegation program tracking.',
+      'Ranked leaderboard of active delegates with Delegate Score, voting power and cohort allocation.',
     status: ModuleStatus.ACTIVE,
     sortOrder: 1,
   },

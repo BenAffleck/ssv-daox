@@ -55,19 +55,10 @@ function parseAddresses(envValue: string | undefined): string[] {
     });
 }
 
-/**
- * Snapshot space IDs for each committee type
- * Can be overridden with environment variables
- */
 export const SNAPSHOT_CONFIG = {
   apiUrl: SNAPSHOT_API_URL,
   getSubgraphUrl: getSnapshotSubgraphUrl,
   cacheSeconds: SNAPSHOT_CACHE_SECONDS,
-  spaces: {
-    grantsCommittee: process.env.SNAPSHOT_GRANTS_SPACE_ID || '',
-    operatorCommittee: process.env.SNAPSHOT_OPERATOR_SPACE_ID || '',
-    multisigCommittee: process.env.SNAPSHOT_MULTISIG_SPACE_ID || '',
-  },
   delegation: {
     sourceAddresses: parseAddresses(process.env.SNAPSHOT_DELEGATION_SOURCE_ADDRESSES),
     spaceFilter: process.env.SNAPSHOT_DELEGATION_SPACE_FILTER || '',

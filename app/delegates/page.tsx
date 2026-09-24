@@ -3,11 +3,9 @@ import { Suspense } from 'react';
 import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
 import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
-import { buildEligibilityLists } from '@/lib/dao-delegates/eligibility/checker';
 import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
 import { fetchVotingPower } from '@/lib/gnosis';
 import { fetchActiveVoteStatus } from '@/lib/snapshot/api/fetch-active-vote-status';
-import { fetchAllCommitteeMembers } from '@/lib/snapshot/api/fetch-all-committees';
 import { fetchConfiguredDelegationRecipients } from '@/lib/snapshot/api/fetch-delegation-recipients';
 import { fetchVoteParticipation } from '@/lib/snapshot/api/fetch-vote-participation';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
@@ -46,17 +44,14 @@ export default async function DaoDelegatesPage() {
     );
   }
 
-  const [leaderboard, health, committees, delegationRecipients, voteParticipation, activeVoteData] =
+  const [leaderboard, health, delegationRecipients, voteParticipation, activeVoteData] =
     await Promise.all([
       fetchLeaderboard(),
       fetchScoreHealth(),
-      fetchAllCommitteeMembers(),
       fetchConfiguredDelegationRecipients(),
       fetchVoteParticipation(SNAPSHOT_CONFIG.delegation.spaceFilter),
       fetchActiveVoteStatus(SNAPSHOT_CONFIG.delegation.spaceFilter),
     ]);
-
-  const lists = buildEligibilityLists(committees, delegationRecipients);
 
   // Only fetch voting power for addresses that are already receiving delegation
   // Others can fetch on-demand via the API to reduce initial page load time
@@ -64,7 +59,7 @@ export default async function DaoDelegatesPage() {
 
   const delegates = transformDelegates(
     leaderboard.rows,
-    lists,
+    delegationRecipients,
     voteParticipation,
     votingPower,
     activeVoteData,

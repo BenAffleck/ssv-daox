@@ -21,7 +21,6 @@ const SORT_DIRECTIONS: readonly SortDirection[] = ['asc', 'desc'] as const;
 function createDelegateFilterConfigs() {
   return {
     searchQuery: stringParam('q', ''),
-    showEligibleOnly: booleanParam('eligible', false),
     showChangesOnly: booleanParam('changes', false),
     showCurrentOnly: booleanParam('current', false),
     sortField: enumParam<SortField>('sort', 'rank', SORT_FIELDS),
