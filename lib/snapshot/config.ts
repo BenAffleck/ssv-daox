@@ -73,12 +73,6 @@ export const SNAPSHOT_CONFIG = {
     spaceFilter: process.env.SNAPSHOT_DELEGATION_SPACE_FILTER || '',
     maxResults: 1000,
   },
-  fixedLists: {
-    vipWallets: parseAddresses(process.env.VIP_WALLETS),
-    verifiedOperators: parseAddresses(process.env.VERIFIED_OPERATORS),
-    grantees: parseAddresses(process.env.GRANTEES),
-    professional: parseAddresses(process.env.PROFESSIONAL),
-  },
   voteParticipation: {
     proposalCount: 5,
   },

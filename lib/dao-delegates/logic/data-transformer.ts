@@ -2,7 +2,7 @@ import type { VotingPowerMap } from '@/lib/gnosis/types';
 import type { ActiveVoteData } from '@/lib/snapshot/api/fetch-active-vote-status';
 import type { VoteParticipationMap } from '@/lib/snapshot/types';
 
-import { checkEligibility, isAlreadyDelegated } from '../eligibility/checker';
+import { committeeNamesOf, isAlreadyDelegated } from '../eligibility/checker';
 import { Delegate, EligibilityLists, PillarScore, ScoreRow } from '../types';
 
 function toPillar(score: number | null, missing: boolean): PillarScore | null {
@@ -23,7 +23,7 @@ export function transformDelegates(
   return rows.map((row) => {
     const address = row.address;
     const { identity } = row;
-    const eligibility = checkEligibility(address, lists);
+    const committeeNames = committeeNamesOf(address, lists);
 
     const activeVoteStatus = activeVoteData
       ? activeVoteData.proposals.map((p) => ({
@@ -54,12 +54,8 @@ export function transformDelegates(
 
       isAlreadyDelegated: isAlreadyDelegated(address, lists),
 
-      isVIP: eligibility.isVIP,
-      isOnCommittee: eligibility.isOnCommittee,
-      isOnFixedList: eligibility.isOnFixedList,
-      isEligible: eligibility.isEligible,
-      committeeNames: eligibility.committeeNames,
-      fixedListNames: eligibility.fixedListNames,
+      isOnCommittee: committeeNames.length > 0,
+      committeeNames,
 
       voteParticipationRate: voteParticipation?.[address] ?? 0,
       activeVoteStatus,

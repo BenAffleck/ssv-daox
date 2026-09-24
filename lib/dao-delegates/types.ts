@@ -41,12 +41,8 @@ export interface Delegate {
   isAlreadyDelegated: boolean;
 
   // Eligibility
-  isVIP: boolean;
   isOnCommittee: boolean;
-  isOnFixedList: boolean;
-  isEligible: boolean;
   committeeNames: string[];
-  fixedListNames: string[];
 
   // Vote participation
   voteParticipationRate: number;
@@ -107,21 +103,8 @@ export interface ScoreHealth {
 }
 
 export interface EligibilityLists {
-  vipWallets: Set<string>;
   grantsCommittee: Set<string>;
   operatorCommittee: Set<string>;
   multisigCommittee: Set<string>;
-  verifiedOperators: Set<string>;
-  grantees: Set<string>;
-  professional: Set<string>;
   alreadyDelegated: Set<string>;
-}
-
-export interface EligibilityResult {
-  isEligible: boolean;
-  isVIP: boolean;
-  isOnCommittee: boolean;
-  isOnFixedList: boolean;
-  committeeNames: string[];
-  fixedListNames: string[];
 }

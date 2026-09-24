@@ -56,7 +56,7 @@ export default async function DaoDelegatesPage() {
       fetchActiveVoteStatus(SNAPSHOT_CONFIG.delegation.spaceFilter),
     ]);
 
-  const lists = buildEligibilityLists(committees, SNAPSHOT_CONFIG.fixedLists, delegationRecipients);
+  const lists = buildEligibilityLists(committees, delegationRecipients);
 
   // Only fetch voting power for addresses that are already receiving delegation
   // Others can fetch on-demand via the API to reduce initial page load time

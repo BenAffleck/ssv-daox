@@ -298,8 +298,9 @@ The primary implemented module. Shows a ranked delegate leaderboard with Delegat
 7. Pass to client for filtering/sorting
 ```
 
-Rank, score and cohort come from the API; the app no longer ranks or assigns
-programs itself.
+Rank, score and cohort come from the API; the app no longer ranks, assigns
+programs or keeps fixed delegation lists itself. The only local eligibility rule
+is committee membership: committee members are shown as ineligible.
 
 ### Delegate Score API
 

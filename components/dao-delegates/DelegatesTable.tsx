@@ -115,7 +115,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
 
     // Apply eligible only filter
     if (showEligibleOnly) {
-      filtered = filtered.filter((d) => d.isEligible);
+      filtered = filtered.filter((d) => !d.isOnCommittee);
     }
 
     // Apply changes only filter (show only Delegate or Undelegate)
