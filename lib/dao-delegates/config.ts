@@ -1,4 +1,4 @@
-import type { Cohort } from './types';
+import type { Cohort, PillarKey } from './types';
 
 /**
  * Delegate Score API configuration.
@@ -15,6 +15,12 @@ export const DELEGATE_SCORE_CONFIG = {
   /** The API's maximum page size. */
   pageSize: 1000,
 } as const;
+
+export const PILLAR_LABELS: Record<PillarKey, string> = {
+  community: 'Community',
+  holdings: 'Holdings',
+  votes: 'Votes',
+};
 
 export const COHORT_LABELS: Record<Cohort, string> = {
   ssvCommunity: 'SSV Community',

@@ -48,7 +48,7 @@ ssv-daox/
 │   │   ├── FilterControls.tsx    # Client: filter UI
 │   │   ├── TableHeader.tsx       # Client: sortable headers
 │   │   ├── DelegateRow.tsx       # Server: row rendering
-│   │   ├── ScoreCell.tsx         # Score + pillar breakdown tooltip
+│   │   ├── ScoreCell.tsx         # Score / pillar value with "n/a"
 │   │   └── *Badge.tsx            # Server: badge components
 │   └── dao-timeline/         # DAO Timeline components
 │       ├── Timeline.tsx          # Client: main container + AI state
@@ -316,11 +316,13 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   The page then shows the as-of and age as a warning but still renders.
 - The page header cites the `run_id` and `as_of` the rows were read from.
 - Scores are unrounded in the API and rounded to one decimal for display.
-- The Score cell's tooltip breaks the score into its pillars (community,
-  holdings, votes). A pillar with `missing_<pillar>: true` shows as "n/a"; a
-  pillar that is `null` is not live and is omitted.
-- The Cohort column shows the delegate's cohort and allocated power. "Next
-  Round" compares the cohort with live delegation status (The Graph).
+- Each pillar (community, holdings, votes) has its own sortable column next to
+  Score. A pillar with `missing_<pillar>: true` shows as "n/a" and sorts last;
+  a pillar that is `null` for every row is not live and its column is hidden.
+- The Cohort column shows the delegate's cohort; the sortable Allocated Power
+  column shows the voting power the run assigns to the address (its share of
+  its identity's cohort seat). "Next Round" compares the cohort with live
+  delegation status (The Graph).
 - When `DELEGATE_SCORE_API_URL` is unset the page renders a notice instead of
   the table. The page revalidates every 5 minutes so a later-configured URL is
   picked up.

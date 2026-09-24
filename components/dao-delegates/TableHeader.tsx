@@ -1,15 +1,24 @@
 'use client';
 
-export type SortField = 'rank' | 'score' | 'votingPower' | 'allocatedPower';
+import { PILLAR_LABELS } from '@/lib/dao-delegates/config';
+import type { PillarKey } from '@/lib/dao-delegates/types';
+
+export type SortField = 'rank' | 'score' | PillarKey | 'votingPower' | 'allocatedPower';
 export type SortDirection = 'asc' | 'desc';
 
 interface TableHeaderProps {
   sortField: SortField;
   sortDirection: SortDirection;
   onSort: (field: SortField) => void;
+  livePillars: PillarKey[];
 }
 
-export default function TableHeader({ sortField, sortDirection, onSort }: TableHeaderProps) {
+export default function TableHeader({
+  sortField,
+  sortDirection,
+  onSort,
+  livePillars,
+}: TableHeaderProps) {
   const SortableHeader = ({
     field,
     children,
@@ -41,15 +50,21 @@ export default function TableHeader({ sortField, sortDirection, onSort }: TableH
         <SortableHeader field="rank" align="center">
           Rank
         </SortableHeader>
+        <th className="table-col-header px-4 py-3 text-left">Name</th>
         <SortableHeader field="score" align="center">
           Score
         </SortableHeader>
+        {livePillars.map((pillar) => (
+          <SortableHeader key={pillar} field={pillar} align="center">
+            {PILLAR_LABELS[pillar]}
+          </SortableHeader>
+        ))}
         <SortableHeader field="votingPower">Voting Power</SortableHeader>
         <th className="table-col-header px-4 py-3 text-left">Wallet Address</th>
-        <th className="table-col-header px-4 py-3 text-left">Name</th>
         <th className="table-col-header px-4 py-3 text-left">Delegation Status</th>
         <th className="table-col-header px-4 py-3 text-left">Eligibility</th>
-        <SortableHeader field="allocatedPower">Cohort</SortableHeader>
+        <th className="table-col-header px-4 py-3 text-left">Cohort</th>
+        <SortableHeader field="allocatedPower">Allocated Power</SortableHeader>
         <th className="table-col-header px-4 py-3 text-left">
           <div>Vote Activity</div>
           <div className="text-[10px] font-normal tracking-normal text-muted/70 normal-case">

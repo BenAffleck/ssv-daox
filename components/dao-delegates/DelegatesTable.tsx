@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { PILLAR_LABELS } from '@/lib/dao-delegates/config';
 import { collectHandles } from '@/lib/dao-delegates/logic/collect-handles';
-import { Delegate } from '@/lib/dao-delegates/types';
+import { Delegate, PillarKey } from '@/lib/dao-delegates/types';
 import { useDelegateFilters } from '@/lib/hooks/useDelegateFilters';
 
 import DelegateRow from './DelegateRow';
@@ -20,6 +21,13 @@ function sortValue(delegate: Delegate, field: SortField): number | null {
       return delegate.rank;
     case 'score':
       return delegate.score;
+    case 'community':
+    case 'holdings':
+    case 'votes': {
+      // A missing pillar is "n/a", not 0, so it sorts with the unscored rows
+      const pillar = delegate.pillars[field];
+      return pillar && !pillar.missing ? pillar.score : null;
+    }
     case 'votingPower':
       return delegate.votingPowerData?.votingPower ?? 0;
     case 'allocatedPower':
@@ -133,6 +141,15 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
     sortDirection,
   ]);
 
+  // A pillar that is null for everyone is not live in this run
+  const livePillars = useMemo(
+    () =>
+      (Object.keys(PILLAR_LABELS) as PillarKey[]).filter((pillar) =>
+        delegates.some((d) => d.pillars[pillar] !== null),
+      ),
+    [delegates],
+  );
+
   const forumHandles = useMemo(
     () => collectHandles(filteredDelegates, 'forumHandle'),
     [filteredDelegates],
@@ -170,10 +187,19 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
       ) : (
         <div className="card overflow-x-auto">
           <table className="w-full">
-            <TableHeader sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+            <TableHeader
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              livePillars={livePillars}
+            />
             <tbody>
               {filteredDelegates.map((delegate) => (
-                <DelegateRow key={delegate.publicAddress} delegate={delegate} />
+                <DelegateRow
+                  key={delegate.publicAddress}
+                  delegate={delegate}
+                  livePillars={livePillars}
+                />
               ))}
             </tbody>
           </table>

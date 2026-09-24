@@ -9,6 +9,9 @@ import { booleanParam, enumParam, stringParam, useUrlState } from './useUrlState
 const SORT_FIELDS: readonly SortField[] = [
   'rank',
   'score',
+  'community',
+  'holdings',
+  'votes',
   'votingPower',
   'allocatedPower',
 ] as const;

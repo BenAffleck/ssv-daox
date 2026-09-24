@@ -12,6 +12,8 @@ export interface PillarScore {
   missing: boolean;
 }
 
+export type PillarKey = 'community' | 'holdings' | 'votes';
+
 export interface Delegate {
   publicAddress: string;
   /** Not unique across rows. */
@@ -30,11 +32,7 @@ export interface Delegate {
   /** 0 to 100, unrounded. `null` when no pillar is live. */
   score: number | null;
   /** `null` entries are pillars that are not live in this run. */
-  pillars: {
-    community: PillarScore | null;
-    holdings: PillarScore | null;
-    votes: PillarScore | null;
-  };
+  pillars: Record<PillarKey, PillarScore | null>;
   cohort: Cohort | null;
   /** Voting power the run allocates to the delegate. */
   allocatedPower: number | null;
