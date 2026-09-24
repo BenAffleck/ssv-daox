@@ -34,6 +34,12 @@ Minimize moving parts while maximizing developer experience and production relia
 | Build-time codegen | **tsx**                    | Runs the TypeScript generator (`scripts/gen-external-tools.ts`) that turns `data/external-tools/*.json` into a typed array on `predev` / `prebuild`.                                       |
 | Linting            | **ESLint 9 (flat config)** | `eslint.config.mjs` consumes Next 16's flat `core-web-vitals` config (replaces the removed `next lint` + legacy `.eslintrc.json`).                                                         |
 
+### External data
+
+| Source          | Choice                     | Rationale                                                                                                                         |
+| --------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Delegate scores | **SSV Delegate Score API** | Replaces the retired Karma API. Read-only JSON with an OpenAPI contract, daily runs, cohort allocation, cached 5 min via `fetch`. |
+
 ### Testing
 
 | Type      | Choice              | Rationale                         |

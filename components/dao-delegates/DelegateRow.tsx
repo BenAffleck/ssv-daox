@@ -2,10 +2,11 @@ import { Delegate } from '@/lib/dao-delegates/types';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 
 import AddressCell from './AddressCell';
+import CohortBadge from './CohortBadge';
 import DelegationStatusBadge from './DelegationStatusBadge';
 import EligibilityBadge from './EligibilityBadge';
 import NameCell from './NameCell';
-import ProgramBadge from './ProgramBadge';
+import ScoreCell from './ScoreCell';
 import VoteParticipationCell from './VoteParticipationCell';
 import VotingPowerBadge from './VotingPowerBadge';
 
@@ -14,36 +15,33 @@ interface DelegateRowProps {
 }
 
 export default function DelegateRow({ delegate }: DelegateRowProps) {
-  const isWithdrawn = delegate.status.toLowerCase() === 'withdrawn';
-  const hasPrograms = delegate.delegationPrograms.length > 0;
+  const hasCohort = delegate.cohort !== null;
 
   // Calculate next round action
   let nextRoundAction: 'Delegate' | 'Undelegate' | 'Keep' | null = null;
   let nextRoundBadgeClass = '';
 
-  if (hasPrograms && !delegate.isAlreadyDelegated) {
+  if (hasCohort && !delegate.isAlreadyDelegated) {
     // Should be added
     nextRoundAction = 'Delegate';
     nextRoundBadgeClass = 'badge-accent';
-  } else if (!hasPrograms && delegate.isAlreadyDelegated) {
+  } else if (!hasCohort && delegate.isAlreadyDelegated) {
     // Should be removed
     nextRoundAction = 'Undelegate';
     nextRoundBadgeClass = 'badge-primary';
-  } else if (hasPrograms && delegate.isAlreadyDelegated) {
+  } else if (hasCohort && delegate.isAlreadyDelegated) {
     // Should be kept
     nextRoundAction = 'Keep';
     nextRoundBadgeClass = 'badge-secondary';
   }
 
   return (
-    <tr
-      className={`border-b border-border transition-colors hover:bg-card-hover ${isWithdrawn ? 'opacity-60' : ''}`}
-    >
+    <tr className="border-b border-border transition-colors hover:bg-card-hover">
       <td className="px-4 py-3 text-center font-medium text-foreground tabular-nums">
-        {delegate.rank}
+        {delegate.rank ?? '-'}
       </td>
-      <td className="px-4 py-3 text-center text-foreground tabular-nums">
-        {delegate.karmaScore.toLocaleString()}
+      <td className="px-4 py-3 text-center">
+        <ScoreCell score={delegate.score} pillars={delegate.pillars} />
       </td>
       <td className="px-4 py-3">
         <VotingPowerBadge
@@ -58,24 +56,13 @@ export default function DelegateRow({ delegate }: DelegateRowProps) {
         <NameCell displayName={delegate.displayName} />
       </td>
       <td className="px-4 py-3">
-        {isWithdrawn ? (
-          <span className="badge badge-muted">Withdrawn</span>
-        ) : (
-          <DelegationStatusBadge isAlreadyDelegated={delegate.isAlreadyDelegated} />
-        )}
+        <DelegationStatusBadge isAlreadyDelegated={delegate.isAlreadyDelegated} />
       </td>
       <td className="px-4 py-3">
         <EligibilityBadge delegate={delegate} />
       </td>
       <td className="px-4 py-3">
-        <ProgramBadge programs={delegate.delegationPrograms} />
-      </td>
-      <td className="px-4 py-3">
-        {delegate.isProfileComplete ? (
-          <span className="badge badge-accent">Complete</span>
-        ) : (
-          <span className="badge badge-muted">Incomplete</span>
-        )}
+        <CohortBadge cohort={delegate.cohort} allocatedPower={delegate.allocatedPower} />
       </td>
       <td className="px-4 py-3">
         <VoteParticipationCell

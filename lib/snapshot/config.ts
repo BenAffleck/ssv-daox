@@ -27,7 +27,7 @@ export function getSnapshotSubgraphUrl(): string {
 
 /**
  * Cache duration in seconds for Snapshot data
- * 5 minutes (consistent with Karma API cache)
+ * 5 minutes (consistent with other API caches)
  */
 export const SNAPSHOT_CACHE_SECONDS = 300;
 

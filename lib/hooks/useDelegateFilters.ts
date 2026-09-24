@@ -8,10 +8,9 @@ import { booleanParam, enumParam, stringParam, useUrlState } from './useUrlState
 
 const SORT_FIELDS: readonly SortField[] = [
   'rank',
-  'karmaScore',
+  'score',
   'votingPower',
-  'delegatedTokens',
-  'delegatorCount',
+  'allocatedPower',
 ] as const;
 
 const SORT_DIRECTIONS: readonly SortDirection[] = ['asc', 'desc'] as const;
@@ -20,9 +19,7 @@ function createDelegateFilterConfigs() {
   return {
     searchQuery: stringParam('q', ''),
     showEligibleOnly: booleanParam('eligible', false),
-    showWithdrawn: booleanParam('withdrawn', false),
     showChangesOnly: booleanParam('changes', false),
-    showIncompleteProfile: booleanParam('incomplete', false),
     showCurrentOnly: booleanParam('current', false),
     sortField: enumParam<SortField>('sort', 'rank', SORT_FIELDS),
     sortDirection: enumParam<SortDirection>('dir', 'asc', SORT_DIRECTIONS),

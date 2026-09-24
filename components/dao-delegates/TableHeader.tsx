@@ -1,7 +1,6 @@
 'use client';
 
-export type SortField =
-  'rank' | 'karmaScore' | 'votingPower' | 'delegatedTokens' | 'delegatorCount';
+export type SortField = 'rank' | 'score' | 'votingPower' | 'allocatedPower';
 export type SortDirection = 'asc' | 'desc';
 
 interface TableHeaderProps {
@@ -42,16 +41,15 @@ export default function TableHeader({ sortField, sortDirection, onSort }: TableH
         <SortableHeader field="rank" align="center">
           Rank
         </SortableHeader>
-        <SortableHeader field="karmaScore" align="center">
+        <SortableHeader field="score" align="center">
           Score
         </SortableHeader>
         <SortableHeader field="votingPower">Voting Power</SortableHeader>
         <th className="table-col-header px-4 py-3 text-left">Wallet Address</th>
-        <th className="table-col-header px-4 py-3 text-left">Name/ENS</th>
+        <th className="table-col-header px-4 py-3 text-left">Name</th>
         <th className="table-col-header px-4 py-3 text-left">Delegation Status</th>
         <th className="table-col-header px-4 py-3 text-left">Eligibility</th>
-        <th className="table-col-header px-4 py-3 text-left">Programs</th>
-        <th className="table-col-header px-4 py-3 text-left">Profile</th>
+        <SortableHeader field="allocatedPower">Cohort</SortableHeader>
         <th className="table-col-header px-4 py-3 text-left">
           <div>Vote Activity</div>
           <div className="text-[10px] font-normal tracking-normal text-muted/70 normal-case">

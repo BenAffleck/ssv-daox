@@ -1,30 +1,25 @@
-import { DelegationProgram } from './types';
+import type { Cohort } from './types';
 
 /**
- * Repo-relative path of the frozen Karma delegate snapshot.
+ * Delegate Score API configuration.
  *
- * The upstream Karma API is retired; delegate data is static until a new
- * source replaces it.
+ * The API replaces the retired Karma API. It scores every candidate once per
+ * as-of day and allocates the DAO's voting power across cohorts.
  */
-export const FROZEN_DELEGATES_CSV_PATH = 'data/delegates/karma-delegates.csv';
-
-export const DELEGATION_PROGRAMS: DelegationProgram[] = [
-  {
-    id: 'dao-delegation',
-    name: 'dao-delegation',
-    displayName: 'DAO Delegation',
-    availableSeats: 10,
-    requiresEligibility: true,
+export const DELEGATE_SCORE_CONFIG = {
+  /** Base URL without trailing slash. Empty when unset. */
+  get apiBaseUrl(): string {
+    return (process.env.DELEGATE_SCORE_API_URL || '').replace(/\/+$/, '');
   },
-  // {
-  //   id: 'ssv-labs-delegation',
-  //   name: 'ssv-labs-delegation',
-  //   displayName: 'SSV Labs Delegation',
-  //   availableSeats: 5,
-  //   requiresEligibility: true,
-  // },
-];
+  cacheSeconds: 300,
+  /** The API's maximum page size. */
+  pageSize: 1000,
+} as const;
 
-export function getDelegationPrograms(): DelegationProgram[] {
-  return DELEGATION_PROGRAMS;
-}
+export const COHORT_LABELS: Record<Cohort, string> = {
+  ssvCommunity: 'SSV Community',
+  verifiedOperators: 'Verified Operators',
+  professional: 'Professional',
+  grantRecipients: 'Grant Recipients',
+  ethCommunities: 'ETH Communities',
+};

@@ -3,74 +3,52 @@ import type { ActiveVoteData } from '@/lib/snapshot/api/fetch-active-vote-status
 import type { VoteParticipationMap } from '@/lib/snapshot/types';
 
 import { checkEligibility, isAlreadyDelegated } from '../eligibility/checker';
-import { Delegate, EligibilityLists, KarmaDelegateCSV } from '../types';
-import { formatAddress } from '../utils/address';
+import { Delegate, EligibilityLists, PillarScore, ScoreRow } from '../types';
+
+function toPillar(score: number | null, missing: boolean): PillarScore | null {
+  return score === null ? null : { score, missing };
+}
 
 /**
- * Transforms CSV delegate data into Delegate objects
- * Applies eligibility checking and computes display fields
+ * Transforms Delegate Score API rows into Delegate objects.
+ * Rows arrive in rank order and keep it.
  */
 export function transformDelegates(
-  csvDelegates: KarmaDelegateCSV[],
+  rows: ScoreRow[],
   lists: EligibilityLists,
   voteParticipation?: VoteParticipationMap,
   votingPower?: VotingPowerMap,
   activeVoteData?: ActiveVoteData,
 ): Delegate[] {
-  return csvDelegates.map((csv) => {
-    // Parse numeric fields
-    const karmaScore = parseFloat(csv.karmaScore) || 0;
-    const delegatedTokens = parseFloat(csv.delegatedTokens) || 0;
-    const delegatorCount = parseInt(csv.delegatorCount, 10) || 0;
+  return rows.map((row) => {
+    const address = row.address;
+    const eligibility = checkEligibility(address, lists);
 
-    // Check eligibility
-    const eligibility = checkEligibility(csv.publicAddress, lists);
-
-    // Check if already delegated
-    const alreadyDelegated = isAlreadyDelegated(csv.publicAddress, lists);
-
-    // Determine display name (priority: ensName > name > truncated address)
-    const displayName = csv.ensName || csv.name || formatAddress(csv.publicAddress);
-
-    // Check if profile is complete (forumHandle and discordUsername set)
-    const isProfileComplete =
-      Boolean(csv.forumHandle && csv.forumHandle.trim()) &&
-      Boolean(csv.discordUsername && csv.discordUsername.trim());
-
-    // Get vote participation rate (normalize address to lowercase for lookup)
-    const voteParticipationRate = voteParticipation?.[csv.publicAddress.toLowerCase()] ?? 0;
-
-    // Get voting power data (normalize address to lowercase for lookup)
-    const votingPowerData = votingPower?.[csv.publicAddress.toLowerCase()] ?? null;
-
-    // Build active vote status for this delegate
-    const addressLower = csv.publicAddress.toLowerCase();
     const activeVoteStatus = activeVoteData
       ? activeVoteData.proposals.map((p) => ({
           proposalId: p.id,
           title: p.title,
-          hasVoted: activeVoteData.voterMap.get(addressLower)?.has(p.id) ?? false,
+          hasVoted: activeVoteData.voterMap.get(address)?.has(p.id) ?? false,
           end: p.end,
         }))
       : [];
 
-    const delegate: Delegate = {
-      // Raw CSV data
-      publicAddress: csv.publicAddress,
-      name: csv.name,
-      ensName: csv.ensName,
-      karmaScore,
-      delegatedTokens,
-      delegatorCount,
-      status: csv.status,
+    return {
+      publicAddress: address,
+      displayName: row.display_name,
 
-      // Computed fields
-      rank: 0, // Will be set by rank calculator
-      displayName,
-      isAlreadyDelegated: alreadyDelegated,
-      isProfileComplete,
+      rank: row.rank,
+      score: row.score,
+      pillars: {
+        community: toPillar(row.community, row.missing_community),
+        holdings: toPillar(row.holdings, row.missing_holdings),
+        votes: toPillar(row.votes, row.missing_votes),
+      },
+      cohort: row.cohort,
+      allocatedPower: row.power,
 
-      // Eligibility
+      isAlreadyDelegated: isAlreadyDelegated(address, lists),
+
       isVIP: eligibility.isVIP,
       isOnCommittee: eligibility.isOnCommittee,
       isOnFixedList: eligibility.isOnFixedList,
@@ -78,21 +56,10 @@ export function transformDelegates(
       committeeNames: eligibility.committeeNames,
       fixedListNames: eligibility.fixedListNames,
 
-      // Programs (will be set by program assigner)
-      delegationPrograms: [],
-
-      // Vote participation
-      voteParticipationRate,
+      voteParticipationRate: voteParticipation?.[address] ?? 0,
       activeVoteStatus,
 
-      // Voting power from Gnosis delegation API
-      votingPowerData,
-
-      // Profile handles
-      forumHandle: csv.forumHandle?.trim() || '',
-      discordUsername: csv.discordUsername?.trim() || '',
+      votingPowerData: votingPower?.[address] ?? null,
     };
-
-    return delegate;
   });
 }

@@ -48,6 +48,7 @@ ssv-daox/
 │   │   ├── FilterControls.tsx    # Client: filter UI
 │   │   ├── TableHeader.tsx       # Client: sortable headers
 │   │   ├── DelegateRow.tsx       # Server: row rendering
+│   │   ├── ScoreCell.tsx         # Score + pillar breakdown tooltip
 │   │   └── *Badge.tsx            # Server: badge components
 │   └── dao-timeline/         # DAO Timeline components
 │       ├── Timeline.tsx          # Client: main container + AI state
@@ -69,8 +70,8 @@ ssv-daox/
 │   │   └── ThemeToggle.tsx   # Theme selector
 │   ├── dao-delegates/        # DAO Delegates logic
 │   │   ├── types.ts          # Delegate types
-│   │   ├── config.ts         # Program configuration
-│   │   ├── api/              # Frozen CSV loader + parser
+│   │   ├── config.ts         # Delegate Score API config, cohort labels
+│   │   ├── api/              # Delegate Score API fetcher
 │   │   ├── eligibility/      # Eligibility rules
 │   │   └── logic/            # Business logic
 │   ├── dao-timeline/         # DAO Timeline logic
@@ -180,7 +181,7 @@ All external data uses dependency injection for testability.
 
 **Data sources:**
 
-- **Frozen delegate CSV** - `data/delegates/karma-delegates.csv`, the last snapshot from the retired Karma API; read from disk, not fetched
+- **Delegate Score API** - Ranked delegates, scores and cohort allocation (requires `DELEGATE_SCORE_API_URL`)
 - **Snapshot Hub API** - Committee member addresses
 - **The Graph Subgraph** - Delegation relationships (requires `THEGRAPH_API_KEY`)
 
@@ -283,41 +284,50 @@ A global search palette indexes all modules and external tools and is reachable 
 
 ## DAO Delegates Module
 
-The primary implemented module. Shows a ranked delegate leaderboard with eligibility and program assignment.
+The primary implemented module. Shows a ranked delegate leaderboard with Delegate Score, eligibility and cohort allocation.
 
 ### Data Pipeline
 
 ```
-1. Read the frozen delegate CSV from disk
+1. Fetch the leaderboard + health from the Delegate Score API (parallel)
 2. Fetch committee members from Snapshot (parallel)
 3. Fetch delegation recipients from The Graph (parallel)
 4. Fetch vote participation from Snapshot (parallel)
 5. Build eligibility Sets (O(1) lookups)
-6. Transform CSV → Delegate objects (inject participation rates)
-7. Calculate ranks by karma score
-8. Run three-phase program assignment
-9. Pass to client for filtering/sorting
+6. Transform score rows → Delegate objects (inject participation rates)
+7. Pass to client for filtering/sorting
 ```
 
-### Three-Phase Program Assignment
+Rank, score and cohort come from the API; the app no longer ranks or assigns
+programs itself.
 
-1. **Pre-phase:** Skip withdrawn delegates
-2. **Phase 1:** Fixed list delegates get all programs (bypass limits)
-3. **Phase 2:** Competitive allocation for eligible + complete profile delegates
+### Delegate Score API
 
-Configuration in `lib/dao-delegates/config.ts`.
+The Delegate Score API replaced the retired Karma API. It is a read-only JSON
+API whose contract is its OpenAPI spec (`/openapi.json`). Each **run** scores
+every candidate for one UTC **as-of** day and allocates the DAO's voting power
+across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
+`grantRecipients`, `ethCommunities`).
 
-### Frozen Delegate Data
+- `lib/dao-delegates/api/fetch-leaderboard.ts` pages `GET /v1/leaderboard` at
+  the maximum page size. Later pages are pinned to the first page's `as_of`; a
+  `run_id` change while paging fails the request.
+- `GET /health` answers `503` with the same body when data is stale or absent.
+  The page then shows the as-of and age as a warning but still renders.
+- The page header cites the `run_id` and `as_of` the rows were read from.
+- Scores are unrounded in the API and rounded to one decimal for display.
+- The Score cell's tooltip breaks the score into its pillars (community,
+  holdings, votes). A pillar with `missing_<pillar>: true` shows as "n/a"; a
+  pillar that is `null` is not live and is omitted.
+- The Cohort column shows the delegate's cohort and allocated power. "Next
+  Round" compares the cohort with live delegation status (The Graph).
+- When `DELEGATE_SCORE_API_URL` is unset the page renders a notice instead of
+  the table. The page revalidates every 5 minutes so a later-configured URL is
+  picked up.
 
-The Karma API that supplied delegate rows is retired (the endpoint and the
-`delegate.ssv.network` profile site both return 404). The last successful
-response is checked in at `data/delegates/karma-delegates.csv` and read by
-`lib/dao-delegates/api/load-delegates.ts`; `next.config.ts` traces the file into
-the deployment bundle. Karma score, delegated tokens, delegator count, and
-profile handles are therefore static. Everything else on the page (committees,
-delegation recipients, vote participation, voting power) is still fetched live.
-Replacing the source means swapping `load-delegates.ts` for a new fetcher that
-produces `KarmaDelegateCSV[]`.
+Karma features the API does not cover yet are removed from the UI: delegate
+status (withdrawn), profile completeness and its empty state, forum/Discord
+handle copy, delegated tokens and delegator count sorting.
 
 ### Vote Participation & Active Vote Status
 
@@ -404,6 +414,9 @@ The landing page displays currently active governance proposals when any exist (
 SNAPSHOT_GRANTS_SPACE_ID=grants.ssvnetwork.eth
 SNAPSHOT_OPERATOR_SPACE_ID=vo.ssvnetwork.eth
 SNAPSHOT_MULTISIG_SPACE_ID=msig.ssvnetwork.eth
+
+# Required for the delegates leaderboard
+DELEGATE_SCORE_API_URL=http://127.0.0.1:8000
 
 # Required for delegation status feature
 THEGRAPH_API_KEY=your_key
