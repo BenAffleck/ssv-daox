@@ -1,21 +1,27 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { BaseError, type Address, type Hash } from 'viem';
 import { normalize } from 'viem/ens';
 import {
   useAccount,
-  useEnsAddress,
+  useConfig,
   usePublicClient,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from 'wagmi';
 import { mainnet } from 'wagmi/chains';
+import { getEnsAddressQueryOptions } from 'wagmi/query';
 
 import {
+  formatPercent,
+  MAX_SPLIT_TARGETS,
   planDelegation,
   toPlannedDelegations,
   type PlannedDelegation,
+  type SplitTarget,
+  type TargetScoring,
 } from '@/lib/delegation/logic/delegation-plan';
 import { SSV_SPACE_ID } from '@/lib/gnosis/config';
 import {
@@ -31,9 +37,20 @@ interface DelegationPanelProps {
   address: string;
   /** Current outgoing delegations, or `null` when the Gnosis API lookup failed. */
   current: DelegationEntry[] | null;
+  /** The selected address's identity siblings, offered as consolidation quick picks. */
+  ownAddresses: string[];
+  scoring: TargetScoring;
 }
 
-type Mode = 'all-to-one' | 'clear';
+type Mode = 'all-to-one' | 'split' | 'clear';
+
+interface ResolvedTarget {
+  ensName: string | null;
+  /** The typed address, or the ENS name's address; `null` while unresolved. */
+  address: string | null;
+  pending: boolean;
+  missing: boolean;
+}
 
 type Submission =
   { kind: 'sent'; hash: Hash; safe: Address | null } | { kind: 'error'; message: string };
@@ -51,8 +68,47 @@ function toEnsName(value: string): string | null {
   }
 }
 
-function formatBps(bps: number): string {
-  return `${(bps / 100).toLocaleString('en-US', { maximumFractionDigits: 2 })}%`;
+/** Resolves each input that contains a dot as an ENS name over the RPC proxy. */
+function useResolvedTargets(inputs: string[]): ResolvedTarget[] {
+  const config = useConfig();
+  const names = inputs.map(toEnsName);
+  const results = useQueries({
+    queries: names.map((name) => ({
+      ...getEnsAddressQueryOptions(config, { name: name ?? undefined, chainId: mainnet.id }),
+      enabled: name !== null,
+    })),
+  });
+  return inputs.map((input, i) => {
+    const name = names[i];
+    if (name === null) {
+      return { ensName: null, address: input, pending: false, missing: false };
+    }
+    const result = results[i];
+    return {
+      ensName: name,
+      address: result.data ?? null,
+      pending: result.isLoading,
+      missing: !result.isLoading && !result.data,
+    };
+  });
+}
+
+function EnsResolution({ target }: { target: ResolvedTarget }) {
+  if (!target.ensName) {
+    return null;
+  }
+  return (
+    <p className="text-[13px] text-muted">
+      {target.pending
+        ? `Resolving ${target.ensName}…`
+        : target.address
+          ? `${target.ensName} resolves to `
+          : `${target.ensName} doesn't resolve to an address.`}
+      {target.address && (
+        <code className="font-mono text-xs text-foreground">{target.address}</code>
+      )}
+    </p>
+  );
 }
 
 // wagmi wraps the wallet's rejection in a contract-call error.
@@ -74,7 +130,7 @@ function DelegationList({ title, items }: { title: string; items: PlannedDelegat
           {items.map((d) => (
             <li key={d.address} className="flex justify-between gap-3 text-[13px]">
               <code className="truncate font-mono text-xs text-foreground">{d.address}</code>
-              <span className="shrink-0 text-foreground">{formatBps(d.bps)}</span>
+              <span className="shrink-0 text-foreground">{formatPercent(d.bps)}</span>
             </li>
           ))}
         </ul>
@@ -129,49 +185,81 @@ function TransactionStatus({ hash, safe }: { hash: Hash; safe: Address | null })
   );
 }
 
+const EMPTY_ROW: SplitTarget = { target: '', percent: '' };
+
+function toSplitTargets(delegations: PlannedDelegation[]): SplitTarget[] {
+  const targets: SplitTarget[] = delegations.map((d) => ({
+    target: d.address,
+    percent: String(d.bps / 100),
+  }));
+  while (targets.length < 2) {
+    targets.push(EMPTY_ROW);
+  }
+  return targets;
+}
+
 /**
- * Delegates all voting power to one address or ENS name, or clears the
- * delegation, in the SSV Snapshot space of the Split Delegation registry.
+ * Delegates voting power to one address or ENS name, splits it across up to
+ * 10, or clears the delegation, in the SSV Snapshot space of the Split
+ * Delegation registry.
  */
-export default function DelegationPanel({ address, current }: DelegationPanelProps) {
+export default function DelegationPanel({
+  address,
+  current,
+  ownAddresses,
+  scoring,
+}: DelegationPanelProps) {
   const { address: connected } = useAccount();
   const publicClient = usePublicClient({ chainId: mainnet.id });
   const { writeContractAsync, isPending: awaitingWallet } = useWriteContract();
 
   const currentEntries = useMemo(() => current ?? [], [current]);
-  const [mode, setMode] = useState<Mode>('all-to-one');
+  const before = useMemo(() => toPlannedDelegations(currentEntries), [currentEntries]);
+  const [mode, setMode] = useState<Mode>(before.length > 1 ? 'split' : 'all-to-one');
   const [target, setTarget] = useState(currentEntries[0]?.address ?? '');
+  const [splitTargets, setSplitTargets] = useState(() => toSplitTargets(before));
   const [confirmedDrop, setConfirmedDrop] = useState(false);
   // Errors show only after an edit, so a prefill that matches the current delegation isn't an error.
   const [edited, setEdited] = useState(false);
   const [submission, setSubmission] = useState<Submission | null>(null);
 
-  const ensName = toEnsName(target.trim());
-  const ens = useEnsAddress({
-    name: ensName ?? undefined,
-    chainId: mainnet.id,
-    query: { enabled: ensName !== null },
+  const inputs = mode === 'split' ? splitTargets.map((t) => t.target.trim()) : [target.trim()];
+  const resolved = useResolvedTargets(mode === 'clear' ? [] : inputs);
+  const addresses = resolved.map((r) => r.address ?? '');
+
+  const plan = planDelegation({
+    delegator: address,
+    input:
+      mode === 'clear'
+        ? { kind: 'clear' }
+        : mode === 'split'
+          ? {
+              kind: 'split',
+              targets: splitTargets.map((t, i) => ({ ...t, target: addresses[i] ?? '' })),
+            }
+          : { kind: 'all-to-one', target: addresses[0] ?? '' },
+    current: currentEntries,
+    scoring,
   });
 
-  const resolvedTarget = ensName ? (ens.data ?? null) : target.trim();
-  const plan = useMemo(
-    () =>
-      planDelegation({
-        delegator: address,
-        input:
-          mode === 'clear'
-            ? { kind: 'clear' }
-            : { kind: 'all-to-one', target: resolvedTarget ?? '' },
-        current: currentEntries,
-      }),
-    [address, mode, resolvedTarget, currentEntries],
-  );
-  const before = useMemo(() => toPlannedDelegations(currentEntries), [currentEntries]);
+  const quickPicks = useMemo(() => {
+    const own = new Map<string, string>();
+    for (const a of [...(connected ? [connected] : []), ...ownAddresses]) {
+      if (a.toLowerCase() !== address.toLowerCase()) {
+        own.set(a.toLowerCase(), a);
+      }
+    }
+    return [...own.values()];
+  }, [connected, ownAddresses, address]);
 
   const isOwner = connected?.toLowerCase() === address.toLowerCase();
-  const ensPending = ensName !== null && ens.isLoading;
-  const ensMissing = ensName !== null && !ens.isLoading && !ens.data;
-  const hasInput = mode === 'clear' || target.trim() !== '';
+  const ensPending = resolved.some((r) => r.pending);
+  const ensMissing = resolved.some((r) => r.missing);
+  const hasInput =
+    mode === 'clear' ||
+    (mode === 'split'
+      ? splitTargets.some((t) => t.target.trim() !== '' || t.percent.trim() !== '')
+      : target.trim() !== '');
   const needsDropConfirmation = plan.droppedDelegates.length > 0 && !confirmedDrop;
   const canSend =
     isOwner &&
@@ -198,6 +286,34 @@ export default function DelegationPanel({ address, current }: DelegationPanelPro
   function changeTarget(value: string) {
     setTarget(value);
     resetOutcome();
+  }
+
+  function changeSplitTargets(next: SplitTarget[]) {
+    setSplitTargets(next);
+    resetOutcome();
+  }
+
+  function updateSplitTarget(index: number, change: Partial<SplitTarget>) {
+    changeSplitTargets(splitTargets.map((t, i) => (i === index ? { ...t, ...change } : t)));
+  }
+
+  const emptyRow = splitTargets.findIndex((t) => t.target.trim() === '');
+  const splitFull = emptyRow < 0 && splitTargets.length >= MAX_SPLIT_TARGETS;
+
+  function addSplitRow(target = '') {
+    changeSplitTargets([...splitTargets, { ...EMPTY_ROW, target }]);
+  }
+
+  function pick(own: string) {
+    if (mode !== 'split') {
+      changeTarget(own);
+      return;
+    }
+    if (emptyRow >= 0) {
+      updateSplitTarget(emptyRow, { target: own });
+    } else if (!splitFull) {
+      addSplitRow(own);
+    }
   }
 
   async function send() {
@@ -267,6 +383,14 @@ export default function DelegationPanel({ address, current }: DelegationPanelPro
         </button>
         <button
           type="button"
+          className={tabClass(mode === 'split')}
+          aria-pressed={mode === 'split'}
+          onClick={() => changeMode('split')}
+        >
+          Split
+        </button>
+        <button
+          type="button"
           className={tabClass(mode === 'clear')}
           aria-pressed={mode === 'clear'}
           onClick={() => changeMode('clear')}
@@ -289,16 +413,80 @@ export default function DelegationPanel({ address, current }: DelegationPanelPro
             autoComplete="off"
             spellCheck={false}
           />
-          {ensName && (
-            <p className="text-[13px] text-muted">
-              {ensPending
-                ? `Resolving ${ensName}…`
-                : ens.data
-                  ? `${ensName} resolves to `
-                  : `${ensName} doesn't resolve to an address.`}
-              {ens.data && <code className="font-mono text-xs text-foreground">{ens.data}</code>}
-            </p>
-          )}
+          {resolved[0] && <EnsResolution target={resolved[0]} />}
+        </div>
+      )}
+
+      {mode === 'split' && (
+        <div className="mt-4 space-y-3">
+          {splitTargets.map((t, i) => (
+            <div key={i} className="space-y-1">
+              <div className="flex gap-2">
+                <input
+                  aria-label={`Delegate ${i + 1} address or ENS name`}
+                  value={t.target}
+                  onChange={(e) => updateSplitTarget(i, { target: e.target.value })}
+                  placeholder="0x… or name.eth"
+                  className="filter-input min-w-0 flex-1 font-mono"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <div className="flex items-center gap-1">
+                  <input
+                    aria-label={`Delegate ${i + 1} percentage`}
+                    value={t.percent}
+                    onChange={(e) => updateSplitTarget(i, { percent: e.target.value })}
+                    placeholder="0.00"
+                    inputMode="decimal"
+                    className="filter-input w-24 text-right"
+                    autoComplete="off"
+                  />
+                  <span className="text-[13px] text-muted">%</span>
+                </div>
+                <button
+                  type="button"
+                  className="filter-btn"
+                  aria-label={`Remove delegate ${i + 1}`}
+                  disabled={splitTargets.length <= 2}
+                  onClick={() => changeSplitTargets(splitTargets.filter((_, j) => j !== i))}
+                >
+                  Remove
+                </button>
+              </div>
+              {resolved[i] && <EnsResolution target={resolved[i]} />}
+            </div>
+          ))}
+          <button
+            type="button"
+            className="filter-btn"
+            disabled={splitTargets.length >= MAX_SPLIT_TARGETS}
+            onClick={() => addSplitRow()}
+          >
+            Add address
+          </button>
+          <p className="text-[13px] text-muted">
+            Up to {MAX_SPLIT_TARGETS} addresses. Percentages allow 2 decimals and must add up to
+            exactly 100%.
+          </p>
+        </div>
+      )}
+
+      {mode !== 'clear' && quickPicks.length > 0 && (
+        <div className="mt-3">
+          <p className="text-[13px] text-muted">Your addresses</p>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {quickPicks.map((own) => (
+              <button
+                key={own}
+                type="button"
+                className="filter-btn font-mono text-xs"
+                disabled={mode === 'split' && splitFull}
+                onClick={() => pick(own)}
+              >
+                {own}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -306,6 +494,14 @@ export default function DelegationPanel({ address, current }: DelegationPanelPro
         <ul role="alert" className="mt-3 space-y-1 text-[13px] text-danger">
           {plan.errors.map((e) => (
             <li key={e}>{e}</li>
+          ))}
+        </ul>
+      )}
+
+      {plan.warnings.length > 0 && !ensPending && (
+        <ul className="mt-3 space-y-1 rounded-lg border border-warning/40 bg-warning/10 p-4 text-[13px] text-foreground">
+          {plan.warnings.map((w) => (
+            <li key={w}>{w}</li>
           ))}
         </ul>
       )}

@@ -13,6 +13,7 @@ import {
   withOptOutStatuses,
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
+import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
 import { fetchOptOutStatuses, getOptOutService } from '@/lib/delegation/opt-out/server';
 import { fetchVotingPower, type DelegationEntry } from '@/lib/gnosis';
 import { getMainnetRpcUrl } from '@/lib/wallet/config';
@@ -61,21 +62,21 @@ function WalletSection({
   );
 }
 
-async function withOptOut(overview: AddressOverview | null): Promise<AddressOverview | null> {
-  if (!overview) {
-    return null;
-  }
-  const statuses = await fetchOptOutStatuses(overview.addresses.map((a) => a.address));
-  return withOptOutStatuses(overview, statuses);
-}
-
 /** Returns `null` when the Gnosis API lookup fails. */
 async function fetchOutgoingDelegations(address: string): Promise<DelegationEntry[] | null> {
   const votingPower = await fetchVotingPower([address]);
   return votingPower[address.toLowerCase()]?.outgoingDelegations ?? null;
 }
 
-async function DelegationSection({ address }: { address: string }) {
+async function DelegationSection({
+  address,
+  ownAddresses,
+  scoring,
+}: {
+  address: string;
+  ownAddresses: string[];
+  scoring: TargetScoring;
+}) {
   if (!getMainnetRpcUrl()) {
     return null;
   }
@@ -85,6 +86,8 @@ async function DelegationSection({ address }: { address: string }) {
       key={address.toLowerCase()}
       address={address}
       current={await fetchOutgoingDelegations(address)}
+      ownAddresses={ownAddresses}
+      scoring={scoring}
     />
   );
 }
@@ -144,9 +147,17 @@ export default async function DelegationPage({
   }
 
   const [leaderboard, health] = await Promise.all([fetchLeaderboard(), fetchScoreHealth()]);
-  const overview = await withOptOut(
-    buildAddressOverview(address, leaderboard.rows, getHighSignalConfig()),
-  );
+  const baseOverview = buildAddressOverview(address, leaderboard.rows, getHighSignalConfig());
+  // One batch: the overview's unscored siblings and every leaderboard address, for target warnings.
+  const statuses = await fetchOptOutStatuses([
+    ...new Set([
+      ...(baseOverview?.addresses ?? []).map((a) => a.address.toLowerCase()),
+      ...leaderboard.rows.map((r) => r.address.toLowerCase()),
+    ]),
+  ]);
+  const overview = baseOverview && withOptOutStatuses(baseOverview, statuses);
+  const scoring = targetScoringOf(leaderboard.rows, statuses);
+  const ownAddresses = overview?.addresses.map((a) => a.address) ?? [];
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
@@ -159,7 +170,7 @@ export default async function DelegationPage({
       {overview ? (
         <>
           <AddressOverviewTable addresses={overview.addresses} />
-          <DelegationSection address={address} />
+          <DelegationSection address={address} ownAddresses={ownAddresses} scoring={scoring} />
           <OptOutPanel
             addresses={overview.addresses}
             mode={getOptOutService().mode}
@@ -170,7 +181,7 @@ export default async function DelegationPage({
       ) : (
         <>
           <EmptyState address={address} />
-          <DelegationSection address={address} />
+          <DelegationSection address={address} ownAddresses={ownAddresses} scoring={scoring} />
         </>
       )}
     </div>

@@ -95,7 +95,7 @@ ssv-daox/
 │   ├── delegation/           # Delegation logic
 │   │   ├── config.ts         # HighSignal URLs (env, with defaults)
 │   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out merge, switch prompt
-│   │   ├── logic/delegation-plan.ts  # Pure: split-delegation form input → delegations, diff, errors
+│   │   ├── logic/delegation-plan.ts  # Pure: split-delegation form input → delegations, diff, warnings, errors
 │   │   └── opt-out/          # Opt-out service (DI), typed data, Score API clients, file stores
 │   ├── wallet/               # Wallet stack
 │   │   ├── config.ts         # Server-only MAINNET_RPC_URL, proxy path
@@ -956,17 +956,35 @@ can send; otherwise the panel asks the user to switch accounts.
    Each entry carries the pin `weight` in bps; without it, the share of
    `power` is used. A failed lookup disables the form, so a write can't
    overwrite delegations the user can't see.
-2. **Form.** "All to one" (prefilled with the largest current delegate) or
-   "Clear delegation". A target containing a dot is an ENS name, normalised
-   and resolved with `useEnsAddress` over the RPC proxy.
-3. **Plan.** `planDelegation({ delegator, input, current })` in
+2. **Form.** "All to one" (prefilled with the largest current delegate),
+   "Split" (prefilled with every current delegate; the default when there
+   are several) or "Clear delegation". Split takes 2 to 10 rows of target
+   and percentage. A target containing a dot is an ENS name, normalised and
+   resolved over the RPC proxy (wagmi's ENS query options, one query per row).
+   **Consolidation quick picks** ("Your addresses") list the connected
+   address and the selected address's identity siblings, minus the selected
+   address. A pick fills the All to one target, or the first empty Split row
+   (else a new row).
+3. **Plan.** `planDelegation({ delegator, input, current, scoring })` in
    `lib/delegation/logic/delegation-plan.ts` returns `{ delegations,
 diff: { added, changed, removed }, droppedDelegates, warnings, errors }`.
-   All to one is a single delegation at 10000 bps. Errors show only after the
+   All to one is a single delegation at 10000 bps. Split percentages are
+   strings with up to 2 decimals, converted to integer bps
+   (`Math.round(percent * 100)`, which absorbs float error); they must be
+   above 0 and total exactly 10000. Split errors: fewer than 2 or more than 10 targets, an
+   empty row, a duplicate target (case-insensitive, after ENS resolution),
+   a bad percentage and a wrong total. Errors show only after the
    user edits, so a prefill equal to the current delegation isn't flagged. Errors: an invalid
    address, the zero address, the delegator itself, a delegation identical
    to the current one (the contract reverts with `DuplicateDelegation`), and
    clearing with nothing delegated.
+   **Warnings** never block. `targetScoringOf(rows, statuses)` maps each
+   leaderboard address to `scored` (has a rank), `opted_out` or
+   `opt_out_pending`; any other address is unscored. A target that is
+   unscored, opted out or opting out warns that its power leaves the scored
+   set. The page reads the statuses in one `fetchOptOutStatuses` batch for
+   every leaderboard address plus the overview's siblings, not `row.opt_out`
+   (the mock records requests the Score API never sees).
 4. **Preview.** Before (current) and After (planned) lists. If
    `droppedDelegates` is non-empty, a checkbox must confirm dropping them.
 5. **Transaction.** `useWriteContract` calls `setDelegation(context,
