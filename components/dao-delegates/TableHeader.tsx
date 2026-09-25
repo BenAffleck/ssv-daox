@@ -32,7 +32,7 @@ export default function TableHeader({
     const alignClass = align === 'center' ? 'text-center' : 'text-left';
 
     return (
-      <th className={`px-4 py-3 ${alignClass}`}>
+      <th className={`px-3 py-3 ${alignClass}`}>
         <button
           onClick={() => onSort(field)}
           className="table-col-header inline-flex items-center gap-1 transition-colors hover:text-primary"
@@ -50,7 +50,7 @@ export default function TableHeader({
         <SortableHeader field="rank" align="center">
           Rank
         </SortableHeader>
-        <th className="table-col-header px-4 py-3 text-left">Name</th>
+        <th className="table-col-header px-3 py-3 text-left">Delegate</th>
         <SortableHeader field="score" align="center">
           Score
         </SortableHeader>
@@ -60,17 +60,18 @@ export default function TableHeader({
           </SortableHeader>
         ))}
         <SortableHeader field="votingPower">Voting Power</SortableHeader>
-        <th className="table-col-header px-4 py-3 text-left">Wallet Address</th>
-        <th className="table-col-header px-4 py-3 text-left">Cohort</th>
-        <th className="table-col-header px-4 py-3 text-left">Delegation Status</th>
+        <th className="table-col-header px-3 py-3 text-left">Cohort</th>
+        <th className="table-col-header px-3 py-3 text-left">Delegation Status</th>
         <SortableHeader field="allocatedPower">Allocated Power</SortableHeader>
-        <th className="table-col-header px-4 py-3 text-left">
+        <th className="table-col-header px-3 py-3 text-left">
           <div>Vote Activity</div>
           <div className="text-[10px] font-normal tracking-normal text-muted/70 normal-case">
             Last 5 closed
           </div>
         </th>
-        <th className="table-col-header px-4 py-3 text-right">Manage</th>
+        <th className="px-3 py-3">
+          <span className="sr-only">Manage</span>
+        </th>
       </tr>
     </thead>
   );

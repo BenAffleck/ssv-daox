@@ -22,56 +22,54 @@ export default function DelegateRow({ delegate, livePillars }: DelegateRowProps)
 
   return (
     <tr className="border-b border-border transition-colors hover:bg-card-hover">
-      <td className="px-4 py-3 text-center font-medium text-foreground tabular-nums">
+      <td className="px-3 py-3 text-center font-medium text-foreground tabular-nums">
         {delegate.rank ?? '-'}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3">
         <NameCell displayName={delegate.displayName} />
+        <AddressCell address={delegate.publicAddress} />
       </td>
-      <td className="px-4 py-3 text-center">
+      <td className="px-3 py-3 text-center">
         <ScoreCell score={delegate.score} />
       </td>
       {livePillars.map((pillar) => (
-        <td key={pillar} className="px-4 py-3 text-center">
+        <td key={pillar} className="px-3 py-3 text-center">
           <ScoreCell
             score={delegate.pillars[pillar]?.score ?? null}
             missing={delegate.pillars[pillar]?.missing}
           />
         </td>
       ))}
-      <td className="px-4 py-3">
+      <td className="px-3 py-3">
         <VotingPowerBadge
           votingPowerData={delegate.votingPowerData}
           address={delegate.publicAddress}
         />
       </td>
-      <td className="px-4 py-3">
-        <AddressCell address={delegate.publicAddress} />
-      </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3">
         <CohortBadge cohort={delegate.cohort} />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3">
         <DelegationStatusBadge
           isAlreadyDelegated={delegate.isAlreadyDelegated}
           hasCohort={hasCohort}
         />
       </td>
-      <td className="px-4 py-3 text-foreground tabular-nums">
+      <td className="px-3 py-3 text-foreground tabular-nums">
         {delegate.allocatedPower ? (
           `${Math.round(delegate.allocatedPower).toLocaleString()} SSV`
         ) : (
           <span className="text-xs text-muted">-</span>
         )}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3">
         <VoteParticipationCell
           participationRate={delegate.voteParticipationRate}
           proposalCount={SNAPSHOT_CONFIG.voteParticipation.proposalCount}
           activeVoteStatus={delegate.activeVoteStatus}
         />
       </td>
-      <td className="px-4 py-3 text-right">
+      <td className="px-3 py-3 text-right">
         <Link
           href={`/delegation?address=${delegate.publicAddress}`}
           className="inline-flex items-center gap-1 text-[13px] whitespace-nowrap text-primary hover:underline"

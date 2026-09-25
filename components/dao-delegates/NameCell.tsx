@@ -25,7 +25,7 @@ export default function NameCell({ displayName }: NameCellProps) {
   };
 
   return (
-    <div className="relative inline-block w-[200px]">
+    <div className="relative block w-[180px]">
       <button
         onClick={handleCopy}
         onMouseEnter={() => setShowTooltip(true)}
