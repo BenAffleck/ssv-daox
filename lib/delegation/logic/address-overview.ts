@@ -76,3 +76,25 @@ export function buildAddressOverview(address: string, rows: ScoreRow[]): Address
   const siblings = entries.filter((e) => !e.isRequested);
   return { addresses: [...requested, ...siblings] };
 }
+
+/**
+ * - `sibling`: the connected account shares the selected address's identity.
+ * - `other`: the connected account is outside that identity.
+ */
+export type AccountSwitchPrompt = 'sibling' | 'other';
+
+/**
+ * Whether the user must switch wallet accounts before signing for `selected`.
+ * Returns `null` when no wallet is connected or it already is `selected`.
+ */
+export function accountSwitchPrompt(
+  selected: string,
+  connected: string | undefined,
+  identityAddresses: string[],
+): AccountSwitchPrompt | null {
+  if (!connected || connected.toLowerCase() === selected.toLowerCase()) {
+    return null;
+  }
+  const isSibling = identityAddresses.some((a) => a.toLowerCase() === connected.toLowerCase());
+  return isSibling ? 'sibling' : 'other';
+}

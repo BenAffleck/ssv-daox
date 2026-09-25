@@ -23,6 +23,8 @@ ssv-daox/
 │   ├── globals.css           # Tailwind v4 + theme tokens
 │   ├── [slug]/               # Dynamic module routes (fallback)
 │   ├── api/                  # API Routes
+│   │   ├── rpc/              # Read-only JSON-RPC proxy for the wallet stack
+│   │   │   └── route.ts      # POST /api/rpc
 │   │   ├── ai-extraction/    # AI extraction endpoint
 │   │   │   └── route.ts      # POST /api/ai-extraction
 │   │   ├── ai-summary/       # AI summary endpoint
@@ -36,6 +38,7 @@ ssv-daox/
 │   ├── dao-timeline/         # DAO Timeline module
 │   │   └── page.tsx          # Server component (event aggregation)
 │   ├── delegation/           # Delegation module (/delegation?address=0x…)
+│   │   ├── layout.tsx        # WalletProvider (wagmi + RainbowKit)
 │   │   ├── page.tsx          # Server component (address overview)
 │   │   └── error.tsx         # Error boundary
 │   └── governance/           # Governance Votes module
@@ -56,6 +59,8 @@ ssv-daox/
 │   ├── delegation/           # Delegation components
 │   │   ├── AddressOverviewTable.tsx # Address + identity siblings
 │   │   ├── AddressLookupForm.tsx    # GET form for the empty state
+│   │   ├── WalletProvider.tsx       # Client: wagmi, React Query, RainbowKit
+│   │   ├── WalletPanel.tsx          # Client: connect button, address sync, switch prompt
 │   │   └── ClaimStatusBadge.tsx
 │   └── dao-timeline/         # DAO Timeline components
 │       ├── Timeline.tsx          # Client: main container + AI state
@@ -81,7 +86,11 @@ ssv-daox/
 │   │   ├── api/              # Delegate Score API fetcher
 │   │   └── logic/            # Business logic
 │   ├── delegation/           # Delegation logic
-│   │   └── logic/address-overview.ts # Pure: siblings + claim status
+│   │   └── logic/address-overview.ts # Pure: siblings, claim status, switch prompt
+│   ├── wallet/               # Wallet stack
+│   │   ├── config.ts         # Server-only MAINNET_RPC_URL, proxy path
+│   │   ├── rpc-proxy.ts      # Method allowlist + forwarding (DI fetch)
+│   │   └── wagmi-config.ts   # Client: mainnet wagmi config + connectors
 │   ├── dao-timeline/         # DAO Timeline logic
 │   │   ├── types.ts          # Event types, sources
 │   │   ├── config.ts         # Source configuration
@@ -437,6 +446,10 @@ SNAPSHOT_MULTISIG_SPACE_ID=msig.ssvnetwork.eth
 # Required for the delegates leaderboard
 DELEGATE_SCORE_API_URL=http://127.0.0.1:8000
 
+# Required for wallet features on /delegation (server-only)
+MAINNET_RPC_URL=https://mainnet.infura.io/v3/<key>
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=   # optional
+
 # Required for delegation status feature
 THEGRAPH_API_KEY=your_key
 SNAPSHOT_DELEGATION_SOURCE_ADDRESSES=0x...,0x...
@@ -732,9 +745,9 @@ on the strip, so a drag that leaves the element still tracks.
 
 ## Delegation Module
 
-Read-only foundation for claiming, opting out and split delegation (spec #4).
+Foundation for claiming, opting out and split delegation (spec #4).
 `/delegation?address=0x…` shows that address and every sibling address in its
-HighSignal identity. No wallet is involved yet.
+HighSignal identity. A connected wallet selects its own address.
 
 ### Data Pipeline
 
@@ -758,8 +771,59 @@ Derived per address:
 
 - No `address` or an unknown one: empty state with an address lookup form.
 - `DELEGATE_SCORE_API_URL` unset: the same notice as DAO Delegates.
+- `MAINNET_RPC_URL` unset: a configuration notice replaces the wallet controls;
+  the read-only overview still renders.
 
 Each DAO Delegates row has an "Open" link to `/delegation?address=<address>`.
+
+### Wallet
+
+wagmi + viem + RainbowKit, mainnet only. `app/delegation/layout.tsx` wraps the
+module in `WalletProvider` (wagmi, React Query, RainbowKit themed from the app
+theme). The config lives in `lib/wallet/wagmi-config.ts`.
+
+- **Connectors:** with `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, injected,
+  MetaMask, Rabby, Safe and WalletConnect. Without it, injected only, and
+  `createWagmiConfig` logs a console warning.
+- **Transport:** the only transport is `http('/api/rpc')`. There is no public
+  RPC fallback. Wallets broadcast transactions themselves.
+- **Address sync** (`WalletPanel`): connecting fills a missing `?address=`
+  with the account, but keeps an explicit one (e.g. from a leaderboard link).
+  An account switch in the wallet always navigates to `?address=<account>`.
+- **Switch prompt:** `accountSwitchPrompt(selected, connected, identityAddresses)`
+  returns `sibling`, `other` or `null`. When it isn't `null`, the panel asks
+  the user to switch accounts before signing for the selected address.
+
+### RPC Proxy
+
+`POST /api/rpc` (`app/api/rpc/route.ts`) is a thin adapter over
+`proxyRpc(request, { rpcUrl, fetch })` in `lib/wallet/rpc-proxy.ts`.
+
+- Forwards a single JSON-RPC request to `MAINNET_RPC_URL` only when its method
+  is in `ALLOWED_RPC_METHODS` (read-only `eth_*` calls and `net_version`).
+- Other methods: `403` with JSON-RPC error `-32601`, upstream not contacted.
+- Batches, bodies without a `method`, non-objects: `400` with `-32600`.
+  Unparseable JSON: `400` with `-32700`.
+- Upstream failure: `502` with a generic message. The upstream URL holds the
+  key, so it's never echoed or logged.
+- `MAINNET_RPC_URL` unset: `503`.
+
+`getMainnetRpcUrl()` (`lib/wallet/config.ts`) reads the variable server-side.
+It has no `NEXT_PUBLIC_` prefix, so Next.js never inlines it into client code.
+
+`next.config.ts` lists `@coinbase/cdp-sdk` in `serverExternalPackages`: its
+dynamic imports of optional `@x402/*` packages otherwise break SSR bundling.
+RainbowKit pulls it in through the Base Account connector.
+
+### Environment Variables
+
+```bash
+# Server-only mainnet RPC. Configure through .env only; no public fallback.
+MAINNET_RPC_URL=https://mainnet.infura.io/v3/<key>
+
+# Optional. Unset: injected wallets only, plus a console warning.
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
+```
 
 ---
 

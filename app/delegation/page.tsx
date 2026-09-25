@@ -1,8 +1,14 @@
 import AddressLookupForm from '@/components/delegation/AddressLookupForm';
 import AddressOverviewTable from '@/components/delegation/AddressOverviewTable';
+import WalletPanel from '@/components/delegation/WalletPanel';
 import { fetchLeaderboard } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
-import { buildAddressOverview, isAddress } from '@/lib/delegation/logic/address-overview';
+import {
+  buildAddressOverview,
+  isAddress,
+  type AddressOverview,
+} from '@/lib/delegation/logic/address-overview';
+import { getMainnetRpcUrl } from '@/lib/wallet/config';
 
 export const revalidate = 300;
 
@@ -23,9 +29,33 @@ function PageHeader({ children }: { children?: React.ReactNode }) {
   );
 }
 
+function WalletSection({
+  address,
+  overview,
+}: {
+  address: string;
+  overview: AddressOverview | null;
+}) {
+  if (!getMainnetRpcUrl()) {
+    return (
+      <div role="status" className="card mt-6 p-4">
+        <p className="text-[13px] text-muted">
+          Wallet features are unavailable: MAINNET_RPC_URL is not configured.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <WalletPanel
+      selectedAddress={address}
+      identityAddresses={overview?.addresses.map((a) => a.address) ?? []}
+    />
+  );
+}
+
 function emptyMessage(address: string): string {
   if (!address) {
-    return 'Enter an address to see its score and identity siblings.';
+    return 'Connect a wallet or enter an address to see its score and identity siblings.';
   }
   if (!isAddress(address)) {
     return `${address} is not an Ethereum address.`;
@@ -69,7 +99,9 @@ export default async function DelegationPage({
   if (!isAddress(address)) {
     return (
       <div className="mx-auto max-w-7xl px-6 py-10">
-        <PageHeader />
+        <PageHeader>
+          <WalletSection address={address} overview={null} />
+        </PageHeader>
         <EmptyState address={address} />
       </div>
     );
@@ -84,6 +116,7 @@ export default async function DelegationPage({
         <p className="mt-2 text-[13px] text-muted">
           Scores from run {leaderboard.runId}, as of {leaderboard.asOf} (UTC).
         </p>
+        <WalletSection address={address} overview={overview} />
       </PageHeader>
       {overview ? (
         <AddressOverviewTable addresses={overview.addresses} />

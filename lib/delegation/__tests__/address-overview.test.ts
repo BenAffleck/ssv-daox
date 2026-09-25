@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Identity, ScoreRow } from '@/lib/dao-delegates/types';
 
-import { buildAddressOverview } from '../logic/address-overview';
+import { accountSwitchPrompt, buildAddressOverview } from '../logic/address-overview';
 
 const ALICE_1 = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
 const ALICE_2 = '0x2222222222222222222222222222222222222222';
@@ -114,5 +114,27 @@ describe('buildAddressOverview', () => {
 
       expect(claimStatusOf(owner, [row(BOB, owner, 70)])).toBe('claimed_scored');
     });
+  });
+});
+
+describe('accountSwitchPrompt', () => {
+  const siblings = [ALICE_1, ALICE_2, ALICE_3];
+
+  it('is not shown without a connected account', () => {
+    expect(accountSwitchPrompt(ALICE_1, undefined, siblings)).toBeNull();
+  });
+
+  it('is not shown when the selected address is the connected account', () => {
+    const connected = '0xABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCD';
+
+    expect(accountSwitchPrompt(ALICE_1, connected, siblings)).toBeNull();
+  });
+
+  it('asks to switch from a sibling to the selected address', () => {
+    expect(accountSwitchPrompt(ALICE_1, ALICE_2, siblings)).toBe('sibling');
+  });
+
+  it('asks to switch from an account outside the identity', () => {
+    expect(accountSwitchPrompt(ALICE_1, BOB, siblings)).toBe('other');
   });
 });
