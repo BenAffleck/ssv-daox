@@ -47,6 +47,9 @@ export interface Delegate {
 
   // Voting power from Gnosis delegation API
   votingPowerData: VotingPowerData | null;
+
+  /** The address's latest opt-out or opt-in request; `null` when none or unknown. */
+  optOut: OptOutStatus | null;
 }
 
 /** A leaderboard row as the Delegate Score API returns it. */

@@ -1,4 +1,5 @@
 import path from 'path';
+import { unstable_rethrow } from 'next/navigation';
 import { createPublicClient, http } from 'viem';
 import { mainnet } from 'viem/chains';
 
@@ -8,7 +9,7 @@ import { getMainnetRpcUrl } from '@/lib/wallet/config';
 import { OPT_OUT_CONFIG } from './config';
 import { createFileNonceStore } from './file-nonce-store';
 import { createMockScoreApiClient } from './mock-score-api';
-import { createScoreApiClient } from './score-api';
+import { createScoreApiClient, type OptOutStatuses } from './score-api';
 import { createOptOutService, type OptOutService, type SignatureVerifier } from './service';
 
 /**
@@ -51,4 +52,19 @@ export function getOptOutService(): OptOutService {
     verifySignature: createRpcVerifier(getMainnetRpcUrl()),
   });
   return service;
+}
+
+/**
+ * The statuses of `addresses` in one batched lookup. Returns `{}` when the
+ * lookup fails, so pages render without opt-out badges.
+ */
+export async function fetchOptOutStatuses(addresses: string[]): Promise<OptOutStatuses> {
+  try {
+    return await getOptOutService().getStatuses(addresses);
+  } catch (error) {
+    // A no-store fetch throws during prerender to make the route dynamic.
+    unstable_rethrow(error);
+    console.error('Opt-out status lookup failed:', error);
+    return {};
+  }
 }

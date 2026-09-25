@@ -13,8 +13,7 @@ import {
   withOptOutStatuses,
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
-import type { OptOutStatuses } from '@/lib/delegation/opt-out/score-api';
-import { getOptOutService } from '@/lib/delegation/opt-out/server';
+import { fetchOptOutStatuses, getOptOutService } from '@/lib/delegation/opt-out/server';
 import { fetchVotingPower, type DelegationEntry } from '@/lib/gnosis';
 import { getMainnetRpcUrl } from '@/lib/wallet/config';
 
@@ -66,12 +65,7 @@ async function withOptOut(overview: AddressOverview | null): Promise<AddressOver
   if (!overview) {
     return null;
   }
-  let statuses: OptOutStatuses = {};
-  try {
-    statuses = await getOptOutService().getStatuses(overview.addresses.map((a) => a.address));
-  } catch (error) {
-    console.error('Opt-out status lookup failed:', error);
-  }
+  const statuses = await fetchOptOutStatuses(overview.addresses.map((a) => a.address));
   return withOptOutStatuses(overview, statuses);
 }
 

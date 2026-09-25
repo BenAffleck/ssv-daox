@@ -4,6 +4,7 @@ import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
 import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
 import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
+import { fetchOptOutStatuses } from '@/lib/delegation/opt-out/server';
 import { fetchVotingPower } from '@/lib/gnosis';
 import { fetchActiveVoteStatus } from '@/lib/snapshot/api/fetch-active-vote-status';
 import { fetchConfiguredDelegationRecipients } from '@/lib/snapshot/api/fetch-delegation-recipients';
@@ -55,7 +56,11 @@ export default async function DaoDelegatesPage() {
 
   // Only fetch voting power for addresses that are already receiving delegation
   // Others can fetch on-demand via the API to reduce initial page load time
-  const votingPower = await fetchVotingPower(delegationRecipients);
+  // Not `row.opt_out`: the opt-out mock records requests the Score API never sees.
+  const [votingPower, optOutStatuses] = await Promise.all([
+    fetchVotingPower(delegationRecipients),
+    fetchOptOutStatuses(leaderboard.rows.map((row) => row.address)),
+  ]);
 
   const delegates = transformDelegates(
     leaderboard.rows,
@@ -63,6 +68,7 @@ export default async function DaoDelegatesPage() {
     voteParticipation,
     votingPower,
     activeVoteData,
+    optOutStatuses,
   );
 
   const isStale = health !== null && health.status !== 'ok';

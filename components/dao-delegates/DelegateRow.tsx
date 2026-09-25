@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 
+import OptOutStatusBadge from '@/components/delegation/OptOutStatusBadge';
 import { Delegate, PillarKey } from '@/lib/dao-delegates/types';
+import { optOutBadgeOf } from '@/lib/delegation/logic/address-overview';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 
 import AddressCell from './AddressCell';
@@ -19,6 +21,7 @@ interface DelegateRowProps {
 
 export default function DelegateRow({ delegate, livePillars }: DelegateRowProps) {
   const hasCohort = delegate.cohort !== null;
+  const optOutBadge = optOutBadgeOf(delegate.optOut);
 
   return (
     <tr className="border-b border-border transition-colors hover:bg-card-hover">
@@ -50,10 +53,14 @@ export default function DelegateRow({ delegate, livePillars }: DelegateRowProps)
         <CohortBadge cohort={delegate.cohort} />
       </td>
       <td className="px-3 py-3">
-        <DelegationStatusBadge
-          isAlreadyDelegated={delegate.isAlreadyDelegated}
-          hasCohort={hasCohort}
-        />
+        {optOutBadge === 'opt_out_pending' || optOutBadge === 'opted_out' ? (
+          <OptOutStatusBadge status={delegate.optOut} />
+        ) : (
+          <DelegationStatusBadge
+            isAlreadyDelegated={delegate.isAlreadyDelegated}
+            hasCohort={hasCohort}
+          />
+        )}
       </td>
       <td className="px-3 py-3 text-foreground tabular-nums">
         {delegate.allocatedPower ? (

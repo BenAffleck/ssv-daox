@@ -1,3 +1,4 @@
+import type { OptOutStatuses } from '@/lib/delegation/opt-out/score-api';
 import type { VotingPowerMap } from '@/lib/gnosis/types';
 import type { ActiveVoteData } from '@/lib/snapshot/api/fetch-active-vote-status';
 import type { VoteParticipationMap } from '@/lib/snapshot/types';
@@ -18,6 +19,7 @@ export function transformDelegates(
   voteParticipation?: VoteParticipationMap,
   votingPower?: VotingPowerMap,
   activeVoteData?: ActiveVoteData,
+  optOutStatuses?: OptOutStatuses,
 ): Delegate[] {
   const delegated = new Set(delegationRecipients.map((addr) => addr.toLowerCase()));
 
@@ -58,6 +60,8 @@ export function transformDelegates(
       activeVoteStatus,
 
       votingPowerData: votingPower?.[address] ?? null,
+
+      optOut: optOutStatuses?.[address.toLowerCase()] ?? null,
     };
   });
 }

@@ -319,8 +319,9 @@ The primary implemented module. Shows a ranked delegate leaderboard with Delegat
 1. Fetch the leaderboard + health from the Delegate Score API (parallel)
 2. Fetch delegation recipients from The Graph (parallel)
 3. Fetch vote participation from Snapshot (parallel)
-4. Transform score rows → Delegate objects (inject delegation status, participation rates)
-5. Pass to client for filtering/sorting
+4. Fetch voting power (Gnosis) and opt-out statuses (parallel)
+5. Transform score rows → Delegate objects (inject delegation status, participation rates, opt-out)
+6. Pass to client for filtering/sorting
 ```
 
 Rank, score and cohort come from the API; the app no longer ranks, assigns
@@ -350,6 +351,12 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   its identity's cohort seat). "Delegation Status" compares the cohort with live
   delegation (The Graph): Active (delegated, keeps a cohort), Add (gains a
   cohort), Remove (delegated, loses its cohort).
+- A row whose latest request is an opt-out shows "Opt-out pending" or, once a
+  run has applied it, "Opted out" in place of its Delegation Status. The page
+  reads every row's status in one `fetchOptOutStatuses` call (`lib/delegation/opt-out/server.ts`), never
+  per row; the live Score API client splits it into requests of 100 addresses.
+  A failed lookup yields no statuses, so the table renders without badges. See
+  [Opt-out](#opt-out).
 - When `DELEGATE_SCORE_API_URL` is unset the page renders a notice instead of
   the table. The page revalidates every 5 minutes so a later-configured URL is
   picked up.
@@ -905,10 +912,11 @@ requests", "Opt-out status") and its OpenAPI spec at
 
 #### Page
 
-`/delegation` fetches statuses for the overview addresses and merges them
-with `withOptOutStatuses(overview, statuses)`; a failed lookup leaves them
-empty. `optOutBadgeOf` and `optOutActionFor` (`logic/address-overview.ts`)
-derive the UI states:
+`/delegation` fetches statuses for the overview addresses with
+`fetchOptOutStatuses` and merges them with `withOptOutStatuses(overview,
+statuses)`; a failed lookup leaves them empty. The DAO Delegates leaderboard
+shows only the "Opt-out pending" and "Opted out" states. `optOutBadgeOf` and
+`optOutActionFor` (`logic/address-overview.ts`) derive the UI states:
 
 | Latest request   | Badge (Opt-out column) | Panel offers |
 | ---------------- | ---------------------- | ------------ |
