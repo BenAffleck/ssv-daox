@@ -1,8 +1,10 @@
 import AddressLookupForm from '@/components/delegation/AddressLookupForm';
 import AddressOverviewTable from '@/components/delegation/AddressOverviewTable';
+import ClaimWizard from '@/components/delegation/ClaimWizard';
 import WalletPanel from '@/components/delegation/WalletPanel';
-import { fetchLeaderboard } from '@/lib/dao-delegates/api/fetch-leaderboard';
+import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
+import { getHighSignalConfig } from '@/lib/delegation/config';
 import {
   buildAddressOverview,
   isAddress,
@@ -107,8 +109,8 @@ export default async function DelegationPage({
     );
   }
 
-  const leaderboard = await fetchLeaderboard();
-  const overview = buildAddressOverview(address, leaderboard.rows);
+  const [leaderboard, health] = await Promise.all([fetchLeaderboard(), fetchScoreHealth()]);
+  const overview = buildAddressOverview(address, leaderboard.rows, getHighSignalConfig());
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
@@ -119,7 +121,10 @@ export default async function DelegationPage({
         <WalletSection address={address} overview={overview} />
       </PageHeader>
       {overview ? (
-        <AddressOverviewTable addresses={overview.addresses} />
+        <>
+          <AddressOverviewTable addresses={overview.addresses} />
+          <ClaimWizard addresses={overview.addresses} lastRunAsOf={health?.as_of ?? null} />
+        </>
       ) : (
         <EmptyState address={address} />
       )}

@@ -1,5 +1,7 @@
 import type { Cohort, Identity, ScoreRow } from '@/lib/dao-delegates/types';
 
+import type { HighSignalConfig } from '../config';
+
 /**
  * - `unclaimed`: the identity has no HighSignal username.
  * - `claimed_pending`: claimed, but the Score API has no community pillar for it yet.
@@ -17,6 +19,13 @@ export interface OverviewAddress {
   cohort: Cohort | null;
   allocatedPower: number | null;
   claimStatus: ClaimStatus;
+  highSignal: HighSignalLinks;
+}
+
+export interface HighSignalLinks {
+  projectUrl: string;
+  /** `null` until the identity has a HighSignal username. */
+  settingsUrl: string | null;
 }
 
 export interface AddressOverview {
@@ -36,11 +45,25 @@ function claimStatusOf(identity: Identity, row: ScoreRow | undefined): ClaimStat
   return hasCommunity ? 'claimed_scored' : 'claimed_pending';
 }
 
+function highSignalLinksOf(identity: Identity, config: HighSignalConfig): HighSignalLinks {
+  const username = identity.hs_username;
+  return {
+    projectUrl: config.projectUrl,
+    settingsUrl: username
+      ? config.settingsUrlTemplate.replaceAll('{username}', encodeURIComponent(username))
+      : null,
+  };
+}
+
 /**
  * Resolves an address and its HighSignal identity siblings from leaderboard rows.
  * Returns `null` when neither a row nor an identity has the address.
  */
-export function buildAddressOverview(address: string, rows: ScoreRow[]): AddressOverview | null {
+export function buildAddressOverview(
+  address: string,
+  rows: ScoreRow[],
+  highSignal: HighSignalConfig,
+): AddressOverview | null {
   const requestedAddress = address.toLowerCase();
   const rowByAddress = new Map(rows.map((r) => [r.address.toLowerCase(), r]));
 
@@ -58,6 +81,7 @@ export function buildAddressOverview(address: string, rows: ScoreRow[]): Address
       ? [{ address: requestedRow.address, ens_name: null }, ...identity.addresses]
       : identity.addresses;
 
+  const links = highSignalLinksOf(identity, highSignal);
   const entries = addresses.map(({ address: sibling, ens_name }) => {
     const row = rowByAddress.get(sibling.toLowerCase());
     return {
@@ -69,6 +93,7 @@ export function buildAddressOverview(address: string, rows: ScoreRow[]): Address
       cohort: row?.cohort ?? null,
       allocatedPower: row?.power ?? null,
       claimStatus: claimStatusOf(identity, row),
+      highSignal: links,
     };
   });
 

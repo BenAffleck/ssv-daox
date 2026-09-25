@@ -61,6 +61,7 @@ ssv-daox/
 │   │   ├── AddressLookupForm.tsx    # GET form for the empty state
 │   │   ├── WalletProvider.tsx       # Client: wagmi, React Query, RainbowKit
 │   │   ├── WalletPanel.tsx          # Client: connect button, address sync, switch prompt
+│   │   ├── ClaimWizard.tsx          # Client: HighSignal claim steps + last run
 │   │   └── ClaimStatusBadge.tsx
 │   └── dao-timeline/         # DAO Timeline components
 │       ├── Timeline.tsx          # Client: main container + AI state
@@ -86,6 +87,7 @@ ssv-daox/
 │   │   ├── api/              # Delegate Score API fetcher
 │   │   └── logic/            # Business logic
 │   ├── delegation/           # Delegation logic
+│   │   ├── config.ts         # HighSignal URLs (env, with defaults)
 │   │   └── logic/address-overview.ts # Pure: siblings, claim status, switch prompt
 │   ├── wallet/               # Wallet stack
 │   │   ├── config.ts         # Server-only MAINNET_RPC_URL, proxy path
@@ -758,6 +760,8 @@ HighSignal identity. A connected wallet selects its own address.
    siblings after in identity order. A sibling without a leaderboard row is
    kept as unscored. Returns `null` for an address in no identity.
 3. `AddressOverviewTable` - Rank, score, cohort, allocated power, claim status
+4. `ClaimWizard` - HighSignal claim steps for any overview address, with the
+   last run's `as_of` from `fetchScoreHealth()` (fetched alongside the leaderboard)
 
 ### Claim Status
 
@@ -766,6 +770,25 @@ Derived per address:
 - `unclaimed`: the identity has no `hs_username`.
 - `claimed_pending`: `hs_username` is set, community pillar missing or absent.
 - `claimed_scored`: `hs_username` is set, community pillar present.
+
+### Claim Wizard (HighSignal)
+
+DAOx only guides; HighSignal proves ownership. A "Start claim" button opens
+three steps for the address picked from the overview:
+
+1. Sign in on HighSignal with Discord, on the SSV project page.
+2. Add one or more Ethereum addresses to the HighSignal profile.
+3. Explicitly share them with the SSV project.
+
+HighSignal has no deep links for steps 2 and 3, so each step is described in
+text as well as linked. The final note says the claim appears after the next
+score run and shows the last run's `as_of` (`/health`).
+
+`buildAddressOverview(address, rows, highSignal)` attaches `highSignal` links
+per address: `projectUrl` always, and `settingsUrl` only when the identity has
+an `hs_username` (URL-encoded into `{username}`). First-time users therefore
+get the project page; step 2 links the settings page once it is known.
+`getHighSignalConfig()` (`lib/delegation/config.ts`) reads the URLs.
 
 ### States
 
@@ -823,6 +846,10 @@ MAINNET_RPC_URL=https://mainnet.infura.io/v3/<key>
 
 # Optional. Unset: injected wallets only, plus a console warning.
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
+
+# HighSignal routes for the claim wizard. Both default to the values below.
+HIGHSIGNAL_PROJECT_URL=https://app.highsignal.xyz/p/ssv/
+HIGHSIGNAL_SETTINGS_URL_TEMPLATE=https://app.highsignal.xyz/settings/u/{username}
 ```
 
 ---
