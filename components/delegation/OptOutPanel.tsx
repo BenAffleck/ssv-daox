@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount, useSignTypedData } from 'wagmi';
 
-import type { OverviewAddress } from '@/lib/delegation/logic/address-overview';
+import { optOutActionFor, type OverviewAddress } from '@/lib/delegation/logic/address-overview';
 import type { OptOutMode } from '@/lib/delegation/opt-out/score-api';
 import type { IssuedNonce } from '@/lib/delegation/opt-out/service';
 import { buildOptOutTypedData, type OptOutAction } from '@/lib/delegation/opt-out/typed-data';
@@ -21,9 +21,22 @@ interface OptOutPanelProps {
 
 type Outcome = { kind: 'success' | 'error'; message: string } | null;
 
+/** Wording for Score API refusals whose own message is written for developers. */
+const REFUSAL_MESSAGES: Record<string, string> = {
+  expired:
+    'The Score API rejected the request as too old or dated in the future. Check your device clock and start again.',
+  superseded:
+    'A newer request for this address was already accepted. Reload the page to see its status.',
+};
+
 async function errorMessage(response: Response): Promise<string> {
   const body = await response.json().catch(() => null);
-  return body?.error?.message ?? `The request failed (HTTP ${response.status}).`;
+  const code: unknown = body?.error?.code;
+  return (
+    (typeof code === 'string' ? REFUSAL_MESSAGES[code] : undefined) ??
+    body?.error?.message ??
+    `The request failed (HTTP ${response.status}).`
+  );
 }
 
 const ACTION_LABELS: Record<OptOutAction, string> = { 'opt-out': 'Opt-out', 'opt-in': 'Opt-in' };
@@ -34,7 +47,7 @@ function isUserRejection(error: unknown): boolean {
 
 /**
  * Signs an EIP-712 opt-out or opt-in request with the wallet that owns the
- * address. A pending opt-out is reversed by an opt-in.
+ * address. An opt-out, pending or applied, is reversed by an opt-in.
  */
 export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOutPanelProps) {
   const router = useRouter();
@@ -49,7 +62,7 @@ export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOu
     return null;
   }
 
-  const action: OptOutAction = entry.optOut?.action === 'opt-out' ? 'opt-in' : 'opt-out';
+  const action = optOutActionFor(entry.optOut);
   const isOwner = connected?.toLowerCase() === entry.address.toLowerCase();
 
   async function submit() {
@@ -144,7 +157,7 @@ export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOu
           )}
           <p className="text-[13px] text-muted">
             Signing from a Safe? Your co-signers may still need to sign in the Safe app. The request
-            expires 10 minutes after you start it, so collect their signatures within that time.
+            expires a day after you start it, so collect their signatures within that time.
           </p>
         </div>
       ) : (

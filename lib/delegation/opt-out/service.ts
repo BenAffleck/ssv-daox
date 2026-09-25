@@ -1,10 +1,16 @@
 import { randomBytes } from 'crypto';
 import type { Address, Hex } from 'viem';
 
-import type { OptOutReceipt, OptOutStatuses, ScoreApiOptOutClient } from './score-api';
+import {
+  ScoreApiRefusal,
+  type OptOutReceipt,
+  type OptOutStatuses,
+  type ScoreApiOptOutClient,
+} from './score-api';
 import { buildOptOutTypedData, type OptOutSubmission, type OptOutTypedData } from './typed-data';
 
-const NONCE_TTL_MS = 10 * 60 * 1000;
+/** Matches the Score API's window, so Safe co-signers have time. */
+const NONCE_TTL_MS = 24 * 60 * 60 * 1000;
 
 export interface NonceRecord {
   nonce: string;
@@ -50,22 +56,39 @@ export type OptOutErrorCode =
   | 'invalid_signature'
   | 'score_api_unavailable';
 
-export type OptOutResult =
-  | { ok: true; receipt: OptOutReceipt }
-  | { ok: false; error: { code: OptOutErrorCode; message: string } };
+export interface OptOutError {
+  /** An `OptOutErrorCode`, or a Score API refusal code passed through. */
+  code: OptOutErrorCode | (string & {});
+  message: string;
+  httpStatus: number;
+}
 
-const ERROR_MESSAGES: Record<OptOutErrorCode, string> = {
-  unknown_nonce: 'This request has no valid nonce. Start again.',
-  nonce_mismatch: 'This request does not match the one DAOx issued. Start again.',
-  nonce_address_mismatch: 'This request was issued for another address. Start again.',
-  nonce_expired: 'This request expired after 10 minutes. Start again.',
-  nonce_used: 'This signature was already submitted. Start again.',
-  invalid_signature: 'The signature is not from the address it opts out.',
-  score_api_unavailable: 'The Score API did not accept the request. Try again later.',
+export type OptOutResult = { ok: true; receipt: OptOutReceipt } | { ok: false; error: OptOutError };
+
+const ERRORS: Record<OptOutErrorCode, { message: string; httpStatus: number }> = {
+  unknown_nonce: { message: 'This request has no valid nonce. Start again.', httpStatus: 400 },
+  nonce_mismatch: {
+    message: 'This request does not match the one DAOx issued. Start again.',
+    httpStatus: 400,
+  },
+  nonce_address_mismatch: {
+    message: 'This request was issued for another address. Start again.',
+    httpStatus: 400,
+  },
+  nonce_expired: { message: 'This request expired after a day. Start again.', httpStatus: 400 },
+  nonce_used: { message: 'This signature was already submitted. Start again.', httpStatus: 409 },
+  invalid_signature: {
+    message: 'The signature is not from the address it opts out.',
+    httpStatus: 401,
+  },
+  score_api_unavailable: {
+    message: 'The Score API did not accept the request. Try again later.',
+    httpStatus: 502,
+  },
 };
 
 function failure(code: OptOutErrorCode): OptOutResult {
-  return { ok: false, error: { code, message: ERROR_MESSAGES[code] } };
+  return { ok: false, error: { code, ...ERRORS[code] } };
 }
 
 export function createOptOutService({
@@ -122,6 +145,10 @@ export function createOptOutService({
         const receipt = await scoreApi.submit({ typedData: canonical, signature });
         return { ok: true, receipt };
       } catch (error) {
+        if (error instanceof ScoreApiRefusal) {
+          const { code, message, httpStatus } = error;
+          return { ok: false, error: { code, message, httpStatus } };
+        }
         console.error('Opt-out submission failed:', error);
         return failure('score_api_unavailable');
       }

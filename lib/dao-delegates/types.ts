@@ -1,3 +1,4 @@
+import type { OptOutStatus } from '@/lib/delegation/opt-out/score-api';
 import type { VotingPowerData } from '@/lib/gnosis/types';
 
 export type Cohort =
@@ -69,6 +70,8 @@ export interface ScoreRow {
   identity: Identity;
   cohort: Cohort | null;
   power: number | null;
+  /** The address's latest opt-out request, read live (pending before the next run). */
+  opt_out: OptOutStatus | null;
 }
 
 /** The person an address belongs to, as linked on HighSignal. */

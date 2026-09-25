@@ -804,13 +804,15 @@ An address owner asks for the address to be excluded from scoring (opt-out)
 or brought back in (opt-in) by signing EIP-712 typed data with its wallet.
 
 - **Semantics:** per address, reversible by opt-in, takes effect at the next
-  score run. Assumed to also exclude the address from its identity's
-  aggregate score; the Score API team has to confirm this.
+  published score run. An opted-out address stays scored and ranked on the
+  leaderboard but draws no seat, so `/delegation?address=` keeps working and
+  the owner can opt back in.
 - **Typed data** (`lib/delegation/opt-out/typed-data.ts`): domain
   `{ name: "SSV DAOx", version: "1", chainId: 1 }`, primary type `OptOut`,
   message `{ address, action: "opt-out" | "opt-in", nonce, issuedAt }`.
   `issuedAt` is an ISO string so wallets show a readable date.
-- **Nonce:** issued by the server, single use, expires after 10 minutes.
+- **Nonce:** issued by the server, single use, expires after 1 day, the Score
+  API's own window, so Safe co-signers have time.
 
 #### Service
 
@@ -823,17 +825,22 @@ or brought back in (opt-in) by signing EIP-712 typed data with its wallet.
   exists, belongs to the address, has the `issuedAt` it was issued with,
   unexpired, unused; signature valid. It then marks the nonce used and records
   or forwards the request; a failed forward still uses up the nonce. Errors are
-  results, not throws: `unknown_nonce`, `nonce_address_mismatch`,
-  `nonce_mismatch`, `nonce_expired`, `nonce_used`, `invalid_signature`,
-  `score_api_unavailable`.
-- `getStatuses(addresses)` → pending request per lowercase address, or `null`.
+  results, not throws, each with an `httpStatus`: `unknown_nonce`,
+  `nonce_address_mismatch`, `nonce_mismatch`, `nonce_expired` (`400`),
+  `invalid_signature` (`401`), `nonce_used` (`409`), `score_api_unavailable`
+  (`502`). A Score API 4xx refusal passes through with its own code, message
+  and status (e.g. `409 superseded`, `400 expired`). A 5xx, a network failure
+  or a malformed body is `score_api_unavailable`.
+- `getStatuses(addresses)` → latest request per lowercase address
+  (`{ action, status: "pending" | "applied" }`), or `null`.
 - `mode` is `mock` or `live`, from the Score API client.
 
 `getOptOutService()` (`opt-out/server.ts`) wires one instance per process:
 
 - **Nonce store:** `.cache/opt-out-nonces.json`. Records are pruned a day
   after expiry, so a late submission reads as expired, not unknown. At most
-  10,000 records; beyond that the nonce route answers `429`.
+  10,000 records (about 2 MB); beyond that the nonce route answers `429`.
+  Records live up to 2 days, so a flood can block new nonces that long.
 - **Single instance:** file writes are serialized per process only. Replay
   protection and the mock's persistence hold on one long-lived instance, not
   across serverless instances or an ephemeral filesystem.
@@ -857,33 +864,64 @@ Thin adapters over the service:
 
 - `POST /api/opt-out/nonce` `{ address }` → `{ nonce, issuedAt }`, or `429`
   when the nonce store is full.
-- `POST /api/opt-out` `{ typedData, signature }` → the receipt, or
-  `{ error: { code, message } }` with `400` (nonce errors, malformed body),
-  `401` (`invalid_signature`), `409` (`nonce_used`), `502` (Score API) or
-  `503` (`MAINNET_RPC_URL` unset).
-- `GET /api/opt-out/status?addresses=0x…,0x…` → `{ statuses }`.
+- `POST /api/opt-out` `{ typedData, signature }` → the receipt, or the
+  service's error with its `httpStatus`; `400` for a malformed body and `503`
+  when `MAINNET_RPC_URL` is unset.
+- `GET /api/opt-out/status?addresses=0x…,0x…` → `{ statuses }`. At most 100
+  addresses, the Score API's cap.
 
 Every error body is `{ error: { code, message } }`.
 
-#### Proposed Score API contract
+#### Score API contract
 
-- `POST /v1/opt-out` with `{ typedData, signature }` returns
-  `{ address, action, status: "pending" }`. The payload is public once signed,
-  so the Score API MUST verify the signature itself and MUST reject a reused
-  or stale nonce on its own; it can't see DAOx's nonce store.
-- `GET /v1/opt-out/status?addresses=0x…,0x…` returns
-  `{ statuses: { [address]: { action, status: "pending" } | null } }`.
+The source of truth is the Score API's `docs/architecture.md` ("Opt-out
+requests", "Opt-out status") and its OpenAPI spec at
+`{DELEGATE_SCORE_API_URL}/openapi.json`. The live client is
+`createScoreApiClient` in `lib/delegation/opt-out/score-api.ts`.
+
+- `POST /v1/opt-out` takes `{ typedData, signature }` unchanged and returns
+  `{ address, action, status: "pending" }`. The API rebuilds the domain and
+  type itself, verifies the signature (ecrecover, then EIP-1271) and keeps its
+  own replay checks. Refusals are `{ error: { code, message } }`:
+
+  | Code                | HTTP | Meaning                                                      |
+  | ------------------- | ---- | ------------------------------------------------------------ |
+  | `invalid_request`   | 400  | Malformed body, wrong domain or action, bad address or nonce |
+  | `expired`           | 400  | `issuedAt` more than 1 day old or more than 2 minutes ahead  |
+  | `invalid_signature` | 401  | Signature doesn't verify                                     |
+  | `nonce_used`        | 409  | `(address, nonce)` already seen                              |
+  | `superseded`        | 409  | A later `issuedAt` was already accepted for the address      |
+  | `rpc_unavailable`   | 503  | The Score API's node failed                                  |
+  | `unavailable`       | 503  | The Score API's database is busy                             |
+
+- `GET /v1/opt-out/status?addresses=a,b` takes up to 100 addresses (more is
+  `400 invalid_request`) and returns `{ statuses: { [address]: status } }`.
+  The live client splits longer lists into batches of 100.
+  A status is the address's latest request, `{ action, status }`, or `null`.
+  It is `applied` once a published run has applied it, else `pending`. An
+  applied opt-out lasts until an opt-in.
+- `/v1/leaderboard` rows and `/v1/delegates/{address}` carry the same status
+  as `opt_out` (`ScoreRow.opt_out`), read live.
 
 #### Page
 
 `/delegation` fetches statuses for the overview addresses and merges them
 with `withOptOutStatuses(overview, statuses)`; a failed lookup leaves them
-empty. The table's Opt-out column shows "Opt-out pending" or "Opt-in
-pending". `OptOutPanel` acts on any overview address, the requested one
-first. It offers "Sign opt-in" while an opt-out is pending, otherwise "Sign
-opt-out", and is enabled only when the connected wallet is that address;
-otherwise it asks the user to switch accounts. A Safe's co-signers must sign
-within the nonce's 10 minutes.
+empty. `optOutBadgeOf` and `optOutActionFor` (`logic/address-overview.ts`)
+derive the UI states:
+
+| Latest request   | Badge (Opt-out column) | Panel offers |
+| ---------------- | ---------------------- | ------------ |
+| none             | -                      | Sign opt-out |
+| opt-out, pending | Opt-out pending        | Sign opt-in  |
+| opt-out, applied | Opted out              | Sign opt-in  |
+| opt-in, pending  | Opt-in pending         | Sign opt-out |
+| opt-in, applied  | -                      | Sign opt-out |
+
+`OptOutPanel` acts on any overview address, the requested one first. It is
+enabled only when the connected wallet is that address; otherwise it asks the
+user to switch accounts. It words `expired` and `superseded` refusals for
+users. A Safe's co-signers must sign within the nonce's day.
 
 ### States
 

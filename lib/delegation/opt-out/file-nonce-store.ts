@@ -7,7 +7,7 @@ interface NonceFile {
 
 // Kept past expiry so a late submission is reported as expired, not unknown.
 const RETENTION_AFTER_EXPIRY_MS = 24 * 60 * 60 * 1000;
-/** Bounds the file against a flood of nonce requests. */
+/** Bounds the file (about 2 MB) against a flood of nonce requests. */
 const MAX_RECORDS = 10_000;
 
 export class NonceStoreFullError extends Error {

@@ -36,6 +36,7 @@ function row(address: string): ScoreRow {
     },
     cohort: null,
     power: 0,
+    opt_out: null,
   };
 }
 

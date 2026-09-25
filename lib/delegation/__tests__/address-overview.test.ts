@@ -5,6 +5,8 @@ import type { Identity, ScoreRow } from '@/lib/dao-delegates/types';
 import {
   accountSwitchPrompt,
   buildAddressOverview,
+  optOutActionFor,
+  optOutBadgeOf,
   withOptOutStatuses,
 } from '../logic/address-overview';
 
@@ -49,6 +51,7 @@ function row(address: string, owner: Identity, community: number | null = null):
     identity: owner,
     cohort: 'professional',
     power: 1000,
+    opt_out: null,
   };
 }
 
@@ -178,6 +181,19 @@ describe('withOptOutStatuses', () => {
       [CHECKSUMMED, { action: 'opt-out', status: 'pending' }],
       [ALICE_2, null],
     ]);
+  });
+});
+
+describe('opt-out states', () => {
+  it.each([
+    ['no request', null, 'opt-out', null],
+    ['a pending opt-out', { action: 'opt-out', status: 'pending' }, 'opt-in', 'opt_out_pending'],
+    ['an applied opt-out', { action: 'opt-out', status: 'applied' }, 'opt-in', 'opted_out'],
+    ['a pending opt-in', { action: 'opt-in', status: 'pending' }, 'opt-out', 'opt_in_pending'],
+    ['an applied opt-in', { action: 'opt-in', status: 'applied' }, 'opt-out', null],
+  ] as const)('offers the right action and badge after %s', (_, status, action, badge) => {
+    expect(optOutActionFor(status)).toBe(action);
+    expect(optOutBadgeOf(status)).toBe(badge);
   });
 });
 

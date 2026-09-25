@@ -22,6 +22,7 @@ const ALICE = privateKeyToAccount(
 const BOB = privateKeyToAccount(
   '0x2222222222222222222222222222222222222222222222222222222222222222',
 );
+const CAROL = '0xca401ca401ca401ca401ca401ca401ca401ca401';
 
 function memoryNonceStore(): NonceStore {
   const records = new Map<string, NonceRecord>();
@@ -115,15 +116,15 @@ describe('opt-out service', () => {
     });
   });
 
-  it('accepts a nonce up to 10 minutes old and rejects it after', async () => {
+  it('accepts a nonce up to a day old, so Safe co-signers have time, and rejects it after', async () => {
     const service = mockService();
     const fresh = await signed(service, ALICE, 'opt-out');
     const stale = await signed(service, BOB, 'opt-out');
 
-    clock = new Date('2026-09-25T12:10:00.000Z');
+    clock = new Date('2026-09-26T12:00:00.000Z');
     expect((await service.submitOptOut(fresh)).ok).toBe(true);
 
-    clock = new Date('2026-09-25T12:10:00.001Z');
+    clock = new Date('2026-09-26T12:00:00.001Z');
     expect(await service.submitOptOut(stale)).toMatchObject({
       ok: false,
       error: { code: 'nonce_expired' },
@@ -216,13 +217,18 @@ describe('opt-out service', () => {
       });
     });
 
-    it('in live mode, forwards the verified request and reads statuses from the Score API', async () => {
+    it('in live mode, forwards the verified request and reads pending and applied statuses', async () => {
       const requests: { url: string; init?: RequestInit }[] = [];
       const fetchStub: typeof fetch = async (input, init) => {
         const url = String(input);
         requests.push({ url, init });
         const body = url.includes('/status')
-          ? { statuses: { [ALICE.address]: { action: 'opt-out', status: 'pending' } } }
+          ? {
+              statuses: {
+                [ALICE.address]: { action: 'opt-out', status: 'applied' },
+                [BOB.address.toLowerCase()]: { action: 'opt-in', status: 'pending' },
+              },
+            }
           : { address: ALICE.address, action: 'opt-out', status: 'pending' };
         return new Response(JSON.stringify(body), { status: 200 });
       };
@@ -232,7 +238,7 @@ describe('opt-out service', () => {
       const submission = await signed(service, ALICE, 'opt-out');
 
       const result = await service.submitOptOut(submission);
-      const statuses = await service.getStatuses([ALICE.address, BOB.address]);
+      const statuses = await service.getStatuses([ALICE.address, BOB.address, CAROL]);
 
       expect(service.mode).toBe('live');
       expect(result).toEqual({
@@ -243,25 +249,77 @@ describe('opt-out service', () => {
       expect(requests[0].init?.method).toBe('POST');
       expect(JSON.parse(String(requests[0].init?.body))).toEqual(submission);
       expect(requests[1].url).toBe(
-        `http://score.test/v1/opt-out/status?addresses=${ALICE.address},${BOB.address}`,
+        `http://score.test/v1/opt-out/status?addresses=${ALICE.address},${BOB.address},${CAROL}`,
       );
       expect(statuses).toEqual({
-        [ALICE.address.toLowerCase()]: { action: 'opt-out', status: 'pending' },
-        [BOB.address.toLowerCase()]: null,
+        [ALICE.address.toLowerCase()]: { action: 'opt-out', status: 'applied' },
+        [BOB.address.toLowerCase()]: { action: 'opt-in', status: 'pending' },
+        [CAROL]: null,
       });
     });
 
-    it('reports an unavailable Score API as an error result', async () => {
-      const service = serviceWith({
-        scoreApi: createScoreApiClient({
-          baseUrl: 'http://score.test',
-          fetch: async () => new Response('down', { status: 503 }),
-        }),
+    function liveServiceAnswering(answer: typeof fetch) {
+      return serviceWith({
+        scoreApi: createScoreApiClient({ baseUrl: 'http://score.test', fetch: answer }),
       });
+    }
+
+    it('looks statuses up in batches of 100, the Score API cap', async () => {
+      const addresses = Array.from(
+        { length: 150 },
+        (_, i) => `0x${(i + 1).toString(16).padStart(40, '0')}`,
+      );
+      const batchSizes: number[] = [];
+      const service = liveServiceAnswering(async (input) => {
+        const batch = new URL(String(input)).searchParams.get('addresses')!.split(',');
+        batchSizes.push(batch.length);
+        const statuses = Object.fromEntries(
+          batch.map((a) => [a, { action: 'opt-out', status: 'applied' }]),
+        );
+        return new Response(JSON.stringify({ statuses }), { status: 200 });
+      });
+
+      const statuses = await service.getStatuses(addresses);
+
+      expect(batchSizes).toEqual([100, 50]);
+      expect(statuses[addresses[149]]).toEqual({ action: 'opt-out', status: 'applied' });
+    });
+
+    function refusal(status: number, code: string, message: string) {
+      return async () => new Response(JSON.stringify({ error: { code, message } }), { status });
+    }
+
+    it.each([
+      [409, 'superseded', 'A later request was already accepted for this address.'],
+      [400, 'expired', 'issuedAt is more than 1 day old.'],
+    ])(
+      'passes a %i %s refusal through with its code and message',
+      async (status, code, message) => {
+        const service = liveServiceAnswering(refusal(status, code, message));
+
+        expect(await service.submitOptOut(await signed(service, ALICE, 'opt-out'))).toEqual({
+          ok: false,
+          error: { code, message, httpStatus: status },
+        });
+      },
+    );
+
+    it.each([
+      ['a 5xx', refusal(503, 'unavailable', 'Database busy')],
+      ['a 4xx without an error body', async () => new Response('nope', { status: 404 })],
+      [
+        'a network failure',
+        async () => {
+          throw new TypeError('fetch failed');
+        },
+      ],
+      ['a malformed success body', async () => new Response('not json', { status: 200 })],
+    ])('reports %s as an unavailable Score API', async (_, answer) => {
+      const service = liveServiceAnswering(answer);
 
       expect(await service.submitOptOut(await signed(service, ALICE, 'opt-out'))).toMatchObject({
         ok: false,
-        error: { code: 'score_api_unavailable' },
+        error: { code: 'score_api_unavailable', httpStatus: 502 },
       });
     });
   });
