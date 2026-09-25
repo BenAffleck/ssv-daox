@@ -78,4 +78,20 @@ describe('toVotingPowerData', () => {
 
     expect(result.votingPower).toBe(1234.5);
   });
+
+  it('keeps the basis-point weight of each outgoing delegation', () => {
+    const result = toVotingPowerData(
+      response({
+        delegateTree: [
+          { delegate: '0xccc', delegatedPower: 25, weight: 2500 },
+          { delegate: '0xddd', delegatedPower: 75, weight: 7500 },
+        ],
+      }),
+    );
+
+    expect(result.outgoingDelegations).toEqual([
+      { address: '0xddd', power: 75, weight: 7500 },
+      { address: '0xccc', power: 25, weight: 2500 },
+    ]);
+  });
 });

@@ -74,10 +74,10 @@ describe('fetchVotingPower', () => {
       delegatorCount: 1,
       delegators: SAMPLE_RESPONSE.delegators,
       incomingDelegations: [
-        { address: '0xaaa1111111111111111111111111111111111111', power: 100.25 },
+        { address: '0xaaa1111111111111111111111111111111111111', power: 100.25, weight: 10000 },
       ],
       outgoingDelegations: [
-        { address: '0xccc3333333333333333333333333333333333333', power: 50.75 },
+        { address: '0xccc3333333333333333333333333333333333333', power: 50.75, weight: 10000 },
       ],
       percentOfVotingPower: 0.42,
       blockNumber: '20000000',

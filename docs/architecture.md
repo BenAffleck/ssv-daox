@@ -95,6 +95,7 @@ ssv-daox/
 │   ├── delegation/           # Delegation logic
 │   │   ├── config.ts         # HighSignal URLs (env, with defaults)
 │   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out merge, switch prompt
+│   │   ├── logic/delegation-plan.ts  # Pure: split-delegation form input → delegations, diff, errors
 │   │   └── opt-out/          # Opt-out service (DI), typed data, Score API clients, file stores
 │   ├── wallet/               # Wallet stack
 │   │   ├── config.ts         # Server-only MAINNET_RPC_URL, proxy path
@@ -402,7 +403,7 @@ The Voting Power column shows a compact total plus an info icon that opens a por
 
 **Data source:** Gnosis Guild Delegation API `pin` endpoint (`lib/gnosis/`), posted with the SSV split-delegation strategy payload. Values are SSV + cSSV.
 
-The pin response carries both flat address lists (`delegators`, `delegates`) and weighted trees (`delegatorTree`, `delegateTree`) that pair each counterparty with its `delegatedPower`. `toVotingPowerData()` (`lib/gnosis/logic/transform-voting-power.ts`) is the single transform shared by the server-side batch fetcher and the on-demand API route; it flattens both trees into `incomingDelegations` / `outgoingDelegations` (`DelegationEntry[]`, sorted by power descending). When a response omits the tree, incoming entries fall back to the flat `delegators` list with `power: null`, rendered as an em dash.
+The pin response carries both flat address lists (`delegators`, `delegates`) and weighted trees (`delegatorTree`, `delegateTree`) that pair each counterparty with its `delegatedPower`. `toVotingPowerData()` (`lib/gnosis/logic/transform-voting-power.ts`) is the single transform shared by the server-side batch fetcher and the on-demand API route; it flattens both trees into `incomingDelegations` / `outgoingDelegations` (`DelegationEntry[]`, sorted by power descending). Each entry keeps the edge's basis-point `weight` when the tree has one. When a response omits the tree, incoming entries fall back to the flat `delegators` list with `power: null`, rendered as an em dash.
 
 **Popover contents:** total / incoming / outgoing / net delegated / delegator count, then a "Delegating in" and a "Delegating out" list. Each list row shows the full counterparty address with its signed absolute amount (`accent` for in, `danger` for out), and each list header carries a copy icon that copies only that list's addresses (newline separated). Empty lists are omitted entirely.
 
@@ -892,6 +893,61 @@ within the nonce's 10 minutes.
   the read-only overview still renders.
 
 Each DAO Delegates row has an "Open" link to `/delegation?address=<address>`.
+
+### Split Delegation
+
+`DelegationPanel` writes to the Gnosis Guild Split Delegation registry
+(`0xDE1e8A7E184Babd9F0E3af18f40634e9Ed6F0905`, `DelegateRegistry.sol` in
+`gnosisguild/split-delegation`). The context is always `SSV_SPACE_ID`
+(`mainnet.ssvnetwork.eth`). It renders for any valid `?address=`, scored or
+not, when `MAINNET_RPC_URL` is set. Only the wallet connected as that address
+can send; otherwise the panel asks the user to switch accounts.
+
+**Write flow:**
+
+1. **Current delegations.** The page fetches the address's pin response
+   server-side (`fetchVotingPower`) and passes its `outgoingDelegations`.
+   Each entry carries the pin `weight` in bps; without it, the share of
+   `power` is used. A failed lookup disables the form, so a write can't
+   overwrite delegations the user can't see.
+2. **Form.** "All to one" (prefilled with the largest current delegate) or
+   "Clear delegation". A target containing a dot is an ENS name, normalised
+   and resolved with `useEnsAddress` over the RPC proxy.
+3. **Plan.** `planDelegation({ delegator, input, current })` in
+   `lib/delegation/logic/delegation-plan.ts` returns `{ delegations,
+diff: { added, changed, removed }, droppedDelegates, warnings, errors }`.
+   All to one is a single delegation at 10000 bps. Errors show only after the
+   user edits, so a prefill equal to the current delegation isn't flagged. Errors: an invalid
+   address, the zero address, the delegator itself, a delegation identical
+   to the current one (the contract reverts with `DuplicateDelegation`), and
+   clearing with nothing delegated.
+4. **Preview.** Before (current) and After (planned) lists. If
+   `droppedDelegates` is non-empty, a checkbox must confirm dropping them.
+5. **Transaction.** `useWriteContract` calls `setDelegation(context,
+delegation, 0)` or `clearDelegation(context)`. The wallet broadcasts it.
+
+**ABI and encoding** (`lib/gnosis/registry.ts`, vendored minimal ABI; the
+selectors are in the deployed bytecode):
+
+- `setDelegation(string context, (bytes32 delegate, uint256 ratio)[] delegation, uint256 expirationTimestamp)`
+  overwrites the sender's whole delegation in the context.
+- `clearDelegation(string context)`.
+- `delegate` is the address left-padded to bytes32. Delegates must be
+  strictly ascending, or the contract reverts; `toRegistryDelegations()`
+  pads and sorts.
+- `ratio` is a relative weight; the Gnosis indexer divides it by the sum.
+  DAOx writes basis points that sum to 10000, which the pin API echoes back
+  as `weight`.
+- Expiration is always 0 (never expires).
+
+**Status.** For an externally owned account, `useWaitForTransactionReceipt`
+drives Pending → Confirmed or Failed, with an Etherscan link. After the wallet
+returns a hash, the panel reads the sender's bytecode. A contract account
+(e.g. a Safe over WalletConnect) returns a Safe transaction hash that is never
+mined as-is, so the panel says it was proposed to the Safe, links the Safe
+queue and doesn't wait for a receipt.
+The pin API is cached for 5 minutes and lags indexing, so a confirmed change
+can take a few minutes to show up in Before.
 
 ### Wallet
 

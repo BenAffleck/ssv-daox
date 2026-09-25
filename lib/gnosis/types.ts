@@ -48,6 +48,8 @@ export interface DelegationEntry {
   address: string;
   /** Absolute delegated power, or null when the API returned the edge without an amount */
   power: number | null;
+  /** The delegator's share across this edge in basis points, when the API returns it */
+  weight?: number;
 }
 
 /**

@@ -1,6 +1,7 @@
 import AddressLookupForm from '@/components/delegation/AddressLookupForm';
 import AddressOverviewTable from '@/components/delegation/AddressOverviewTable';
 import ClaimWizard from '@/components/delegation/ClaimWizard';
+import DelegationPanel from '@/components/delegation/DelegationPanel';
 import OptOutPanel from '@/components/delegation/OptOutPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
 import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
@@ -14,6 +15,7 @@ import {
 } from '@/lib/delegation/logic/address-overview';
 import type { OptOutStatuses } from '@/lib/delegation/opt-out/score-api';
 import { getOptOutService } from '@/lib/delegation/opt-out/server';
+import { fetchVotingPower, type DelegationEntry } from '@/lib/gnosis';
 import { getMainnetRpcUrl } from '@/lib/wallet/config';
 
 export const revalidate = 300;
@@ -71,6 +73,26 @@ async function withOptOut(overview: AddressOverview | null): Promise<AddressOver
     console.error('Opt-out status lookup failed:', error);
   }
   return withOptOutStatuses(overview, statuses);
+}
+
+/** Returns `null` when the Gnosis API lookup fails. */
+async function fetchOutgoingDelegations(address: string): Promise<DelegationEntry[] | null> {
+  const votingPower = await fetchVotingPower([address]);
+  return votingPower[address.toLowerCase()]?.outgoingDelegations ?? null;
+}
+
+async function DelegationSection({ address }: { address: string }) {
+  if (!getMainnetRpcUrl()) {
+    return null;
+  }
+  // Keyed so the form re-prefills when `?address=` changes.
+  return (
+    <DelegationPanel
+      key={address.toLowerCase()}
+      address={address}
+      current={await fetchOutgoingDelegations(address)}
+    />
+  );
 }
 
 function emptyMessage(address: string): string {
@@ -143,6 +165,7 @@ export default async function DelegationPage({
       {overview ? (
         <>
           <AddressOverviewTable addresses={overview.addresses} />
+          <DelegationSection address={address} />
           <OptOutPanel
             addresses={overview.addresses}
             mode={getOptOutService().mode}
@@ -151,7 +174,10 @@ export default async function DelegationPage({
           <ClaimWizard addresses={overview.addresses} lastRunAsOf={health?.as_of ?? null} />
         </>
       ) : (
-        <EmptyState address={address} />
+        <>
+          <EmptyState address={address} />
+          <DelegationSection address={address} />
+        </>
       )}
     </div>
   );

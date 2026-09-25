@@ -33,6 +33,7 @@ function toDelegationEntries(
     .map((node) => ({
       address: addressOf(node) ?? '',
       power: toNumber(node.delegatedPower),
+      ...(typeof node.weight === 'number' && { weight: node.weight }),
     }))
     .filter((entry) => entry.address !== '')
     .sort((a, b) => b.power - a.power);
