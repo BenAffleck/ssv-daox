@@ -11,6 +11,7 @@
 - `CODING_STANDARDS.md` - Coding standards: Always read before writing any code or comments.
 
 ## Testing
+
 - Write tests that exercise real code through public interfaces / observable behavior.
 - Do not write tests for what the type system already guarantees.
 - Do not write tests that merely restate the implementation.

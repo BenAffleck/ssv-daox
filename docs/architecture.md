@@ -35,6 +35,9 @@ ssv-daox/
 │   │   └── page.tsx          # Server component (data orchestration)
 │   ├── dao-timeline/         # DAO Timeline module
 │   │   └── page.tsx          # Server component (event aggregation)
+│   ├── delegation/           # Delegation module (/delegation?address=0x…)
+│   │   ├── page.tsx          # Server component (address overview)
+│   │   └── error.tsx         # Error boundary
 │   └── governance/           # Governance Votes module
 │       ├── page.tsx          # Server component (cross-space aggregation)
 │       └── loading.tsx       # Loading skeleton
@@ -50,6 +53,10 @@ ssv-daox/
 │   │   ├── DelegateRow.tsx       # Server: row rendering
 │   │   ├── ScoreCell.tsx         # Score / pillar value with "n/a"
 │   │   └── *Badge.tsx            # Server: badge components
+│   ├── delegation/           # Delegation components
+│   │   ├── AddressOverviewTable.tsx # Address + identity siblings
+│   │   ├── AddressLookupForm.tsx    # GET form for the empty state
+│   │   └── ClaimStatusBadge.tsx
 │   └── dao-timeline/         # DAO Timeline components
 │       ├── Timeline.tsx          # Client: main container + AI state
 │       ├── TimelineFilterControls.tsx
@@ -73,6 +80,8 @@ ssv-daox/
 │   │   ├── config.ts         # Delegate Score API config, cohort labels
 │   │   ├── api/              # Delegate Score API fetcher
 │   │   └── logic/            # Business logic
+│   ├── delegation/           # Delegation logic
+│   │   └── logic/address-overview.ts # Pure: siblings + claim status
 │   ├── dao-timeline/         # DAO Timeline logic
 │   │   ├── types.ts          # Event types, sources
 │   │   ├── config.ts         # Source configuration
@@ -170,7 +179,7 @@ The header (`components/Header.tsx`) is a `'use client'` component providing a t
 
 **CSS classes:** `.nav-item` / `.nav-item-active` in `@layer components` (follows `.filter-btn` pattern)
 
-**Icon mapping:** Slug-to-icon map in Header component (`dao-delegates` → `Users`, `dao-timeline` → `Calendar`)
+**Icon mapping:** Slug-to-icon map in Header component (`delegates` → `Users`, `timeline` → `Calendar`, `governance` → `Vote`, `delegation` → `Split`)
 
 **Dependencies:** `lucide-react` (tree-shakeable icon library, ~1KB per icon)
 
@@ -718,6 +727,39 @@ read as the foreground of the list.
 nudge (shift steps a week). Both handles are `role="slider"` with
 `aria-valuetext` carrying the readable date. Pointer drag uses pointer capture
 on the strip, so a drag that leaves the element still tracks.
+
+---
+
+## Delegation Module
+
+Read-only foundation for claiming, opting out and split delegation (spec #4).
+`/delegation?address=0x…` shows that address and every sibling address in its
+HighSignal identity. No wallet is involved yet.
+
+### Data Pipeline
+
+1. `fetchLeaderboard()` - Reuses the DAO Delegates fetcher (5-minute cache)
+2. `buildAddressOverview(address, rows)` - Pure function in
+   `lib/delegation/logic/address-overview.ts`. It finds the identity that lists
+   the address (case-insensitive), puts the requested address first and its
+   siblings after in identity order. A sibling without a leaderboard row is
+   kept as unscored. Returns `null` for an address in no identity.
+3. `AddressOverviewTable` - Rank, score, cohort, allocated power, claim status
+
+### Claim Status
+
+Derived per address:
+
+- `unclaimed`: the identity has no `hs_username`.
+- `claimed_pending`: `hs_username` is set, community pillar missing or absent.
+- `claimed_scored`: `hs_username` is set, community pillar present.
+
+### States
+
+- No `address` or an unknown one: empty state with an address lookup form.
+- `DELEGATE_SCORE_API_URL` unset: the same notice as DAO Delegates.
+
+Each DAO Delegates row has an "Open" link to `/delegation?address=<address>`.
 
 ---
 

@@ -1,3 +1,6 @@
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
+
 import { Delegate, PillarKey } from '@/lib/dao-delegates/types';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 
@@ -67,6 +70,15 @@ export default function DelegateRow({ delegate, livePillars }: DelegateRowProps)
           proposalCount={SNAPSHOT_CONFIG.voteParticipation.proposalCount}
           activeVoteStatus={delegate.activeVoteStatus}
         />
+      </td>
+      <td className="px-4 py-3 text-right">
+        <Link
+          href={`/delegation?address=${delegate.publicAddress}`}
+          className="inline-flex items-center gap-1 text-[13px] whitespace-nowrap text-primary hover:underline"
+        >
+          Open
+          <ChevronRight size={14} />
+        </Link>
       </td>
     </tr>
   );

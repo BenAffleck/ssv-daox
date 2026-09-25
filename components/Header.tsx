@@ -3,7 +3,18 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, ChevronDown, FileText, Home, Menu, User, Users, Vote, X } from 'lucide-react';
+import {
+  Calendar,
+  ChevronDown,
+  FileText,
+  Home,
+  Menu,
+  Split,
+  User,
+  Users,
+  Vote,
+  X,
+} from 'lucide-react';
 
 import SearchPalette, { SearchTrigger } from '@/components/SearchPalette';
 import { getExternalToolsSorted } from '@/lib/data/external-tools';
@@ -15,6 +26,7 @@ const slugIconMap: Record<string, React.ComponentType<{ size?: number }>> = {
   delegates: Users,
   timeline: Calendar,
   governance: Vote,
+  delegation: Split,
 };
 
 function getIconForSlug(slug: string) {

@@ -27,6 +27,15 @@ export const modules: Module[] = [
     status: ModuleStatus.ACTIVE,
     sortOrder: 3,
   },
+  {
+    id: 'dao-delegation',
+    slug: 'delegation',
+    name: 'Delegation',
+    description:
+      'Your scored addresses and their HighSignal identity siblings, with rank, score, cohort and claim status.',
+    status: ModuleStatus.ACTIVE,
+    sortOrder: 4,
+  },
 ];
 
 export function getModulesSorted(): Module[] {

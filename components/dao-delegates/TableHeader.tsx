@@ -70,6 +70,7 @@ export default function TableHeader({
             Last 5 closed
           </div>
         </th>
+        <th className="table-col-header px-4 py-3 text-right">Manage</th>
       </tr>
     </thead>
   );
