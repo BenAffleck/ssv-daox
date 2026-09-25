@@ -1,6 +1,7 @@
 import AddressLookupForm from '@/components/delegation/AddressLookupForm';
 import AddressOverviewTable from '@/components/delegation/AddressOverviewTable';
 import ClaimWizard from '@/components/delegation/ClaimWizard';
+import OptOutPanel from '@/components/delegation/OptOutPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
 import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
@@ -8,8 +9,11 @@ import { getHighSignalConfig } from '@/lib/delegation/config';
 import {
   buildAddressOverview,
   isAddress,
+  withOptOutStatuses,
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
+import type { OptOutStatuses } from '@/lib/delegation/opt-out/score-api';
+import { getOptOutService } from '@/lib/delegation/opt-out/server';
 import { getMainnetRpcUrl } from '@/lib/wallet/config';
 
 export const revalidate = 300;
@@ -24,7 +28,8 @@ function PageHeader({ children }: { children?: React.ReactNode }) {
     <div className="mb-10">
       <h1 className="mb-2">Delegation</h1>
       <p className="text-[15px] text-muted">
-        An address and every sibling address in its HighSignal identity, with score and claim status
+        An address and every sibling address in its HighSignal identity, with score, claim and
+        opt-out status
       </p>
       {children}
     </div>
@@ -53,6 +58,19 @@ function WalletSection({
       identityAddresses={overview?.addresses.map((a) => a.address) ?? []}
     />
   );
+}
+
+async function withOptOut(overview: AddressOverview | null): Promise<AddressOverview | null> {
+  if (!overview) {
+    return null;
+  }
+  let statuses: OptOutStatuses = {};
+  try {
+    statuses = await getOptOutService().getStatuses(overview.addresses.map((a) => a.address));
+  } catch (error) {
+    console.error('Opt-out status lookup failed:', error);
+  }
+  return withOptOutStatuses(overview, statuses);
 }
 
 function emptyMessage(address: string): string {
@@ -110,7 +128,9 @@ export default async function DelegationPage({
   }
 
   const [leaderboard, health] = await Promise.all([fetchLeaderboard(), fetchScoreHealth()]);
-  const overview = buildAddressOverview(address, leaderboard.rows, getHighSignalConfig());
+  const overview = await withOptOut(
+    buildAddressOverview(address, leaderboard.rows, getHighSignalConfig()),
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
@@ -123,6 +143,11 @@ export default async function DelegationPage({
       {overview ? (
         <>
           <AddressOverviewTable addresses={overview.addresses} />
+          <OptOutPanel
+            addresses={overview.addresses}
+            mode={getOptOutService().mode}
+            signingAvailable={Boolean(getMainnetRpcUrl())}
+          />
           <ClaimWizard addresses={overview.addresses} lastRunAsOf={health?.as_of ?? null} />
         </>
       ) : (

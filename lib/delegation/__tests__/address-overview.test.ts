@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { Identity, ScoreRow } from '@/lib/dao-delegates/types';
 
-import { accountSwitchPrompt, buildAddressOverview } from '../logic/address-overview';
+import {
+  accountSwitchPrompt,
+  buildAddressOverview,
+  withOptOutStatuses,
+} from '../logic/address-overview';
 
 const ALICE_1 = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
 const ALICE_2 = '0x2222222222222222222222222222222222222222';
@@ -156,6 +160,24 @@ describe('buildAddressOverview', () => {
         'https://hs.example/settings/u/carol%2Fx%20y',
       );
     });
+  });
+});
+
+describe('withOptOutStatuses', () => {
+  const CHECKSUMMED = '0xABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCD';
+  const alice = identity('alice', [CHECKSUMMED, ALICE_2]);
+
+  it('attaches each address its pending opt-out request, matched regardless of case', () => {
+    const overview = buildAddressOverview(CHECKSUMMED, [row(CHECKSUMMED, alice)], HIGHSIGNAL);
+
+    const merged = withOptOutStatuses(overview!, {
+      [ALICE_1.toLowerCase()]: { action: 'opt-out', status: 'pending' },
+    });
+
+    expect(merged.addresses.map((a) => [a.address, a.optOut])).toEqual([
+      [CHECKSUMMED, { action: 'opt-out', status: 'pending' }],
+      [ALICE_2, null],
+    ]);
   });
 });
 

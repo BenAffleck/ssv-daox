@@ -3,6 +3,7 @@ import ScoreCell from '@/components/dao-delegates/ScoreCell';
 import type { OverviewAddress } from '@/lib/delegation/logic/address-overview';
 
 import ClaimStatusBadge from './ClaimStatusBadge';
+import OptOutStatusBadge from './OptOutStatusBadge';
 
 export default function AddressOverviewTable({ addresses }: { addresses: OverviewAddress[] }) {
   return (
@@ -16,6 +17,7 @@ export default function AddressOverviewTable({ addresses }: { addresses: Overvie
             <th className="table-col-header px-4 py-3 text-left">Cohort</th>
             <th className="table-col-header px-4 py-3 text-left">Allocated Power</th>
             <th className="table-col-header px-4 py-3 text-left">Claim</th>
+            <th className="table-col-header px-4 py-3 text-left">Opt-out</th>
           </tr>
         </thead>
         <tbody>
@@ -46,6 +48,9 @@ export default function AddressOverviewTable({ addresses }: { addresses: Overvie
               </td>
               <td className="px-4 py-3">
                 <ClaimStatusBadge status={entry.claimStatus} />
+              </td>
+              <td className="px-4 py-3">
+                <OptOutStatusBadge status={entry.optOut} />
               </td>
             </tr>
           ))}

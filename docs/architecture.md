@@ -25,6 +25,10 @@ ssv-daox/
 │   ├── api/                  # API Routes
 │   │   ├── rpc/              # Read-only JSON-RPC proxy for the wallet stack
 │   │   │   └── route.ts      # POST /api/rpc
+│   │   ├── opt-out/          # Signed score opt-out / opt-in
+│   │   │   ├── route.ts      # POST /api/opt-out
+│   │   │   ├── nonce/route.ts   # POST /api/opt-out/nonce
+│   │   │   └── status/route.ts  # GET /api/opt-out/status
 │   │   ├── ai-extraction/    # AI extraction endpoint
 │   │   │   └── route.ts      # POST /api/ai-extraction
 │   │   ├── ai-summary/       # AI summary endpoint
@@ -62,6 +66,8 @@ ssv-daox/
 │   │   ├── WalletProvider.tsx       # Client: wagmi, React Query, RainbowKit
 │   │   ├── WalletPanel.tsx          # Client: connect button, address sync, switch prompt
 │   │   ├── ClaimWizard.tsx          # Client: HighSignal claim steps + last run
+│   │   ├── OptOutPanel.tsx          # Client: EIP-712 opt-out / opt-in + Demo banner
+│   │   ├── OptOutStatusBadge.tsx
 │   │   └── ClaimStatusBadge.tsx
 │   └── dao-timeline/         # DAO Timeline components
 │       ├── Timeline.tsx          # Client: main container + AI state
@@ -88,7 +94,8 @@ ssv-daox/
 │   │   └── logic/            # Business logic
 │   ├── delegation/           # Delegation logic
 │   │   ├── config.ts         # HighSignal URLs (env, with defaults)
-│   │   └── logic/address-overview.ts # Pure: siblings, claim status, switch prompt
+│   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out merge, switch prompt
+│   │   └── opt-out/          # Opt-out service (DI), typed data, Score API clients, file stores
 │   ├── wallet/               # Wallet stack
 │   │   ├── config.ts         # Server-only MAINNET_RPC_URL, proxy path
 │   │   ├── rpc-proxy.ts      # Method allowlist + forwarding (DI fetch)
@@ -790,6 +797,93 @@ an `hs_username` (URL-encoded into `{username}`). First-time users therefore
 get the project page; step 2 links the settings page once it is known.
 `getHighSignalConfig()` (`lib/delegation/config.ts`) reads the URLs.
 
+### Opt-out
+
+An address owner asks for the address to be excluded from scoring (opt-out)
+or brought back in (opt-in) by signing EIP-712 typed data with its wallet.
+
+- **Semantics:** per address, reversible by opt-in, takes effect at the next
+  score run. Assumed to also exclude the address from its identity's
+  aggregate score; the Score API team has to confirm this.
+- **Typed data** (`lib/delegation/opt-out/typed-data.ts`): domain
+  `{ name: "SSV DAOx", version: "1", chainId: 1 }`, primary type `OptOut`,
+  message `{ address, action: "opt-out" | "opt-in", nonce, issuedAt }`.
+  `issuedAt` is an ISO string so wallets show a readable date.
+- **Nonce:** issued by the server, single use, expires after 10 minutes.
+
+#### Service
+
+`createOptOutService({ nonces, scoreApi, verifySignature, now })` in
+`lib/delegation/opt-out/service.ts`. All dependencies are injected:
+
+- `issueNonce(address)` → `{ nonce, issuedAt }`.
+- `submitOptOut({ typedData, signature })` rebuilds domain and types itself
+  (only the message is taken from the client), then checks in order: nonce
+  exists, belongs to the address, has the `issuedAt` it was issued with,
+  unexpired, unused; signature valid. It then marks the nonce used and records
+  or forwards the request; a failed forward still uses up the nonce. Errors are
+  results, not throws: `unknown_nonce`, `nonce_address_mismatch`,
+  `nonce_mismatch`, `nonce_expired`, `nonce_used`, `invalid_signature`,
+  `score_api_unavailable`.
+- `getStatuses(addresses)` → pending request per lowercase address, or `null`.
+- `mode` is `mock` or `live`, from the Score API client.
+
+`getOptOutService()` (`opt-out/server.ts`) wires one instance per process:
+
+- **Nonce store:** `.cache/opt-out-nonces.json`. Records are pruned a day
+  after expiry, so a late submission reads as expired, not unknown. At most
+  10,000 records; beyond that the nonce route answers `429`.
+- **Single instance:** file writes are serialized per process only. Replay
+  protection and the mock's persistence hold on one long-lived instance, not
+  across serverless instances or an ephemeral filesystem.
+- **Verifier:** `publicClient.verifyTypedData` over `MAINNET_RPC_URL`, so
+  EIP-1271 contract wallets (Safe) verify as well as EOAs. The UI tells Safe
+  users that co-signers may still need to sign.
+- **Score API client:** the file mock (`.cache/opt-out-mock.json`, latest
+  request per address) unless `OPT_OUT_MOCK=false`, then the real client
+  against `DELEGATE_SCORE_API_URL`.
+
+#### Mock toggle
+
+The Score API has no opt-out endpoint yet, so the mock is on in all
+environments by default. While it is on, `OptOutPanel` shows a "Demo" banner:
+DAOx verifies the signature and records the request, but scoring is not
+affected. Set `OPT_OUT_MOCK=false` once the endpoint below ships.
+
+#### API routes
+
+Thin adapters over the service:
+
+- `POST /api/opt-out/nonce` `{ address }` → `{ nonce, issuedAt }`, or `429`
+  when the nonce store is full.
+- `POST /api/opt-out` `{ typedData, signature }` → the receipt, or
+  `{ error: { code, message } }` with `400` (nonce errors, malformed body),
+  `401` (`invalid_signature`), `409` (`nonce_used`), `502` (Score API) or
+  `503` (`MAINNET_RPC_URL` unset).
+- `GET /api/opt-out/status?addresses=0x…,0x…` → `{ statuses }`.
+
+Every error body is `{ error: { code, message } }`.
+
+#### Proposed Score API contract
+
+- `POST /v1/opt-out` with `{ typedData, signature }` returns
+  `{ address, action, status: "pending" }`. The payload is public once signed,
+  so the Score API MUST verify the signature itself and MUST reject a reused
+  or stale nonce on its own; it can't see DAOx's nonce store.
+- `GET /v1/opt-out/status?addresses=0x…,0x…` returns
+  `{ statuses: { [address]: { action, status: "pending" } | null } }`.
+
+#### Page
+
+`/delegation` fetches statuses for the overview addresses and merges them
+with `withOptOutStatuses(overview, statuses)`; a failed lookup leaves them
+empty. The table's Opt-out column shows "Opt-out pending" or "Opt-in
+pending". `OptOutPanel` acts on any overview address, the requested one
+first. It offers "Sign opt-in" while an opt-out is pending, otherwise "Sign
+opt-out", and is enabled only when the connected wallet is that address;
+otherwise it asks the user to switch accounts. A Safe's co-signers must sign
+within the nonce's 10 minutes.
+
 ### States
 
 - No `address` or an unknown one: empty state with an address lookup form.
@@ -850,6 +944,9 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
 # HighSignal routes for the claim wizard. Both default to the values below.
 HIGHSIGNAL_PROJECT_URL=https://app.highsignal.xyz/p/ssv/
 HIGHSIGNAL_SETTINGS_URL_TEMPLATE=https://app.highsignal.xyz/settings/u/{username}
+
+# Opt-out Score API mock. On unless "false"; on shows the "Demo" banner.
+OPT_OUT_MOCK=true
 ```
 
 ---
