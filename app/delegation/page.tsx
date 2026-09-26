@@ -35,8 +35,7 @@ function PageHeader({ children }: { children?: React.ReactNode }) {
     <div className="mb-10">
       <h1 className="mb-2">Delegation</h1>
       <p className="text-[15px] text-muted">
-        An address and every sibling address in its HighSignal identity, with score, claim and
-        opt-out status
+        Check your score, then claim on HighSignal, opt out or delegate your voting power.
       </p>
       {children}
     </div>
@@ -77,10 +76,12 @@ async function DelegationSection({
   address,
   ownAddresses,
   scoring,
+  step,
 }: {
   address: string;
   ownAddresses: string[];
   scoring: TargetScoring;
+  step?: number;
 }) {
   if (!getMainnetRpcUrl()) {
     return null;
@@ -93,6 +94,7 @@ async function DelegationSection({
       current={await fetchOutgoingDelegations(address)}
       ownAddresses={ownAddresses}
       scoring={scoring}
+      step={step}
     />
   );
 }
@@ -177,13 +179,23 @@ export default async function DelegationPage({
       {overview ? (
         <>
           <AddressOverviewTable addresses={overview.addresses} />
-          <DelegationSection address={address} ownAddresses={ownAddresses} scoring={scoring} />
+          <ClaimWizard
+            addresses={overview.addresses}
+            lastRunAsOf={health?.as_of ?? null}
+            step={1}
+          />
           <OptOutPanel
             addresses={overview.addresses}
             mode={getOptOutService().mode}
             signingAvailable={Boolean(getMainnetRpcUrl())}
+            step={2}
           />
-          <ClaimWizard addresses={overview.addresses} lastRunAsOf={health?.as_of ?? null} />
+          <DelegationSection
+            address={address}
+            ownAddresses={ownAddresses}
+            scoring={scoring}
+            step={3}
+          />
         </>
       ) : (
         <>

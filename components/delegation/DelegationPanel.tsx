@@ -32,6 +32,8 @@ import {
 } from '@/lib/gnosis/registry';
 import type { DelegationEntry } from '@/lib/gnosis/types';
 
+import StepPanel from './StepPanel';
+
 interface DelegationPanelProps {
   /** The selected address; only its owner can send the transaction. */
   address: string;
@@ -40,6 +42,7 @@ interface DelegationPanelProps {
   /** The selected address's identity siblings, offered as consolidation quick picks. */
   ownAddresses: string[];
   scoring: TargetScoring;
+  step?: number;
 }
 
 type Mode = 'all-to-one' | 'split' | 'clear';
@@ -208,6 +211,7 @@ export default function DelegationPanel({
   current,
   ownAddresses,
   scoring,
+  step,
 }: DelegationPanelProps) {
   const { address: connected } = useAccount();
   const publicClient = usePublicClient({ chainId: mainnet.id });
@@ -355,14 +359,23 @@ export default function DelegationPanel({
   const tabClass = (active: boolean) => (active ? 'filter-btn-active' : 'filter-btn');
 
   return (
-    <section className="card mt-6 p-5" aria-labelledby="delegation-title">
-      <h3 id="delegation-title">Delegate voting power</h3>
-      <p className="mt-1 text-[13px] text-muted">
-        Delegate the voting power of{' '}
-        <code className="font-mono text-xs text-foreground">{address}</code> in the{' '}
+    <StepPanel
+      step={step}
+      title="Delegate voting power"
+      summary="Optional. Give your Snapshot voting power to one address or split it across several."
+      status={
+        before.length > 0 && (
+          <span className="badge badge-muted whitespace-nowrap">
+            Delegated to {before.length === 1 ? '1 address' : `${before.length} addresses`}
+          </span>
+        )
+      }
+      openLabel="Delegate"
+    >
+      <p className="text-[13px] text-muted">
+        Delegates <code className="font-mono text-xs text-foreground">{address}</code> in the{' '}
         <code className="font-mono text-xs text-foreground">{SSV_SPACE_ID}</code> Snapshot space
-        through the Gnosis Guild Split Delegation registry. Delegation cascades: power delegated to
-        you is forwarded too.
+        through the Gnosis Guild Split Delegation registry. Power delegated to you is forwarded too.
       </p>
 
       {current === null && (
@@ -563,6 +576,6 @@ export default function DelegationPanel({
           </p>
         )}
       </div>
-    </section>
+    </StepPanel>
   );
 }

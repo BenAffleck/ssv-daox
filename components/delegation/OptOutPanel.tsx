@@ -6,6 +6,7 @@ import { useAccount, useSignTypedData } from 'wagmi';
 
 import {
   optOutActionFor,
+  optOutBadgeOf,
   safeRequestState,
   type OverviewAddress,
 } from '@/lib/delegation/logic/address-overview';
@@ -18,6 +19,7 @@ import {
 } from '@/lib/delegation/opt-out/typed-data';
 
 import OptOutStatusBadge from './OptOutStatusBadge';
+import StepPanel from './StepPanel';
 
 interface OptOutPanelProps {
   /** The overview's addresses, requested one first. Only an address's owner can sign for it. */
@@ -25,6 +27,7 @@ interface OptOutPanelProps {
   mode: OptOutMode;
   /** `false` when MAINNET_RPC_URL is unset and signatures can't be checked. */
   signingAvailable: boolean;
+  step?: number;
 }
 
 type Outcome = { kind: 'success' | 'error'; message: string } | null;
@@ -88,7 +91,7 @@ function isUserRejection(error: unknown): boolean {
  * Signs an EIP-712 opt-out or opt-in request with the wallet that owns the
  * address. An opt-out, pending or applied, is reversed by an opt-in.
  */
-export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOutPanelProps) {
+export default function OptOutPanel({ addresses, mode, signingAvailable, step }: OptOutPanelProps) {
   const router = useRouter();
   const { address: connected } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
@@ -189,8 +192,22 @@ export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOu
     }
   }
 
+  const awaitingCoSigners = signingAvailable && safeRequest && safeState === 'awaiting';
+
   return (
-    <section className="card mt-6 p-5" aria-labelledby="opt-out-title">
+    <StepPanel
+      step={step}
+      title="Opt out of scoring"
+      summary="Optional. Exclude an address from scoring so no voting power is allocated to it."
+      status={
+        awaitingCoSigners ? (
+          <span className="badge badge-warning whitespace-nowrap">Awaiting co-signers</span>
+        ) : (
+          optOutBadgeOf(entry.optOut) && <OptOutStatusBadge status={entry.optOut} />
+        )
+      }
+      openLabel={action === 'opt-out' ? 'Opt out' : 'Opt back in'}
+    >
       {mode === 'mock' && (
         <div role="status" className="mb-4 rounded-lg border border-warning/40 bg-warning/10 p-4">
           <p className="text-[13px] font-medium text-warning">Demo</p>
@@ -201,19 +218,12 @@ export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOu
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h3 id="opt-out-title">Opt out of scoring</h3>
-          <p className="mt-1 text-[13px] text-muted">
-            Ask for <code className="font-mono text-xs text-foreground">{entry.address}</code> to be
-            excluded from scoring, so no voting power is assigned to it. It applies to this address
-            only, takes effect at the next score run, and can be reversed by opting back in.
-          </p>
-        </div>
-        <OptOutStatusBadge status={entry.optOut} />
-      </div>
+      <p className="text-[13px] text-muted">
+        Applies to <code className="font-mono text-xs text-foreground">{entry.address}</code> only,
+        takes effect at the next score run, and can be reversed by opting back in.
+      </p>
 
-      {signingAvailable && safeRequest && safeState === 'awaiting' && (
+      {awaitingCoSigners && (
         <div role="status" className="mt-4 rounded-lg border border-warning/40 bg-warning/10 p-4">
           <p className="text-[13px] font-medium text-warning">
             Safe {ACTION_LABELS[safeRequest.action].toLowerCase()} awaiting co-signers
@@ -283,6 +293,6 @@ export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOu
           {outcome.message}
         </p>
       )}
-    </section>
+    </StepPanel>
   );
 }

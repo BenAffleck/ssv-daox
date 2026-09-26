@@ -66,6 +66,7 @@ ssv-daox/
 │   │   ├── AddressLookupForm.tsx    # GET form for the empty state
 │   │   ├── WalletProvider.tsx       # Client: wagmi, React Query, RainbowKit
 │   │   ├── WalletPanel.tsx          # Client: connect button, address sync, switch prompt
+│   │   ├── StepPanel.tsx            # Client: collapsed numbered card (title, summary, status badge)
 │   │   ├── ClaimWizard.tsx          # Client: HighSignal claim steps + last run
 │   │   ├── OptOutPanel.tsx          # Client: EIP-712 opt-out / opt-in + Demo banner
 │   │   ├── OptOutStatusBadge.tsx
@@ -776,8 +777,16 @@ HighSignal identity. A connected wallet selects its own address.
    siblings after in identity order. A sibling without a leaderboard row is
    kept as unscored. Returns `null` for an address in no identity.
 3. `AddressOverviewTable` - Rank, score, cohort, allocated power, claim status
-4. `ClaimWizard` - HighSignal claim steps for any overview address, with the
-   last run's `as_of` from `fetchScoreHealth()` (fetched alongside the leaderboard)
+4. Three `StepPanel`s, collapsed by default, in this order:
+   1. `ClaimWizard` - HighSignal claim steps for any overview address, with the
+      last run's `as_of` from `fetchScoreHealth()` (fetched alongside the leaderboard)
+   2. `OptOutPanel` - see [Opt-out](#opt-out)
+   3. `DelegationPanel` - see the Split Delegation section
+
+Each collapsed header shows a one-line summary and a status badge (claim
+status, opt-out status or "Awaiting co-signers", delegation count), so the
+state reads without expanding. Bodies stay mounted while hidden, so form state
+survives collapsing.
 
 ### Claim Status
 
@@ -789,8 +798,8 @@ Derived per address:
 
 ### Claim Wizard (HighSignal)
 
-DAOx only guides; HighSignal proves ownership. A "Start claim" button opens
-three steps for the address picked from the overview:
+DAOx only guides; HighSignal proves ownership. Expanding the panel ("Start
+claim") shows three steps for the address picked from the overview:
 
 1. Sign in on HighSignal with Discord, on the SSV project page.
 2. Add one or more Ethereum addresses to the HighSignal profile.
