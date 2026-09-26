@@ -1,6 +1,6 @@
 /**
  * Issues a single-use opt-out nonce for an address
- * POST /api/opt-out/nonce  { address }
+ * POST /api/opt-out/nonce  { address, action }
  */
 
 import { NextResponse } from 'next/server';
@@ -13,10 +13,16 @@ import { getOptOutService } from '@/lib/delegation/opt-out/server';
 export async function POST(request: Request) {
   const parsed = nonceRequestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return errorResponse(400, 'invalid_request', 'The address is not an Ethereum address.');
+    return errorResponse(
+      400,
+      'invalid_request',
+      'The request needs an Ethereum address and an action.',
+    );
   }
   try {
-    return NextResponse.json(await getOptOutService().issueNonce(parsed.data.address));
+    return NextResponse.json(
+      await getOptOutService().issueNonce(parsed.data.address, parsed.data.action),
+    );
   } catch (error) {
     if (error instanceof NonceStoreFullError) {
       return errorResponse(429, 'too_many_requests', error.message);

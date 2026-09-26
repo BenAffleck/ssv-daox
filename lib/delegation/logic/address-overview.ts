@@ -2,6 +2,7 @@ import type { Cohort, Identity, ScoreRow } from '@/lib/dao-delegates/types';
 
 import type { HighSignalConfig } from '../config';
 import type { OptOutStatus, OptOutStatuses } from '../opt-out/score-api';
+import type { SafeRequest, SafeRequests } from '../opt-out/service';
 import type { OptOutAction } from '../opt-out/typed-data';
 
 /**
@@ -24,6 +25,8 @@ export interface OverviewAddress {
   highSignal: HighSignalLinks;
   /** The pending opt-out or opt-in request; `null` when none is pending. */
   optOut: OptOutStatus | null;
+  /** A Safe request whose signing tab may have closed; `null` when none is open. */
+  safeRequest: SafeRequest | null;
 }
 
 export interface HighSignalLinks {
@@ -99,6 +102,7 @@ export function buildAddressOverview(
       claimStatus: claimStatusOf(identity, row),
       highSignal: links,
       optOut: null,
+      safeRequest: null,
     };
   });
 
@@ -118,6 +122,32 @@ export function withOptOutStatuses(
       optOut: statuses[entry.address.toLowerCase()] ?? null,
     })),
   };
+}
+
+/** Attaches the open Safe request of each address, keyed by lowercase address. */
+export function withSafeRequests(
+  overview: AddressOverview,
+  requests: SafeRequests,
+): AddressOverview {
+  return {
+    addresses: overview.addresses.map((entry) => ({
+      ...entry,
+      safeRequest: requests[entry.address.toLowerCase()] ?? null,
+    })),
+  };
+}
+
+/**
+ * - `awaiting`: co-signers can still sign; "Check again" looks for their signatures.
+ * - `expired`: the nonce ran out, so the owner must start again.
+ */
+export type SafeRequestState = 'awaiting' | 'expired';
+
+export function safeRequestState(request: SafeRequest | null, now: Date): SafeRequestState | null {
+  if (!request) {
+    return null;
+  }
+  return now.getTime() > Date.parse(request.expiresAt) ? 'expired' : 'awaiting';
 }
 
 /** An opt-out, pending or applied, is reversed by an opt-in; anything else can opt out. */

@@ -9,8 +9,14 @@ import { getMainnetRpcUrl } from '@/lib/wallet/config';
 import { OPT_OUT_CONFIG } from './config';
 import { createFileNonceStore } from './file-nonce-store';
 import { createMockScoreApiClient } from './mock-score-api';
+import { createSafeTransactionService } from './safe-tx-service';
 import { createScoreApiClient, type OptOutStatuses } from './score-api';
-import { createOptOutService, type OptOutService, type SignatureVerifier } from './service';
+import {
+  createOptOutService,
+  type OptOutService,
+  type SafeRequests,
+  type SignatureVerifier,
+} from './service';
 
 /**
  * Verifies through the mainnet RPC, so EIP-1271 contract wallets (Safe) work
@@ -50,6 +56,10 @@ export function getOptOutService(): OptOutService {
       ? createMockScoreApiClient(path.join(process.cwd(), OPT_OUT_CONFIG.mockFilePath))
       : createScoreApiClient({ baseUrl: DELEGATE_SCORE_CONFIG.apiBaseUrl, fetch }),
     verifySignature: createRpcVerifier(getMainnetRpcUrl()),
+    safeTxService: createSafeTransactionService({
+      baseUrl: OPT_OUT_CONFIG.safeTxServiceUrl,
+      fetch,
+    }),
   });
   return service;
 }
@@ -65,6 +75,20 @@ export async function fetchOptOutStatuses(addresses: string[]): Promise<OptOutSt
     // A no-store fetch throws during prerender to make the route dynamic.
     unstable_rethrow(error);
     console.error('Opt-out status lookup failed:', error);
+    return {};
+  }
+}
+
+/**
+ * The open Safe requests of `addresses`. Returns `{}` when the lookup fails,
+ * so pages render without the "awaiting co-signers" state.
+ */
+export async function fetchSafeRequests(addresses: string[]): Promise<SafeRequests> {
+  try {
+    return await getOptOutService().findSafeRequests(addresses);
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error('Safe request lookup failed:', error);
     return {};
   }
 }

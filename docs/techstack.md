@@ -42,13 +42,14 @@ Minimize moving parts while maximizing developer experience and production relia
 
 ### Wallet (Delegation module)
 
-| Concern         | Choice                      | Rationale                                                                                                                                                                                |
-| --------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ethereum client | **viem**                    | Typed, tree-shakeable. Covers ENS, EIP-712 signing and `verifyTypedData` with EIP-1271 (Safe) support, which opt-out needs.                                                              |
-| React bindings  | **wagmi 2** (+ React Query) | Account state, connectors and contract writes as hooks over viem. Pinned to v2: RainbowKit 2 requires `wagmi@^2`.                                                                        |
-| Connect UI      | **RainbowKit 2**            | Maintained connect modal for injected wallets, WalletConnect and Safe. WalletConnect is optional (`NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`); without it only injected wallets are offered. |
-| RPC             | **DAOx proxy (`/api/rpc`)** | Keeps the keyed `MAINNET_RPC_URL` server-side. Forwards only allowlisted read methods; wallets broadcast transactions. No public RPC fallback.                                           |
-| Opt-out store   | **JSON files in `.cache/`** | Nonces and the Score API mock need no database: one process, short-lived nonces. Ephemeral on serverless hosts, which the "Demo" mock tolerates.                                         |
+| Concern         | Choice                       | Rationale                                                                                                                                                                                                             |
+| --------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ethereum client | **viem**                     | Typed, tree-shakeable. Covers ENS, EIP-712 signing and `verifyTypedData` with EIP-1271 (Safe) support, which opt-out needs.                                                                                           |
+| React bindings  | **wagmi 2** (+ React Query)  | Account state, connectors and contract writes as hooks over viem. Pinned to v2: RainbowKit 2 requires `wagmi@^2`.                                                                                                     |
+| Connect UI      | **RainbowKit 2**             | Maintained connect modal for injected wallets, WalletConnect and Safe. WalletConnect is optional (`NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`); without it only injected wallets are offered.                              |
+| RPC             | **DAOx proxy (`/api/rpc`)**  | Keeps the keyed `MAINNET_RPC_URL` server-side. Forwards only allowlisted read methods; wallets broadcast transactions. No public RPC fallback.                                                                        |
+| Safe signatures | **Safe Transaction Service** | Resumes a Safe opt-out after the tab closed: it holds the co-signers' off-chain message signatures. Called from the server (injected `fetch`, testable, no CORS or client key), mainnet only (`SAFE_TX_SERVICE_URL`). |
+| Opt-out store   | **JSON files in `.cache/`**  | Nonces and the Score API mock need no database: one process, short-lived nonces. Ephemeral on serverless hosts, which the "Demo" mock tolerates.                                                                      |
 
 ### Testing
 

@@ -11,10 +11,15 @@ import {
   buildAddressOverview,
   isAddress,
   withOptOutStatuses,
+  withSafeRequests,
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
 import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
-import { fetchOptOutStatuses, getOptOutService } from '@/lib/delegation/opt-out/server';
+import {
+  fetchOptOutStatuses,
+  fetchSafeRequests,
+  getOptOutService,
+} from '@/lib/delegation/opt-out/server';
 import { fetchVotingPower, type DelegationEntry } from '@/lib/gnosis';
 import { getMainnetRpcUrl } from '@/lib/wallet/config';
 
@@ -148,14 +153,16 @@ export default async function DelegationPage({
 
   const [leaderboard, health] = await Promise.all([fetchLeaderboard(), fetchScoreHealth()]);
   const baseOverview = buildAddressOverview(address, leaderboard.rows, getHighSignalConfig());
-  // One batch: the overview's unscored siblings and every leaderboard address, for target warnings.
-  const statuses = await fetchOptOutStatuses([
-    ...new Set([
-      ...(baseOverview?.addresses ?? []).map((a) => a.address.toLowerCase()),
-      ...leaderboard.rows.map((r) => r.address.toLowerCase()),
+  const overviewAddresses = (baseOverview?.addresses ?? []).map((a) => a.address.toLowerCase());
+  const [statuses, safeRequests] = await Promise.all([
+    // One batch: the overview's unscored siblings and every leaderboard address, for target warnings.
+    fetchOptOutStatuses([
+      ...new Set([...overviewAddresses, ...leaderboard.rows.map((r) => r.address.toLowerCase())]),
     ]),
+    fetchSafeRequests(overviewAddresses),
   ]);
-  const overview = baseOverview && withOptOutStatuses(baseOverview, statuses);
+  const overview =
+    baseOverview && withSafeRequests(withOptOutStatuses(baseOverview, statuses), safeRequests);
   const scoring = targetScoringOf(leaderboard.rows, statuses);
   const ownAddresses = overview?.addresses.map((a) => a.address) ?? [];
 

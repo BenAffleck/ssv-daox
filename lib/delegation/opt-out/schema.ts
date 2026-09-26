@@ -8,7 +8,12 @@ const addressSchema = z
   .refine((value) => isAddress(value, { strict: false }), 'Invalid address')
   .transform((value) => value as Address);
 
-export const nonceRequestSchema = z.object({ address: addressSchema });
+export const nonceRequestSchema = z.object({
+  address: addressSchema,
+  action: z.enum(OPT_OUT_ACTIONS),
+});
+
+export const safeSignatureQuerySchema = z.object({ nonce: z.string().min(1) });
 
 /** Only the message is read: domain and types are always DAOx's own. */
 const submissionSchema = z.object({
@@ -22,7 +27,8 @@ const submissionSchema = z.object({
   }),
   signature: z
     .string()
-    .regex(/^0x[0-9a-fA-F]+$/, 'Invalid signature')
+    // `0x` is a Safe's on-chain signature (SignMessageLib).
+    .regex(/^0x[0-9a-fA-F]*$/, 'Invalid signature')
     .transform((value) => value as `0x${string}`),
 });
 

@@ -28,6 +28,7 @@ ssv-daox/
 │   │   ├── opt-out/          # Signed score opt-out / opt-in
 │   │   │   ├── route.ts      # POST /api/opt-out
 │   │   │   ├── nonce/route.ts   # POST /api/opt-out/nonce
+│   │   │   ├── safe-signature/route.ts # GET /api/opt-out/safe-signature
 │   │   │   └── status/route.ts  # GET /api/opt-out/status
 │   │   ├── ai-extraction/    # AI extraction endpoint
 │   │   │   └── route.ts      # POST /api/ai-extraction
@@ -94,9 +95,9 @@ ssv-daox/
 │   │   └── logic/            # Business logic
 │   ├── delegation/           # Delegation logic
 │   │   ├── config.ts         # HighSignal URLs (env, with defaults)
-│   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out merge, switch prompt
+│   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out and Safe request merge, switch prompt
 │   │   ├── logic/delegation-plan.ts  # Pure: split-delegation form input → delegations, diff, warnings, errors
-│   │   └── opt-out/          # Opt-out service (DI), typed data, Score API clients, file stores
+│   │   └── opt-out/          # Opt-out service (DI), typed data, Score API and Safe clients, file stores
 │   ├── wallet/               # Wallet stack
 │   │   ├── config.ts         # Server-only MAINNET_RPC_URL, proxy path
 │   │   ├── rpc-proxy.ts      # Method allowlist + forwarding (DI fetch)
@@ -818,19 +819,20 @@ or brought back in (opt-in) by signing EIP-712 typed data with its wallet.
   `{ name: "SSV DAOx", version: "1", chainId: 1 }`, primary type `OptOut`,
   message `{ address, action: "opt-out" | "opt-in", nonce, issuedAt }`.
   `issuedAt` is an ISO string so wallets show a readable date.
-- **Nonce:** issued by the server, single use, expires after 1 day, the Score
-  API's own window, so Safe co-signers have time.
+- **Nonce:** issued by the server for an address and action, single use,
+  expires after 1 day, the Score API's own window, so Safe co-signers have
+  time. The record keeps the whole message, so a Safe request can be resumed.
 
 #### Service
 
-`createOptOutService({ nonces, scoreApi, verifySignature, now })` in
+`createOptOutService({ nonces, scoreApi, verifySignature, safeTxService, now })` in
 `lib/delegation/opt-out/service.ts`. All dependencies are injected:
 
-- `issueNonce(address)` → `{ nonce, issuedAt }`.
+- `issueNonce(address, action)` → `{ nonce, issuedAt }`.
 - `submitOptOut({ typedData, signature })` rebuilds domain and types itself
   (only the message is taken from the client), then checks in order: nonce
-  exists, belongs to the address, has the `issuedAt` it was issued with,
-  unexpired, unused; signature valid. It then marks the nonce used and records
+  exists, belongs to the address, has the `issuedAt` and action it was issued
+  with, unexpired, unused; signature valid. It then marks the nonce used and records
   or forwards the request; a failed forward still uses up the nonce. Errors are
   results, not throws, each with an `httpStatus`: `unknown_nonce`,
   `nonce_address_mismatch`, `nonce_mismatch`, `nonce_expired` (`400`),
@@ -840,6 +842,8 @@ or brought back in (opt-in) by signing EIP-712 typed data with its wallet.
   or a malformed body is `score_api_unavailable`.
 - `getStatuses(addresses)` → latest request per lowercase address
   (`{ action, status: "pending" | "applied" }`), or `null`.
+- `findSafeRequests(addresses)` and `findSafeSignature(nonce)`: see
+  [Safe resume](#safe-resume).
 - `mode` is `mock` or `live`, from the Score API client.
 
 `getOptOutService()` (`opt-out/server.ts`) wires one instance per process:
@@ -854,9 +858,49 @@ or brought back in (opt-in) by signing EIP-712 typed data with its wallet.
 - **Verifier:** `publicClient.verifyTypedData` over `MAINNET_RPC_URL`, so
   EIP-1271 contract wallets (Safe) verify as well as EOAs. The UI tells Safe
   users that co-signers may still need to sign.
+- **Safe Transaction Service:** `createSafeTransactionService` against
+  `SAFE_TX_SERVICE_URL` (default `https://api.safe.global/tx-service/eth`,
+  mainnet only).
 - **Score API client:** the file mock (`.cache/opt-out-mock.json`, latest
   request per address) unless `OPT_OUT_MOCK=false`, then the real client
   against `DELEGATE_SCORE_API_URL`.
+
+#### Safe resume
+
+`signTypedData` resolves only once every Safe co-signer has signed. If the tab
+closes first, the owner resumes the request later from `OptOutPanel`.
+
+- **Open request:** `findSafeRequests(addresses)` returns, per lowercase
+  address, the latest nonce record while unused, expired or not, when the Safe
+  Transaction Service knows the address as a Safe (`GET /api/v1/safes/{address}/`).
+  An EOA's abandoned nonce never shows, nor does one a newer request replaced. `/delegation` reads them for the
+  overview with `fetchSafeRequests` and merges them with `withSafeRequests`.
+- **Panel:** `safeRequestState(request, now)` is `awaiting` until the nonce
+  expires, then `expired`. `awaiting` shows "Safe opt-out awaiting co-signers"
+  (or opt-in) with **Check again**; `expired` says so, and the Sign button
+  starts again.
+- **Check again:** `GET /api/opt-out/safe-signature?nonce=` runs
+  `findSafeSignature(nonce)`, which rebuilds the typed data from the record
+  and checks, in order:
+  1. **Off-chain message:** the Safe Transaction Service message
+     (`GET /api/v1/messages/{safeMessageHash}/`). `safeMessageHashOf` is the
+     Safe's EIP-712 `SafeMessage` over the request's EIP-712 hash (no `chainId`
+     in the domain before Safe 1.3.0). Once its confirmations reach the Safe's
+     threshold, the answer is `preparedSignature`.
+  2. **On-chain (SignMessageLib):** the verifier accepts signature `0x`,
+     because `isValidSignature(hash, 0x)` passes once the Safe transaction ran.
+  3. Otherwise `awaiting` with `confirmations` and `threshold`.
+
+  The panel then posts a `signed` answer to `POST /api/opt-out`, so every
+  nonce and signature check applies unchanged. `0x` passes DAOx's schema, but
+  the live Score API refuses it with `400 invalid_request` until
+  BenAffleck/ssv-scoring#24 ships, and that refusal would use up the nonce.
+  So in live mode, step 2 answers `onchain_signature_unsupported` (`409`)
+  instead; remove that guard once #24 ships.
+
+- **Errors:** `not_a_safe` (`400`) and `safe_lookup_unavailable` (`502`), plus
+  the nonce errors.
+- **Out of scope:** ERC-6492 (undeployed Safes).
 
 #### Mock toggle
 
@@ -869,10 +913,13 @@ affected. Set `OPT_OUT_MOCK=false` once the endpoint below ships.
 
 Thin adapters over the service:
 
-- `POST /api/opt-out/nonce` `{ address }` → `{ nonce, issuedAt }`, or `429`
-  when the nonce store is full.
+- `POST /api/opt-out/nonce` `{ address, action }` → `{ nonce, issuedAt }`, or
+  `429` when the nonce store is full.
 - `POST /api/opt-out` `{ typedData, signature }` → the receipt, or the
   service's error with its `httpStatus`; `400` for a malformed body and `503`
+  when `MAINNET_RPC_URL` is unset.
+- `GET /api/opt-out/safe-signature?nonce=…` → `{ status: "awaiting",
+confirmations, threshold }` or `{ status: "signed", submission }`; `503`
   when `MAINNET_RPC_URL` is unset.
 - `GET /api/opt-out/status?addresses=0x…,0x…` → `{ statuses }`. At most 100
   addresses, the Score API's cap.
@@ -929,7 +976,8 @@ shows only the "Opt-out pending" and "Opted out" states. `optOutBadgeOf` and
 `OptOutPanel` acts on any overview address, the requested one first. It is
 enabled only when the connected wallet is that address; otherwise it asks the
 user to switch accounts. It words `expired` and `superseded` refusals for
-users. A Safe's co-signers must sign within the nonce's day.
+users. A Safe's co-signers must sign within the nonce's day; the owner can
+close the page and resume with **Check again** ([Safe resume](#safe-resume)).
 
 ### States
 
@@ -1067,6 +1115,9 @@ HIGHSIGNAL_SETTINGS_URL_TEMPLATE=https://app.highsignal.xyz/settings/u/{username
 
 # Opt-out Score API mock. On unless "false"; on shows the "Demo" banner.
 OPT_OUT_MOCK=true
+
+# Mainnet Safe Transaction Service for Safe resume (default shown).
+SAFE_TX_SERVICE_URL=https://api.safe.global/tx-service/eth
 ```
 
 ---

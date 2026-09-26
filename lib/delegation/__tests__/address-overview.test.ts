@@ -7,7 +7,9 @@ import {
   buildAddressOverview,
   optOutActionFor,
   optOutBadgeOf,
+  safeRequestState,
   withOptOutStatuses,
+  withSafeRequests,
 } from '../logic/address-overview';
 
 const ALICE_1 = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
@@ -194,6 +196,36 @@ describe('opt-out states', () => {
   ] as const)('offers the right action and badge after %s', (_, status, action, badge) => {
     expect(optOutActionFor(status)).toBe(action);
     expect(optOutBadgeOf(status)).toBe(badge);
+  });
+});
+
+describe('Safe requests', () => {
+  const REQUEST = {
+    action: 'opt-out',
+    nonce: 'n1',
+    issuedAt: '2026-09-25T12:00:00.000Z',
+    expiresAt: '2026-09-26T12:00:00.000Z',
+  } as const;
+
+  it('attaches each address its open Safe request, matched regardless of case', () => {
+    const CHECKSUMMED = '0xABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCD';
+    const alice = identity('alice', [CHECKSUMMED, ALICE_2]);
+    const overview = buildAddressOverview(CHECKSUMMED, [row(CHECKSUMMED, alice)], HIGHSIGNAL);
+
+    const merged = withSafeRequests(overview!, { [ALICE_1]: REQUEST, [ALICE_2]: null });
+
+    expect(merged.addresses.map((a) => [a.address, a.safeRequest])).toEqual([
+      [CHECKSUMMED, REQUEST],
+      [ALICE_2, null],
+    ]);
+  });
+
+  it.each([
+    ['without a request', null, '2026-09-25T13:00:00.000Z', null],
+    ['until the nonce expires', REQUEST, '2026-09-26T12:00:00.000Z', 'awaiting'],
+    ['after the nonce expires', REQUEST, '2026-09-26T12:00:00.001Z', 'expired'],
+  ] as const)('shows the panel state %s', (_, request, now, state) => {
+    expect(safeRequestState(request, new Date(now))).toBe(state);
   });
 });
 

@@ -40,6 +40,16 @@ export function createFileNonceStore(filePath: string): NonceStore {
       const { nonces } = await file.read();
       return nonces[nonce] ?? null;
     },
+    async findLatest(address) {
+      const { nonces } = await file.read();
+      let latest: NonceRecord | null = null;
+      for (const record of Object.values(nonces)) {
+        if (record.address === address && (!latest || record.issuedAt > latest.issuedAt)) {
+          latest = record;
+        }
+      }
+      return latest;
+    },
     markUsed(nonce) {
       return file.update((data) => {
         const record = data.nonces[nonce];

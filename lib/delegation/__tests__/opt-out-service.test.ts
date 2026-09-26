@@ -1,11 +1,12 @@
 import { mkdtemp, rm } from 'fs/promises';
 import { tmpdir } from 'os';
 import path from 'path';
-import { verifyTypedData, type Address } from 'viem';
+import { hashTypedData, verifyTypedData, type Address, type Hex } from 'viem';
 import { privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createMockScoreApiClient } from '../opt-out/mock-score-api';
+import { createSafeTransactionService } from '../opt-out/safe-tx-service';
 import { createScoreApiClient } from '../opt-out/score-api';
 import {
   createOptOutService,
@@ -14,7 +15,11 @@ import {
   type OptOutServiceDeps,
   type SignatureVerifier,
 } from '../opt-out/service';
-import { buildOptOutTypedData, type OptOutAction } from '../opt-out/typed-data';
+import {
+  buildOptOutTypedData,
+  type OptOutAction,
+  type OptOutTypedData,
+} from '../opt-out/typed-data';
 
 const ALICE = privateKeyToAccount(
   '0x1111111111111111111111111111111111111111111111111111111111111111',
@@ -32,6 +37,10 @@ function memoryNonceStore(): NonceStore {
     },
     async find(nonce) {
       return records.get(nonce) ?? null;
+    },
+    async findLatest(address) {
+      const own = [...records.values()].filter((r) => r.address === address);
+      return own.sort((a, b) => a.issuedAt.localeCompare(b.issuedAt)).at(-1) ?? null;
     },
     async markUsed(nonce) {
       const record = records.get(nonce);
@@ -63,11 +72,18 @@ describe('opt-out service', () => {
   function serviceWith({
     scoreApi = createMockScoreApiClient(path.join(dir, 'opt-out-mock.json')),
     verifySignature = verifyEoa,
-  }: Partial<Pick<OptOutServiceDeps, 'scoreApi' | 'verifySignature'>> = {}) {
+    safeFetch = async () => new Response('{}', { status: 404 }),
+  }: Partial<Pick<OptOutServiceDeps, 'scoreApi' | 'verifySignature'>> & {
+    safeFetch?: typeof fetch;
+  } = {}) {
     return createOptOutService({
       nonces: memoryNonceStore(),
       scoreApi,
       verifySignature,
+      safeTxService: createSafeTransactionService({
+        baseUrl: 'http://safe.test',
+        fetch: safeFetch,
+      }),
       now: () => clock,
     });
   }
@@ -80,7 +96,7 @@ describe('opt-out service', () => {
     action: OptOutAction,
     address: Address = account.address,
   ) {
-    const { nonce, issuedAt } = await service.issueNonce(address);
+    const { nonce, issuedAt } = await service.issueNonce(address, action);
     const typedData = buildOptOutTypedData({ address, action, nonce, issuedAt });
     return { typedData, signature: await account.signTypedData(typedData) };
   }
@@ -133,7 +149,7 @@ describe('opt-out service', () => {
 
   it("rejects a nonce issued to a different address, even with the address owner's signature", async () => {
     const service = mockService();
-    const { nonce, issuedAt } = await service.issueNonce(BOB.address);
+    const { nonce, issuedAt } = await service.issueNonce(BOB.address, 'opt-out');
     const typedData = buildOptOutTypedData({
       address: ALICE.address,
       action: 'opt-out',
@@ -154,7 +170,7 @@ describe('opt-out service', () => {
 
   it('rejects a signed timestamp other than the one issued with the nonce', async () => {
     const service = mockService();
-    const { nonce } = await service.issueNonce(ALICE.address);
+    const { nonce } = await service.issueNonce(ALICE.address, 'opt-out');
     const typedData = buildOptOutTypedData({
       address: ALICE.address,
       action: 'opt-out',
@@ -321,6 +337,173 @@ describe('opt-out service', () => {
         ok: false,
         error: { code: 'score_api_unavailable', httpStatus: 502 },
       });
+    });
+  });
+
+  describe('Safe resume', () => {
+    const SAFE: Address = '0x5afe5afE5afE5afE5afE5aFe5aFe5Afe5Afe5AfE';
+    const OWNER_SIGNATURE = `0x${'ab'.repeat(65)}` as Hex;
+
+    /** The Safe's EIP-712 `SafeMessage` hash, the Safe Transaction Service's message key. */
+    function safeMessageHashOf(typedData: OptOutTypedData): Hex {
+      return hashTypedData({
+        domain: { chainId: 1, verifyingContract: SAFE },
+        types: { SafeMessage: [{ name: 'message', type: 'bytes' }] },
+        primaryType: 'SafeMessage',
+        message: { message: hashTypedData({ ...typedData, message: { ...typedData.message } }) },
+      });
+    }
+
+    /** A Safe Transaction Service holding a 2-of-3 Safe and, optionally, one message. */
+    function safeServiceWith(message?: { hash: () => Hex; confirmations: number }): typeof fetch {
+      return async (input) => {
+        const url = String(input);
+        if (url === `http://safe.test/api/v1/safes/${SAFE}/`) {
+          return Response.json({ address: SAFE, threshold: 2, version: '1.3.0' });
+        }
+        if (message && url === `http://safe.test/api/v1/messages/${message.hash()}/`) {
+          return Response.json({
+            safe: SAFE,
+            messageHash: message.hash(),
+            confirmations: Array.from({ length: message.confirmations }, () => ({
+              signature: OWNER_SIGNATURE,
+            })),
+            preparedSignature: `0x${'ab'.repeat(65 * message.confirmations)}`,
+          });
+        }
+        return Response.json({ detail: 'Not found.' }, { status: 404 });
+      };
+    }
+
+    async function issuedForSafe(service: ReturnType<typeof mockService>) {
+      const { nonce, issuedAt } = await service.issueNonce(SAFE, 'opt-out');
+      return {
+        nonce,
+        typedData: buildOptOutTypedData({ address: SAFE, action: 'opt-out', nonce, issuedAt }),
+      };
+    }
+
+    it('reports a message still below the threshold as awaiting co-signers', async () => {
+      let hash: Hex = '0x';
+      const service = serviceWith({
+        safeFetch: safeServiceWith({ hash: () => hash, confirmations: 1 }),
+        verifySignature: async () => false,
+      });
+      const { nonce, typedData } = await issuedForSafe(service);
+      hash = safeMessageHashOf(typedData);
+
+      expect(await service.findSafeSignature(nonce)).toEqual({
+        ok: true,
+        status: 'awaiting',
+        confirmations: 1,
+        threshold: 2,
+      });
+    });
+
+    it('submits the combined signature once the owners reach the threshold', async () => {
+      let hash: Hex = '0x';
+      const combined = `0x${'ab'.repeat(130)}`;
+      const service = serviceWith({
+        safeFetch: safeServiceWith({ hash: () => hash, confirmations: 2 }),
+        verifySignature: async ({ signature }) => signature === combined,
+      });
+      const { nonce, typedData } = await issuedForSafe(service);
+      hash = safeMessageHashOf(typedData);
+
+      const found = await service.findSafeSignature(nonce);
+      expect(found).toEqual({
+        ok: true,
+        status: 'signed',
+        submission: { typedData, signature: combined },
+      });
+      if (!found.ok || found.status !== 'signed') {
+        return;
+      }
+      expect(await service.submitOptOut(found.submission)).toEqual({
+        ok: true,
+        receipt: { address: SAFE, action: 'opt-out', status: 'pending' },
+      });
+      expect(await service.findSafeSignature(nonce)).toMatchObject({
+        ok: false,
+        error: { code: 'nonce_used' },
+      });
+    });
+
+    it('submits an empty signature once the Safe signed the message on-chain', async () => {
+      const service = serviceWith({
+        safeFetch: safeServiceWith(),
+        // Stands in for isValidSignature(hash, 0x) after SignMessageLib ran.
+        verifySignature: async ({ signature }) => signature === '0x',
+      });
+      const { nonce, typedData } = await issuedForSafe(service);
+
+      const found = await service.findSafeSignature(nonce);
+      expect(found).toEqual({
+        ok: true,
+        status: 'signed',
+        submission: { typedData, signature: '0x' },
+      });
+      if (!found.ok || found.status !== 'signed') {
+        return;
+      }
+      expect((await service.submitOptOut(found.submission)).ok).toBe(true);
+    });
+
+    it('in live mode, refuses an on-chain signature the Score API cannot accept yet, keeping the nonce', async () => {
+      const service = serviceWith({
+        scoreApi: createScoreApiClient({
+          baseUrl: 'http://score.test',
+          fetch: async () => Response.json({ error: { code: 'invalid_request' } }, { status: 400 }),
+        }),
+        safeFetch: safeServiceWith(),
+        verifySignature: async ({ signature }) => signature === '0x',
+      });
+      const { nonce } = await issuedForSafe(service);
+
+      const expected = { ok: false, error: { code: 'onchain_signature_unsupported' } };
+      expect(await service.findSafeSignature(nonce)).toMatchObject(expected);
+      expect(await service.findSafeSignature(nonce)).toMatchObject(expected);
+    });
+
+    it('refuses to resume an expired request', async () => {
+      const service = serviceWith({ safeFetch: safeServiceWith() });
+      const { nonce } = await issuedForSafe(service);
+
+      clock = new Date('2026-09-26T12:00:00.001Z');
+
+      expect(await service.findSafeSignature(nonce)).toMatchObject({
+        ok: false,
+        error: { code: 'nonce_expired' },
+      });
+    });
+
+    it("lists a Safe's unused request so its owner can resume it, but not an EOA's", async () => {
+      const service = serviceWith({ safeFetch: safeServiceWith() });
+      const { nonce, typedData } = await issuedForSafe(service);
+      await service.issueNonce(ALICE.address, 'opt-out');
+
+      expect(await service.findSafeRequests([SAFE, ALICE.address])).toEqual({
+        [SAFE.toLowerCase()]: {
+          action: 'opt-out',
+          nonce,
+          issuedAt: typedData.message.issuedAt,
+          expiresAt: '2026-09-26T12:00:00.000Z',
+        },
+        [ALICE.address.toLowerCase()]: null,
+      });
+    });
+
+    it('hides an abandoned request once a newer one for the Safe went through', async () => {
+      const service = serviceWith({
+        safeFetch: safeServiceWith(),
+        verifySignature: async ({ signature }) => signature === '0x',
+      });
+      await issuedForSafe(service);
+      clock = new Date('2026-09-25T13:00:00.000Z');
+      const newer = await issuedForSafe(service);
+      await service.submitOptOut({ typedData: newer.typedData, signature: '0x' });
+
+      expect(await service.findSafeRequests([SAFE])).toEqual({ [SAFE.toLowerCase()]: null });
     });
   });
 });
