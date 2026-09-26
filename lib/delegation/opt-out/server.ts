@@ -1,4 +1,3 @@
-import path from 'path';
 import { unstable_rethrow } from 'next/navigation';
 import { createPublicClient, http } from 'viem';
 import { mainnet } from 'viem/chains';
@@ -51,9 +50,9 @@ let service: OptOutService | null = null;
  */
 export function getOptOutService(): OptOutService {
   service ??= createOptOutService({
-    nonces: createFileNonceStore(path.join(process.cwd(), OPT_OUT_CONFIG.nonceFilePath)),
+    nonces: createFileNonceStore(OPT_OUT_CONFIG.nonceFilePath),
     scoreApi: OPT_OUT_CONFIG.mockEnabled
-      ? createMockScoreApiClient(path.join(process.cwd(), OPT_OUT_CONFIG.mockFilePath))
+      ? createMockScoreApiClient(OPT_OUT_CONFIG.mockFilePath)
       : createScoreApiClient({ baseUrl: DELEGATE_SCORE_CONFIG.apiBaseUrl, fetch }),
     verifySignature: createRpcVerifier(getMainnetRpcUrl()),
     safeTxService: createSafeTransactionService({

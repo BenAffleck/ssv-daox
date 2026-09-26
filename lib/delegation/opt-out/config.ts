@@ -1,3 +1,11 @@
+import os from 'os';
+import path from 'path';
+
+/** Vercel functions can write only to `/tmp`; the deployment directory is read-only. */
+function cacheRoot(): string {
+  return process.env.VERCEL ? os.tmpdir() : process.cwd();
+}
+
 export const OPT_OUT_CONFIG = {
   /**
    * The Score API has no opt-out endpoint yet, so the mock is on unless
@@ -13,6 +21,10 @@ export const OPT_OUT_CONFIG = {
       'https://api.safe.global/tx-service/eth'
     );
   },
-  nonceFilePath: '.cache/opt-out-nonces.json',
-  mockFilePath: '.cache/opt-out-mock.json',
+  get nonceFilePath(): string {
+    return path.join(cacheRoot(), '.cache/opt-out-nonces.json');
+  },
+  get mockFilePath(): string {
+    return path.join(cacheRoot(), '.cache/opt-out-mock.json');
+  },
 } as const;

@@ -848,6 +848,9 @@ or brought back in (opt-in) by signing EIP-712 typed data with its wallet.
 
 `getOptOutService()` (`opt-out/server.ts`) wires one instance per process:
 
+- **Cache location:** `.cache/` under the working directory, or under
+  `os.tmpdir()` when `VERCEL` is set, because Vercel functions can write only
+  to `/tmp`.
 - **Nonce store:** `.cache/opt-out-nonces.json`. Records are pruned a day
   after expiry, so a late submission reads as expired, not unknown. At most
   10,000 records (about 2 MB); beyond that the nonce route answers `429`.
