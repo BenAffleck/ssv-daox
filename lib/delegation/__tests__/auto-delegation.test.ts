@@ -282,10 +282,21 @@ describe('autoDelegationView loop guard', () => {
     expect(guarded({ action: 'opt-out', status: 'applied' })).toEqual({ kind: 'awaiting-run' });
   });
 
-  it('guards even when the API omits the pool amount or all power comes from the pool', () => {
-    const pin = pinData({ votingPower: '4000', incomingPower: '4000', delegators: [POOL] });
+  it('guards with an unknown pool amount when the API omits it', () => {
+    const pin = pinData({ votingPower: '5000', incomingPower: '4000', delegators: [POOL] });
 
     expect(guarded(null, pin)).toEqual({ kind: 'opt-out-required', poolPower: null });
+  });
+
+  it('guards rather than reporting nothing to delegate when all power comes from the pool', () => {
+    const pin = pinData({
+      votingPower: '4000',
+      incomingPower: '4000',
+      delegators: [POOL],
+      delegatorTree: [{ delegator: POOL, delegatedPower: 4000 }],
+    });
+
+    expect(guarded(null, pin).kind).toBe('opt-out-required');
   });
 
   it('guards before asking to switch account', () => {
@@ -305,7 +316,7 @@ describe('autoDelegationView loop guard', () => {
     expect(guarded(null, pin).kind).toBe('opt-out-required');
   });
 
-  it('applies the normal states once the pool no longer delegates in, whatever the opt-out', () => {
+  it('applies the normal states once the pool no longer delegates in, even when opted out', () => {
     const pin = pinData({ votingPower: '1000' });
 
     expect(guarded({ action: 'opt-out', status: 'applied' }, pin).kind).toBe('ready');

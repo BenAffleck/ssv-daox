@@ -24,19 +24,29 @@ interface AutoDelegationPathProps {
   poolAddress: string;
   /** The selected address's opt-out request; `null` when it sent none. */
   optOut: OptOutStatus | null;
+  /** `false` when the page has no Opt-out step to open, so "Opt out first" isn't a link. */
+  optOutStepAvailable: boolean;
   /** `false` without an RPC URL: the breakdown shows, the action doesn't. */
   walletAvailable: boolean;
 }
 
 const LAG_NOTE = 'Your voting power card and the pool total update within about 5 minutes.';
 
-function movesAlongNote({ delegatorCount, power }: MovesAlong): string {
-  const whose = `${formatDelegatorCount(delegatorCount)}${delegatorCount === 1 ? "'s" : "'"}`;
-  const amount = power === null ? 'voting power' : formatPower(power);
-  return `${whose} ${amount} moves to the pool too, because delegating passes on power delegated to you.`;
+function powerOrFallback(power: number | null): string {
+  return power === null ? 'voting power' : formatPower(power);
 }
 
-function blockedReason(state: AutoDelegationState, connected: boolean, address: string) {
+function movesAlongNote({ delegatorCount, power }: MovesAlong): string {
+  const whose = `${formatDelegatorCount(delegatorCount)}${delegatorCount === 1 ? "'s" : "'"}`;
+  return `${whose} ${powerOrFallback(power)} moves to the pool too, because delegating passes on power delegated to you.`;
+}
+
+function blockedReason(
+  state: AutoDelegationState,
+  connected: boolean,
+  address: string,
+  optOutStepAvailable: boolean,
+) {
   switch (state.kind) {
     case 'unavailable':
       return "Your current delegations couldn't be loaded, so the action is disabled to avoid overwriting them. Try again in a few minutes.";
@@ -51,11 +61,14 @@ function blockedReason(state: AutoDelegationState, connected: boolean, address: 
     case 'opt-out-required':
       return (
         <>
-          You receive {state.poolPower === null ? 'voting power' : formatPower(state.poolPower)}{' '}
-          from the DAO pool.{' '}
-          <OpenStepButton anchor="opt-out" variant="link">
-            Opt out first
-          </OpenStepButton>
+          You receive {powerOrFallback(state.poolPower)} from the DAO pool.{' '}
+          {optOutStepAvailable ? (
+            <OpenStepButton anchor="opt-out" variant="link">
+              Opt out first
+            </OpenStepButton>
+          ) : (
+            'Opt out first.'
+          )}
         </>
       );
     case 'awaiting-run':
@@ -96,6 +109,7 @@ export default function AutoDelegationPath({
   pin,
   poolAddress,
   optOut,
+  optOutStepAvailable,
   walletAvailable,
 }: AutoDelegationPathProps) {
   const { address: connected } = useAccount();
@@ -147,7 +161,9 @@ export default function AutoDelegationPath({
           ) : (
             <>
               <DelegateButton disabled awaitingWallet={false} />
-              <p className="text-muted">{blockedReason(state, Boolean(connected), address)}</p>
+              <p className="text-muted">
+                {blockedReason(state, Boolean(connected), address, optOutStepAvailable)}
+              </p>
             </>
           )}
         </div>

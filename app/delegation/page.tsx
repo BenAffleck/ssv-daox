@@ -181,13 +181,14 @@ export default async function DelegationPage({
     fetchPin(address),
   ]);
   const baseOverview = buildAddressOverview(address, leaderboard.rows, getHighSignalConfig());
+  const selected = address.toLowerCase();
   const overviewAddresses = (baseOverview?.addresses ?? []).map((a) => a.address.toLowerCase());
   const [statuses, safeRequests] = await Promise.all([
     // One batch: the selected address (loop guard), the overview's unscored siblings and every
     // leaderboard address (target warnings).
     fetchOptOutStatuses([
       ...new Set([
-        address.toLowerCase(),
+        selected,
         ...overviewAddresses,
         ...leaderboard.rows.map((r) => r.address.toLowerCase()),
       ]),
@@ -216,7 +217,8 @@ export default async function DelegationPage({
             address={address}
             pin={pin}
             poolAddress={AUTO_DELEGATION_POOL_ADDRESS}
-            optOut={statuses[address.toLowerCase()] ?? null}
+            optOut={statuses[selected] ?? null}
+            optOutStepAvailable={overview !== null}
             walletAvailable={Boolean(getMainnetRpcUrl())}
           />
         }

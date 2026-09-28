@@ -868,10 +868,14 @@ cohort delegates.
      - `awaiting-run`: an opt-out is pending or applied, but the pool still
        delegates in. It shows "Waiting for the next run to remove the pool's
        delegation."
-       Once the pool's delegation is gone, the states below apply. The guard
-       precedes `switch-account`, `nothing-to-delegate`, `already-delegating`
-       and `ready`. The page adds the selected address to its opt-out status
-       batch; a failed status lookup reads as not opted out.
+
+     Once the pool's delegation is gone, the states below apply. The guard
+     precedes `switch-account`, `nothing-to-delegate`, `already-delegating`
+     and `ready`, so any viewer sees why the address can't delegate to the
+     pool. The page adds the selected address to its opt-out status batch; a
+     failed status lookup reads as not opted out. Without an address overview
+     the page has no Opt-out step, so "Opt out first" is plain text.
+
   4. `switch-account`: no wallet, or the connected wallet isn't the selected
      address. The action says to connect or switch; `WalletPanel` shows the
      account-switch prompt.
