@@ -835,7 +835,7 @@ cohort delegates.
 - **Auto-delegation view model.** `autoDelegationView()`
   (`lib/delegation/logic/auto-delegation.ts`) is pure. It takes the selected
   address, the connected account, the address's pin data (`null` when the
-  lookup failed) and the pool address. It returns the `breakdown` (`null` for a
+  lookup failed), the pool address and the address's opt-out status. It returns the `breakdown` (`null` for a
   failed lookup) and the action `state`. Addresses match case-insensitively.
   The pool's name and `isAutoDelegationPool()` live in `logic/pool.ts`, so
   `delegation-plan.ts` and `auto-delegation.ts` don't import each other. The
@@ -857,16 +857,31 @@ cohort delegates.
      never overwrites delegations the user can't see.
   2. `nothing-to-delegate` with `reason: 'pool'`: the selected address is the
      pool itself ("This is the DAO pool"), whoever views it.
-  3. `switch-account`: no wallet, or the connected wallet isn't the selected
+  3. Loop guard: the pool is among the address's incoming delegators (a
+     cohort seat holder). A split delegation passes on all incoming power, so
+     delegating to the pool would loop (pool → address → pool). The live pin
+     data decides; the opt-out status only picks the state:
+     - `opt-out-required`: not opted out (no request, or an opt-in). The
+       action is replaced by "You receive X from the DAO pool" and an "Opt out
+       first" link that runs `openStep('opt-out')`. `poolPower` is `null` when
+       the API omits the amount.
+     - `awaiting-run`: an opt-out is pending or applied, but the pool still
+       delegates in. It shows "Waiting for the next run to remove the pool's
+       delegation."
+       Once the pool's delegation is gone, the states below apply. The guard
+       precedes `switch-account`, `nothing-to-delegate`, `already-delegating`
+       and `ready`. The page adds the selected address to its opt-out status
+       batch; a failed status lookup reads as not opted out.
+  4. `switch-account`: no wallet, or the connected wallet isn't the selected
      address. The action says to connect or switch; `WalletPanel` shows the
      account-switch prompt.
-  4. `nothing-to-delegate` with `reason: 'no-power'`: own tokens + incoming
+  5. `nothing-to-delegate` with `reason: 'no-power'`: own tokens + incoming
      power from non-pool delegators = 0 ("Nothing to delegate on this
      address").
-  5. `already-delegating`: the only outgoing delegation is the pool at 10000
+  6. `already-delegating`: the only outgoing delegation is the pool at 10000
      bps. A success line reads "You're delegating X to the DAO pool", with a
      "Change" link that runs `openStep('delegation')`.
-  6. `ready`: the action is enabled. The state carries the plan's
+  7. `ready`: the action is enabled. The state carries the plan's
      `delegations` and `droppedDelegates`, and `movesAlong`: the non-pool
      incoming delegators and their power (`null` without any; power `null`
      when the API omits an amount). The card notes that their power moves to
@@ -881,8 +896,8 @@ cohort delegates.
   Delegation step. `SubmissionStatus` shows the same EOA and Safe status, with
   a note that the card and pool total update within about 5 minutes. The
   button stays disabled once a transaction is sent, until the page reloads. The
-  action is hidden without `MAINNET_RPC_URL`. Opt-out status is not read or
-  changed.
+  action is hidden without `MAINNET_RPC_URL`. Opt-out status is read for the
+  loop guard only, never changed.
 
 ### Claim Status
 

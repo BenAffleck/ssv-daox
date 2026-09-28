@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { OptOutStatus } from '@/lib/delegation/opt-out/score-api';
 import { toVotingPowerData } from '@/lib/gnosis/logic/transform-voting-power';
 import type { GnosisDelegationResponse } from '@/lib/gnosis/types';
 
@@ -62,7 +63,7 @@ const HOLDER = '0x1111111111111111111111111111111111111111';
 const DELEGATE = '0x2222222222222222222222222222222222222222';
 
 function view(pin: ReturnType<typeof pinData> | null, address = HOLDER, connected = address) {
-  return autoDelegationView({ address, connected, pin, poolAddress: POOL });
+  return autoDelegationView({ address, connected, pin, poolAddress: POOL, optOut: null });
 }
 
 describe('autoDelegationView breakdown', () => {
@@ -115,6 +116,7 @@ describe('autoDelegationView breakdown', () => {
       connected: HOLDER,
       pin: pinData({ votingPower: '5000', incomingPower: '4000', delegators: [POOL] }),
       poolAddress: POOL.toLowerCase(),
+      optOut: null,
     });
 
     expect(breakdown?.fromPool).toEqual({ power: null });
@@ -148,8 +150,13 @@ describe('autoDelegationView state', () => {
 
   it('asks to switch account when no wallet is connected', () => {
     expect(
-      autoDelegationView({ address: HOLDER, connected: undefined, pin: holding, poolAddress: POOL })
-        .state,
+      autoDelegationView({
+        address: HOLDER,
+        connected: undefined,
+        pin: holding,
+        poolAddress: POOL,
+        optOut: null,
+      }).state,
     ).toEqual({ kind: 'switch-account' });
   });
 
@@ -161,17 +168,6 @@ describe('autoDelegationView state', () => {
 
   it('has nothing to delegate without own tokens or third-party power', () => {
     expect(view(pinData()).state).toEqual({ kind: 'nothing-to-delegate', reason: 'no-power' });
-  });
-
-  it('has nothing to delegate when all incoming power comes from the pool', () => {
-    const pin = pinData({
-      votingPower: '4000',
-      incomingPower: '4000',
-      delegators: [POOL],
-      delegatorTree: [{ delegator: POOL, delegatedPower: 4000 }],
-    });
-
-    expect(view(pin).state).toEqual({ kind: 'nothing-to-delegate', reason: 'no-power' });
   });
 
   it('has nothing to delegate on the pool address itself, whoever views it', () => {
@@ -205,14 +201,13 @@ describe('autoDelegationView state', () => {
     expect(view(pin).state).toMatchObject({ kind: 'ready', droppedDelegates: [DELEGATE] });
   });
 
-  it('reports third-party power that moves to the pool too, excluding the pool', () => {
+  it('reports third-party power that moves to the pool too', () => {
     const pin = pinData({
-      votingPower: '5500',
-      incomingPower: '4500',
-      delegators: ['0xaaa', POOL, '0xbbb'],
+      votingPower: '1500',
+      incomingPower: '500',
+      delegators: ['0xaaa', '0xbbb'],
       delegatorTree: [
         { delegator: '0xaaa', delegatedPower: 300 },
-        { delegator: POOL, delegatedPower: 4000 },
         { delegator: '0xbbb', delegatedPower: 200 },
       ],
     });
@@ -253,5 +248,66 @@ describe('autoDelegationView state', () => {
     });
 
     expect(view(pin).state.kind).toBe('ready');
+  });
+});
+
+describe('autoDelegationView loop guard', () => {
+  const seatHolder = pinData({
+    votingPower: '5000',
+    incomingPower: '4000',
+    delegators: [POOL.toLowerCase()],
+    delegatorTree: [{ delegator: POOL.toLowerCase(), delegatedPower: 4000 }],
+  });
+
+  function guarded(optOut: OptOutStatus | null, pin = seatHolder, connected: string = HOLDER) {
+    return autoDelegationView({ address: HOLDER, connected, pin, poolAddress: POOL, optOut }).state;
+  }
+
+  it('requires an opt-out first when the pool delegates in and the address is not opted out', () => {
+    expect(guarded(null)).toEqual({ kind: 'opt-out-required', poolPower: 4000 });
+  });
+
+  it('requires an opt-out first when only an opt-in is on record', () => {
+    expect(guarded({ action: 'opt-in', status: 'applied' })).toEqual({
+      kind: 'opt-out-required',
+      poolPower: 4000,
+    });
+  });
+
+  it('awaits the next run while the opt-out is pending', () => {
+    expect(guarded({ action: 'opt-out', status: 'pending' })).toEqual({ kind: 'awaiting-run' });
+  });
+
+  it('awaits the next run once the opt-out is applied but the pool still delegates in', () => {
+    expect(guarded({ action: 'opt-out', status: 'applied' })).toEqual({ kind: 'awaiting-run' });
+  });
+
+  it('guards even when the API omits the pool amount or all power comes from the pool', () => {
+    const pin = pinData({ votingPower: '4000', incomingPower: '4000', delegators: [POOL] });
+
+    expect(guarded(null, pin)).toEqual({ kind: 'opt-out-required', poolPower: null });
+  });
+
+  it('guards before asking to switch account', () => {
+    expect(guarded(null, seatHolder, DELEGATE).kind).toBe('opt-out-required');
+  });
+
+  it('guards an address that already delegates to the pool', () => {
+    const pin = pinData({
+      votingPower: '4000',
+      incomingPower: '4000',
+      outgoingPower: '1000',
+      delegators: [POOL],
+      delegatorTree: [{ delegator: POOL, delegatedPower: 4000 }],
+      delegateTree: [{ delegate: POOL, delegatedPower: 1000, weight: 10000 }],
+    });
+
+    expect(guarded(null, pin).kind).toBe('opt-out-required');
+  });
+
+  it('applies the normal states once the pool no longer delegates in, whatever the opt-out', () => {
+    const pin = pinData({ votingPower: '1000' });
+
+    expect(guarded({ action: 'opt-out', status: 'applied' }, pin).kind).toBe('ready');
   });
 });

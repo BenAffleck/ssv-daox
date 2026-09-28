@@ -1,5 +1,6 @@
 import type { Address } from 'viem';
 
+import type { OptOutStatus } from '@/lib/delegation/opt-out/score-api';
 import type { DelegationEntry, VotingPowerData } from '@/lib/gnosis/types';
 
 import {
@@ -68,6 +69,8 @@ export interface AutoDelegationInput {
   /** The selected address's pin data; `null` when the lookup failed. */
   pin: VotingPowerData | null;
   poolAddress: string;
+  /** The selected address's opt-out request; `null` when it sent none. */
+  optOut: OptOutStatus | null;
 }
 
 /** Third-party power delegated in, which the pool delegation passes on too. */
@@ -81,6 +84,10 @@ export interface MovesAlong {
 export type AutoDelegationState =
   | { kind: 'unavailable' }
   | { kind: 'switch-account' }
+  /** The pool delegates in, so delegating to it would loop; `poolPower` is `null` when the API omitted it. */
+  | { kind: 'opt-out-required'; poolPower: number | null }
+  /** Opted out, but the pool's delegation stays until the next run removes it. */
+  | { kind: 'awaiting-run' }
   | { kind: 'nothing-to-delegate'; reason: 'no-power' | 'pool' }
   | { kind: 'already-delegating'; power: number }
   | {
@@ -146,8 +153,12 @@ function delegatesAllToPool(outgoing: DelegationEntry[], poolAddress: string): b
   );
 }
 
+function isOptedOut(optOut: OptOutStatus | null): boolean {
+  return optOut?.action === 'opt-out';
+}
+
 function stateOf(
-  { address, connected, pin, poolAddress }: AutoDelegationInput,
+  { address, connected, pin, poolAddress, optOut }: AutoDelegationInput,
   breakdown: VotingPowerBreakdown | null,
 ): AutoDelegationState {
   if (!pin || !breakdown) {
@@ -155,6 +166,12 @@ function stateOf(
   }
   if (sameAddress(address, poolAddress)) {
     return { kind: 'nothing-to-delegate', reason: 'pool' };
+  }
+  // A split delegation passes on all incoming power: pool → address → pool would loop.
+  if (breakdown.incoming.some((entry) => entry.isPool)) {
+    return isOptedOut(optOut)
+      ? { kind: 'awaiting-run' }
+      : { kind: 'opt-out-required', poolPower: breakdown.fromPool?.power ?? null };
   }
   if (!connected || !sameAddress(connected, address)) {
     return { kind: 'switch-account' };

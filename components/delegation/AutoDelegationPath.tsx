@@ -10,6 +10,7 @@ import {
   type AutoDelegationState,
   type MovesAlong,
 } from '@/lib/delegation/logic/auto-delegation';
+import type { OptOutStatus } from '@/lib/delegation/opt-out/score-api';
 import type { VotingPowerData } from '@/lib/gnosis/types';
 
 import { DropConfirmation, SubmissionStatus, useDelegationWrite } from './DelegationTransaction';
@@ -21,6 +22,8 @@ interface AutoDelegationPathProps {
   /** The selected address's pin data; `null` when the lookup failed. */
   pin: VotingPowerData | null;
   poolAddress: string;
+  /** The selected address's opt-out request; `null` when it sent none. */
+  optOut: OptOutStatus | null;
   /** `false` without an RPC URL: the breakdown shows, the action doesn't. */
   walletAvailable: boolean;
 }
@@ -45,6 +48,18 @@ function blockedReason(state: AutoDelegationState, connected: boolean, address: 
           delegate.
         </>
       );
+    case 'opt-out-required':
+      return (
+        <>
+          You receive {state.poolPower === null ? 'voting power' : formatPower(state.poolPower)}{' '}
+          from the DAO pool.{' '}
+          <OpenStepButton anchor="opt-out" variant="link">
+            Opt out first
+          </OpenStepButton>
+        </>
+      );
+    case 'awaiting-run':
+      return "Waiting for the next run to remove the pool's delegation.";
     case 'nothing-to-delegate':
       return state.reason === 'pool'
         ? 'This is the DAO pool.'
@@ -80,10 +95,17 @@ export default function AutoDelegationPath({
   address,
   pin,
   poolAddress,
+  optOut,
   walletAvailable,
 }: AutoDelegationPathProps) {
   const { address: connected } = useAccount();
-  const { breakdown, state } = autoDelegationView({ address, connected, pin, poolAddress });
+  const { breakdown, state } = autoDelegationView({
+    address,
+    connected,
+    pin,
+    poolAddress,
+    optOut,
+  });
   const { send, submission, awaitingWallet } = useDelegationWrite();
   const [confirmedDrop, setConfirmedDrop] = useState(false);
 
