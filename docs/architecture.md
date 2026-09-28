@@ -68,8 +68,10 @@ ssv-daox/
 │   │   ├── WalletProvider.tsx       # Client: wagmi, React Query, RainbowKit
 │   │   ├── WalletPanel.tsx          # Client: connect button, address sync, switch prompt
 │   │   ├── HeroCard.tsx             # Server: two contribution paths + pool total
-│   │   ├── VotingPowerBreakdownCard.tsx  # Server: selected address's voting power + Details
-│   │   ├── OpenStepButton.tsx       # Client: button that calls openStep
+│   │   ├── AutoDelegationPath.tsx   # Client: breakdown card + "Delegate to the DAO" action
+│   │   ├── VotingPowerBreakdownCard.tsx  # Selected address's voting power + Details
+│   │   ├── DelegationTransaction.tsx     # Client: registry write hook, EOA/Safe status, drop confirmation
+│   │   ├── OpenStepButton.tsx       # Client: button (or link-styled) that calls openStep
 │   │   ├── StepPanel.tsx            # Client: collapsed numbered card (title, summary, status badge)
 │   │   ├── ClaimWizard.tsx          # Client: HighSignal claim steps + last run
 │   │   ├── OptOutPanel.tsx          # Client: EIP-712 opt-out / opt-in + Demo banner
@@ -101,7 +103,8 @@ ssv-daox/
 │   ├── delegation/           # Delegation logic
 │   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address
 │   │   ├── api/fetch-pin.ts  # Gnosis pin per address; pool pin → PoolSummary, shared by both pages
-│   │   ├── logic/auto-delegation.ts  # Pure: pool summary; auto-delegation view model (breakdown); SSV formatting
+│   │   ├── logic/pool.ts             # Pure: pool name, isAutoDelegationPool, address matching
+│   │   ├── logic/auto-delegation.ts  # Pure: pool summary; auto-delegation view model (breakdown, action state); SSV formatting
 │   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out and Safe request merge, switch prompt
 │   │   ├── logic/delegation-plan.ts  # Pure: split-delegation form input → delegations, diff, warnings, errors
 │   │   └── opt-out/          # Opt-out service (DI), typed data, Score API and Safe clients, file stores
@@ -831,9 +834,12 @@ cohort delegates.
   - A failed pool lookup shows a status line instead of the totals.
 - **Auto-delegation view model.** `autoDelegationView()`
   (`lib/delegation/logic/auto-delegation.ts`) is pure. It takes the selected
-  address's pin data (`null` when the lookup failed) and the pool address, and
-  returns the `breakdown`, or `null` for a failed lookup. Addresses match
-  case-insensitively. The breakdown holds:
+  address, the connected account, the address's pin data (`null` when the
+  lookup failed) and the pool address. It returns the `breakdown` (`null` for a
+  failed lookup) and the action `state`. Addresses match case-insensitively.
+  The pool's name and `isAutoDelegationPool()` live in `logic/pool.ts`, so
+  `delegation-plan.ts` and `auto-delegation.ts` don't import each other. The
+  breakdown holds:
   - your tokens (SSV + cSSV held) = total − incoming + outgoing
   - delegated to you, with the delegator count
   - of which from the pool, `null` unless the pool delegates in; its amount is
@@ -846,6 +852,36 @@ cohort delegates.
   leaderboard tooltip's "Net Delegated" is not shown. A failed pin lookup shows
   a status line. The page fetches the pin once (`fetchPin`) and also feeds its
   outgoing delegations to the Delegation step.
+- **Action states.** `state.kind` is the first that applies:
+  1. `unavailable`: the pin lookup failed. The action is disabled, so a write
+     never overwrites delegations the user can't see.
+  2. `nothing-to-delegate` with `reason: 'pool'`: the selected address is the
+     pool itself ("This is the DAO pool"), whoever views it.
+  3. `switch-account`: no wallet, or the connected wallet isn't the selected
+     address. The action says to connect or switch; `WalletPanel` shows the
+     account-switch prompt.
+  4. `nothing-to-delegate` with `reason: 'no-power'`: own tokens + incoming
+     power from non-pool delegators = 0 ("Nothing to delegate on this
+     address").
+  5. `already-delegating`: the only outgoing delegation is the pool at 10000
+     bps. A success line reads "You're delegating X to the DAO pool", with a
+     "Change" link that runs `openStep('delegation')`.
+  6. `ready`: the action is enabled. The state carries the plan's
+     `delegations` and `droppedDelegates`, and `movesAlong`: the non-pool
+     incoming delegators and their power (`null` without any; power `null`
+     when the API omits an amount). The card notes that their power moves to
+     the pool too, because a split delegation passes on delegated power.
+- **"Delegate to the DAO".** `AutoDelegationPath` (client) computes the view
+  with `useAccount()` and renders the breakdown card and the action. The
+  `ready` state comes from `planDelegation()` with an All to one input to the
+  pool (10000 bps, expiration 0, `SSV_SPACE_ID`), so the action reuses the
+  Split Delegation plan and write path (`useDelegationWrite`,
+  `setDelegation`). It replaces the address's whole delegation. Dropped
+  delegates need the same confirm checkbox (`DropConfirmation`) as the
+  Delegation step. `SubmissionStatus` shows the same EOA and Safe status, with
+  a note that the card and pool total update within about 5 minutes. The
+  action is hidden without `MAINNET_RPC_URL`. Opt-out status is not read or
+  changed.
 
 ### Claim Status
 
@@ -1114,8 +1150,10 @@ diff: { added, changed, removed }, droppedDelegates, warnings, notes, errors }`.
    the drop confirmation and in the leaderboard's voting-power delegation
    lists, with the address as a tooltip. If
    `droppedDelegates` is non-empty, a checkbox must confirm dropping them.
-5. **Transaction.** `useWriteContract` calls `setDelegation(context,
-delegation, 0)` or `clearDelegation(context)`. The wallet broadcasts it.
+5. **Transaction.** `useDelegationWrite()` (`DelegationTransaction.tsx`,
+   shared with "Delegate to the DAO") calls `setDelegation(context,
+delegation, 0)` or `clearDelegation(context)` with `useWriteContract`. The
+   wallet broadcasts it.
 
 **ABI and encoding** (`lib/gnosis/registry.ts`, vendored minimal ABI; the
 selectors are in the deployed bytecode):

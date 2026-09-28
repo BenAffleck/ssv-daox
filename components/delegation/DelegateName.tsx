@@ -1,7 +1,4 @@
-import {
-  AUTO_DELEGATION_POOL_NAME,
-  isAutoDelegationPool,
-} from '@/lib/delegation/logic/auto-delegation';
+import { AUTO_DELEGATION_POOL_NAME, isAutoDelegationPool } from '@/lib/delegation/logic/pool';
 
 /** The pool by name, any other delegate by address. `className` sets size and wrapping. */
 export default function DelegateName({

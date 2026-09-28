@@ -58,24 +58,29 @@ describe('summarizePool', () => {
 });
 
 const POOL = '0xb35096b074fdb9bBac63E3AdaE0Bbde512B2E6b6';
+const HOLDER = '0x1111111111111111111111111111111111111111';
+const DELEGATE = '0x2222222222222222222222222222222222222222';
+
+function view(pin: ReturnType<typeof pinData> | null, address = HOLDER, connected = address) {
+  return autoDelegationView({ address, connected, pin, poolAddress: POOL });
+}
 
 describe('autoDelegationView breakdown', () => {
   it('is unavailable when the pin lookup failed', () => {
-    expect(autoDelegationView({ pin: null, poolAddress: POOL }).breakdown).toBeNull();
+    expect(view(null).breakdown).toBeNull();
   });
 
   it('derives own tokens as total − incoming + outgoing', () => {
-    const { breakdown } = autoDelegationView({
-      pin: pinData({
+    const { breakdown } = view(
+      pinData({
         votingPower: '900',
         incomingPower: '300',
         outgoingPower: '400',
         delegators: ['0xaaa'],
         delegatorTree: [{ delegator: '0xaaa', delegatedPower: 300 }],
-        delegateTree: [{ delegate: '0xccc', delegatedPower: 400 }],
+        delegateTree: [{ delegate: DELEGATE, delegatedPower: 400 }],
       }),
-      poolAddress: POOL,
-    });
+    );
 
     expect(breakdown).toMatchObject({
       ownPower: 1000,
@@ -88,8 +93,8 @@ describe('autoDelegationView breakdown', () => {
   });
 
   it('separates power delegated in from the pool, matching its address in any case', () => {
-    const { breakdown } = autoDelegationView({
-      pin: pinData({
+    const { breakdown } = view(
+      pinData({
         votingPower: '5000',
         incomingPower: '4500',
         delegators: [POOL.toLowerCase(), '0xaaa'],
@@ -98,8 +103,7 @@ describe('autoDelegationView breakdown', () => {
           { delegator: '0xaaa', delegatedPower: 500 },
         ],
       }),
-      poolAddress: POOL,
-    });
+    );
 
     expect(breakdown?.incomingPower).toBe(4500);
     expect(breakdown?.fromPool).toEqual({ power: 4000 });
@@ -107,6 +111,8 @@ describe('autoDelegationView breakdown', () => {
 
   it('keeps the pool row with an unknown amount when the API omits delegated power', () => {
     const { breakdown } = autoDelegationView({
+      address: HOLDER,
+      connected: HOLDER,
       pin: pinData({ votingPower: '5000', incomingPower: '4000', delegators: [POOL] }),
       poolAddress: POOL.toLowerCase(),
     });
@@ -115,17 +121,137 @@ describe('autoDelegationView breakdown', () => {
   });
 
   it('flags the pool among outgoing delegations, matching its address in any case', () => {
-    const { breakdown } = autoDelegationView({
-      pin: pinData({
+    const { breakdown } = view(
+      pinData({
         outgoingPower: '1000',
         delegateTree: [
           { delegate: POOL.toUpperCase().replace('0X', '0x'), delegatedPower: 600 },
-          { delegate: '0xccc', delegatedPower: 400 },
+          { delegate: DELEGATE, delegatedPower: 400 },
         ],
       }),
-      poolAddress: POOL,
-    });
+    );
 
     expect(breakdown?.outgoing.map((e) => e.isPool)).toEqual([true, false]);
+  });
+});
+
+describe('autoDelegationView state', () => {
+  const holding = pinData({ votingPower: '1000' });
+
+  it('is unavailable when the pin lookup failed, so a write never overwrites unseen delegations', () => {
+    expect(view(null).state).toEqual({ kind: 'unavailable' });
+  });
+
+  it('asks to switch account when the connected wallet is another address', () => {
+    expect(view(holding, HOLDER, DELEGATE).state).toEqual({ kind: 'switch-account' });
+  });
+
+  it('asks to switch account when no wallet is connected', () => {
+    expect(
+      autoDelegationView({ address: HOLDER, connected: undefined, pin: holding, poolAddress: POOL })
+        .state,
+    ).toEqual({ kind: 'switch-account' });
+  });
+
+  it('matches the connected wallet case-insensitively', () => {
+    expect(view(holding, HOLDER, HOLDER.toUpperCase().replace('0X', '0x')).state.kind).toBe(
+      'ready',
+    );
+  });
+
+  it('has nothing to delegate without own tokens or third-party power', () => {
+    expect(view(pinData()).state).toEqual({ kind: 'nothing-to-delegate', reason: 'no-power' });
+  });
+
+  it('has nothing to delegate when all incoming power comes from the pool', () => {
+    const pin = pinData({
+      votingPower: '4000',
+      incomingPower: '4000',
+      delegators: [POOL],
+      delegatorTree: [{ delegator: POOL, delegatedPower: 4000 }],
+    });
+
+    expect(view(pin).state).toEqual({ kind: 'nothing-to-delegate', reason: 'no-power' });
+  });
+
+  it('has nothing to delegate on the pool address itself, whoever views it', () => {
+    const pool = pinData({ votingPower: '1260000' });
+
+    expect(view(pool, POOL.toLowerCase(), DELEGATE).state).toEqual({
+      kind: 'nothing-to-delegate',
+      reason: 'pool',
+    });
+  });
+
+  it('is ready to delegate everything to the pool without a current delegation', () => {
+    expect(view(holding).state).toEqual({
+      kind: 'ready',
+      delegations: [{ address: POOL, bps: 10000 }],
+      droppedDelegates: [],
+      movesAlong: null,
+    });
+  });
+
+  it('lists the current delegates the pool delegation drops', () => {
+    const pin = pinData({
+      votingPower: '0',
+      outgoingPower: '1000',
+      delegateTree: [
+        { delegate: DELEGATE, delegatedPower: 600, weight: 6000 },
+        { delegate: POOL.toLowerCase(), delegatedPower: 400, weight: 4000 },
+      ],
+    });
+
+    expect(view(pin).state).toMatchObject({ kind: 'ready', droppedDelegates: [DELEGATE] });
+  });
+
+  it('reports third-party power that moves to the pool too, excluding the pool', () => {
+    const pin = pinData({
+      votingPower: '5500',
+      incomingPower: '4500',
+      delegators: ['0xaaa', POOL, '0xbbb'],
+      delegatorTree: [
+        { delegator: '0xaaa', delegatedPower: 300 },
+        { delegator: POOL, delegatedPower: 4000 },
+        { delegator: '0xbbb', delegatedPower: 200 },
+      ],
+    });
+
+    expect(view(pin).state).toMatchObject({
+      kind: 'ready',
+      movesAlong: { delegatorCount: 2, power: 500 },
+    });
+  });
+
+  it('reports third-party power with an unknown amount when the API omits it', () => {
+    const pin = pinData({ votingPower: '1500', incomingPower: '500', delegators: ['0xaaa'] });
+
+    expect(view(pin).state).toMatchObject({
+      kind: 'ready',
+      movesAlong: { delegatorCount: 1, power: null },
+    });
+  });
+
+  it('is already delegating when the only delegation is the pool at 100%', () => {
+    const pin = pinData({
+      votingPower: '0',
+      outgoingPower: '1000',
+      delegateTree: [{ delegate: POOL.toLowerCase(), delegatedPower: 1000, weight: 10000 }],
+    });
+
+    expect(view(pin).state).toEqual({ kind: 'already-delegating', power: 1000 });
+  });
+
+  it('is ready when the pool holds only part of the delegation', () => {
+    const pin = pinData({
+      votingPower: '0',
+      outgoingPower: '1000',
+      delegateTree: [
+        { delegate: POOL, delegatedPower: 500, weight: 5000 },
+        { delegate: DELEGATE, delegatedPower: 500, weight: 5000 },
+      ],
+    });
+
+    expect(view(pin).state.kind).toBe('ready');
   });
 });

@@ -5,7 +5,7 @@ import type { DelegationEntry } from '@/lib/gnosis/types';
 
 import type { OptOutStatuses } from '../opt-out/score-api';
 import { isAddress, optOutBadgeOf } from './address-overview';
-import { AUTO_DELEGATION_POOL_NAME, isAutoDelegationPool } from './auto-delegation';
+import { AUTO_DELEGATION_POOL_NAME, isAutoDelegationPool } from './pool';
 
 const FULL_BPS = 10000;
 export const MAX_SPLIT_TARGETS = 10;

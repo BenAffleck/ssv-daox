@@ -2,15 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
-import { BaseError, type Address, type Hash } from 'viem';
 import { normalize } from 'viem/ens';
-import {
-  useAccount,
-  useConfig,
-  usePublicClient,
-  useWaitForTransactionReceipt,
-  useWriteContract,
-} from 'wagmi';
+import { useAccount, useConfig } from 'wagmi';
 import { mainnet } from 'wagmi/chains';
 import { getEnsAddressQueryOptions } from 'wagmi/query';
 
@@ -24,15 +17,10 @@ import {
   type TargetScoring,
 } from '@/lib/delegation/logic/delegation-plan';
 import { SSV_SPACE_ID } from '@/lib/gnosis/config';
-import {
-  NO_EXPIRATION,
-  SPLIT_DELEGATION_ABI,
-  SPLIT_DELEGATION_REGISTRY,
-  toRegistryDelegations,
-} from '@/lib/gnosis/registry';
 import type { DelegationEntry } from '@/lib/gnosis/types';
 
 import DelegateName from './DelegateName';
+import { DropConfirmation, SubmissionStatus, useDelegationWrite } from './DelegationTransaction';
 import StepPanel from './StepPanel';
 
 interface DelegationPanelProps {
@@ -55,11 +43,6 @@ interface ResolvedTarget {
   pending: boolean;
   missing: boolean;
 }
-
-type Submission =
-  { kind: 'sent'; hash: Hash; safe: Address | null } | { kind: 'error'; message: string };
-
-const EXPLORER_URL = mainnet.blockExplorers.default.url;
 
 function toEnsName(value: string): string | null {
   if (!value.includes('.')) {
@@ -115,14 +98,6 @@ function EnsResolution({ target }: { target: ResolvedTarget }) {
   );
 }
 
-// wagmi wraps the wallet's rejection in a contract-call error.
-function isUserRejection(error: unknown): boolean {
-  if (error instanceof BaseError) {
-    return error.walk((e) => (e as Error).name === 'UserRejectedRequestError') !== null;
-  }
-  return error instanceof Error && error.name === 'UserRejectedRequestError';
-}
-
 function DelegationList({ title, items }: { title: string; items: PlannedDelegation[] }) {
   return (
     <div className="min-w-0 flex-1 rounded-lg bg-background p-4">
@@ -138,52 +113,6 @@ function DelegationList({ title, items }: { title: string; items: PlannedDelegat
             </li>
           ))}
         </ul>
-      )}
-    </div>
-  );
-}
-
-function TransactionStatus({ hash, safe }: { hash: Hash; safe: Address | null }) {
-  const receipt = useWaitForTransactionReceipt({ hash, query: { enabled: safe === null } });
-
-  if (safe) {
-    return (
-      <p role="status" className="text-[13px] text-foreground">
-        Proposed to your Safe. Your co-signers must approve it before it executes.{' '}
-        <a
-          href={`https://app.safe.global/transactions/queue?safe=eth:${safe}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline"
-        >
-          Open the Safe queue
-        </a>
-      </p>
-    );
-  }
-
-  const failed = receipt.isError || receipt.data?.status === 'reverted';
-  const confirmed = receipt.data?.status === 'success';
-  const label = failed ? 'Failed' : confirmed ? 'Confirmed' : 'Pending';
-  const tone = failed ? 'text-danger' : confirmed ? 'text-accent' : 'text-warning';
-
-  return (
-    <div role="status" className="space-y-1 text-[13px]">
-      <p>
-        <span className={`font-medium ${tone}`}>{label}</span>{' '}
-        <a
-          href={`${EXPLORER_URL}/tx/${hash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline"
-        >
-          View on Etherscan
-        </a>
-      </p>
-      {confirmed && (
-        <p className="text-muted">
-          The Gnosis delegation API can take a few minutes to show the new delegation.
-        </p>
       )}
     </div>
   );
@@ -215,8 +144,7 @@ export default function DelegationPanel({
   step,
 }: DelegationPanelProps) {
   const { address: connected } = useAccount();
-  const publicClient = usePublicClient({ chainId: mainnet.id });
-  const { writeContractAsync, isPending: awaitingWallet } = useWriteContract();
+  const { send: write, submission, resetSubmission, awaitingWallet } = useDelegationWrite();
 
   const currentEntries = useMemo(() => current ?? [], [current]);
   const before = useMemo(() => toPlannedDelegations(currentEntries), [currentEntries]);
@@ -226,7 +154,6 @@ export default function DelegationPanel({
   const [confirmedDrop, setConfirmedDrop] = useState(false);
   // Errors show only after an edit, so a prefill that matches the current delegation isn't an error.
   const [edited, setEdited] = useState(false);
-  const [submission, setSubmission] = useState<Submission | null>(null);
 
   const inputs = mode === 'split' ? splitTargets.map((t) => t.target.trim()) : [target.trim()];
   const resolved = useResolvedTargets(mode === 'clear' ? [] : inputs);
@@ -280,7 +207,7 @@ export default function DelegationPanel({
   function resetOutcome() {
     setEdited(true);
     setConfirmedDrop(false);
-    setSubmission(null);
+    resetSubmission();
   }
 
   function changeMode(next: Mode) {
@@ -321,40 +248,8 @@ export default function DelegationPanel({
     }
   }
 
-  async function send() {
-    setSubmission(null);
-    try {
-      const hash =
-        mode === 'clear'
-          ? await writeContractAsync({
-              address: SPLIT_DELEGATION_REGISTRY,
-              abi: SPLIT_DELEGATION_ABI,
-              functionName: 'clearDelegation',
-              args: [SSV_SPACE_ID],
-              chainId: mainnet.id,
-            })
-          : await writeContractAsync({
-              address: SPLIT_DELEGATION_REGISTRY,
-              abi: SPLIT_DELEGATION_ABI,
-              functionName: 'setDelegation',
-              args: [SSV_SPACE_ID, toRegistryDelegations(plan.delegations), NO_EXPIRATION],
-              chainId: mainnet.id,
-            });
-      // A contract account (Safe) returns a Safe transaction hash that is never mined as-is.
-      const code = connected ? await publicClient?.getCode({ address: connected }) : undefined;
-      setSubmission({
-        kind: 'sent',
-        hash,
-        safe: connected && code && code !== '0x' ? connected : null,
-      });
-    } catch (error) {
-      setSubmission({
-        kind: 'error',
-        message: isUserRejection(error)
-          ? 'The transaction was rejected in your wallet.'
-          : 'The transaction could not be sent. Try again.',
-      });
-    }
+  function send() {
+    return write(mode === 'clear' ? 'clear' : plan.delegations);
   }
 
   const tabClass = (active: boolean) => (active ? 'filter-btn-active' : 'filter-btn');
@@ -538,24 +433,11 @@ export default function DelegationPanel({
       </div>
 
       {plan.errors.length === 0 && plan.droppedDelegates.length > 0 && (
-        <label className="mt-4 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-4 text-[13px] text-foreground">
-          <input
-            type="checkbox"
-            checked={confirmedDrop}
-            onChange={(e) => setConfirmedDrop(e.target.checked)}
-            className="mt-0.5"
-          />
-          <span>
-            I understand this removes my delegation to{' '}
-            {plan.droppedDelegates.map((d, i) => (
-              <span key={d}>
-                {i > 0 && ', '}
-                <DelegateName address={d} className="text-xs" />
-              </span>
-            ))}
-            .
-          </span>
-        </label>
+        <DropConfirmation
+          dropped={plan.droppedDelegates}
+          checked={confirmedDrop}
+          onChange={setConfirmedDrop}
+        />
       )}
 
       <div className="mt-4 space-y-3">
@@ -577,14 +459,10 @@ export default function DelegationPanel({
             <code className="font-mono text-xs text-foreground">{address}</code> to delegate.
           </p>
         )}
-        {submission?.kind === 'sent' && (
-          <TransactionStatus hash={submission.hash} safe={submission.safe} />
-        )}
-        {submission?.kind === 'error' && (
-          <p role="alert" className="text-[13px] text-danger">
-            {submission.message}
-          </p>
-        )}
+        <SubmissionStatus
+          submission={submission}
+          note="The Gnosis delegation API can take a few minutes to show the new delegation."
+        />
       </div>
     </StepPanel>
   );

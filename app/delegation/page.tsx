@@ -1,5 +1,6 @@
 import AddressLookupForm from '@/components/delegation/AddressLookupForm';
 import AddressOverviewTable from '@/components/delegation/AddressOverviewTable';
+import AutoDelegationPath from '@/components/delegation/AutoDelegationPath';
 import ClaimWizard from '@/components/delegation/ClaimWizard';
 import DelegationPanel from '@/components/delegation/DelegationPanel';
 import HeroCard from '@/components/delegation/HeroCard';
@@ -16,11 +17,7 @@ import {
   withSafeRequests,
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
-import {
-  autoDelegationView,
-  type AutoDelegationView,
-  type PoolSummary,
-} from '@/lib/delegation/logic/auto-delegation';
+import type { PoolSummary } from '@/lib/delegation/logic/auto-delegation';
 import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
 import {
   fetchOptOutStatuses,
@@ -76,11 +73,11 @@ function WalletSection({
 function Hero({
   pool,
   overview,
-  autoDelegation = null,
+  autoDelegation,
 }: {
   pool: PoolSummary | null;
   overview: AddressOverview | null;
-  autoDelegation?: AutoDelegationView | null;
+  autoDelegation?: React.ReactNode;
 }) {
   return (
     <HeroCard
@@ -196,7 +193,6 @@ export default async function DelegationPage({
     baseOverview && withSafeRequests(withOptOutStatuses(baseOverview, statuses), safeRequests);
   const scoring = targetScoringOf(leaderboard.rows, statuses);
   const ownAddresses = overview?.addresses.map((a) => a.address) ?? [];
-  const autoDelegation = autoDelegationView({ pin, poolAddress: AUTO_DELEGATION_POOL_ADDRESS });
   const outgoingDelegations = pin?.outgoingDelegations ?? null;
 
   return (
@@ -207,7 +203,18 @@ export default async function DelegationPage({
         </p>
         <WalletSection address={address} overview={overview} />
       </PageHeader>
-      <Hero pool={pool} overview={overview} autoDelegation={autoDelegation} />
+      <Hero
+        pool={pool}
+        overview={overview}
+        autoDelegation={
+          <AutoDelegationPath
+            address={address}
+            pin={pin}
+            poolAddress={AUTO_DELEGATION_POOL_ADDRESS}
+            walletAvailable={Boolean(getMainnetRpcUrl())}
+          />
+        }
+      />
       {overview ? (
         <>
           <AddressOverviewTable addresses={overview.addresses} />
