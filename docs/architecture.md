@@ -66,6 +66,8 @@ ssv-daox/
 │   │   ├── AddressLookupForm.tsx    # GET form for the empty state
 │   │   ├── WalletProvider.tsx       # Client: wagmi, React Query, RainbowKit
 │   │   ├── WalletPanel.tsx          # Client: connect button, address sync, switch prompt
+│   │   ├── HeroCard.tsx             # Server: two contribution paths + pool total
+│   │   ├── OpenStepButton.tsx       # Client: button that calls openStep
 │   │   ├── StepPanel.tsx            # Client: collapsed numbered card (title, summary, status badge)
 │   │   ├── ClaimWizard.tsx          # Client: HighSignal claim steps + last run
 │   │   ├── OptOutPanel.tsx          # Client: EIP-712 opt-out / opt-in + Demo banner
@@ -95,7 +97,8 @@ ssv-daox/
 │   │   ├── api/              # Delegate Score API fetcher
 │   │   └── logic/            # Business logic
 │   ├── delegation/           # Delegation logic
-│   │   ├── config.ts         # HighSignal URLs (env, with defaults)
+│   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address
+│   │   ├── logic/auto-delegation.ts  # Pure: pool pin data → total, DAO-held, community-delegated
 │   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out and Safe request merge, switch prompt
 │   │   ├── logic/delegation-plan.ts  # Pure: split-delegation form input → delegations, diff, warnings, errors
 │   │   └── opt-out/          # Opt-out service (DI), typed data, Score API and Safe clients, file stores
@@ -794,6 +797,29 @@ Three things expand the step and scroll to it: a URL fragment on load, a plain
 `openStep`: Next's `<Link>` and `router.push` change the fragment without firing
 `hashchange`. Collapsing a targeted step clears the fragment, so the same link
 opens it again.
+
+### Auto-delegation
+
+The DAO's **auto-delegation pool** is `AUTO_DELEGATION_POOL_ADDRESS` in
+`lib/delegation/config.ts`. It is a constant, not an environment variable,
+because it is a governance fact. Score runs redistribute the pool's power to
+cohort delegates.
+
+- **Pool summary.** The page fetches the pool's pin response with
+  `fetchVotingPower` (5-minute cache). `summarizePool()`
+  (`lib/delegation/logic/auto-delegation.ts`) turns it into:
+  - total voting power
+  - DAO-held = the pool's own tokens (total − incoming + outgoing)
+  - community-delegated = incoming power, with the delegator count
+- **Hero card.** `HeroCard` sits above the address overview in every page
+  state (no address, invalid, unscored, scored, Score API unconfigured). It
+  presents two paths and the pool total:
+  - "Become a delegate" shows the requested address's claim status, rank and
+    cohort from the overview, and opens the Claim step with `openStep('claim')`.
+    Without an overview there is no Claim step, so it links to HighSignal.
+  - "Let the DAO delegate for you" explains the pool in plain words. It shows
+    no per-user or per-seat numbers.
+  - A failed pool lookup shows a status line instead of the totals.
 
 ### Claim Status
 

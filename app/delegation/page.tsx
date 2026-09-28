@@ -2,11 +2,12 @@ import AddressLookupForm from '@/components/delegation/AddressLookupForm';
 import AddressOverviewTable from '@/components/delegation/AddressOverviewTable';
 import ClaimWizard from '@/components/delegation/ClaimWizard';
 import DelegationPanel from '@/components/delegation/DelegationPanel';
+import HeroCard from '@/components/delegation/HeroCard';
 import OptOutPanel from '@/components/delegation/OptOutPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
 import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
-import { getHighSignalConfig } from '@/lib/delegation/config';
+import { AUTO_DELEGATION_POOL_ADDRESS, getHighSignalConfig } from '@/lib/delegation/config';
 import {
   buildAddressOverview,
   isAddress,
@@ -14,6 +15,7 @@ import {
   withSafeRequests,
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
+import { summarizePool, type PoolSummary } from '@/lib/delegation/logic/auto-delegation';
 import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
 import {
   fetchOptOutStatuses,
@@ -62,6 +64,23 @@ function WalletSection({
     <WalletPanel
       selectedAddress={address}
       identityAddresses={overview?.addresses.map((a) => a.address) ?? []}
+    />
+  );
+}
+
+/** Returns `null` when the Gnosis API lookup fails. */
+async function fetchPoolSummary(): Promise<PoolSummary | null> {
+  const votingPower = await fetchVotingPower([AUTO_DELEGATION_POOL_ADDRESS]);
+  const pool = votingPower[AUTO_DELEGATION_POOL_ADDRESS.toLowerCase()];
+  return pool ? summarizePool(pool) : null;
+}
+
+function Hero({ pool, overview }: { pool: PoolSummary | null; overview: AddressOverview | null }) {
+  return (
+    <HeroCard
+      pool={pool}
+      candidate={overview?.addresses[0] ?? null}
+      highSignalProjectUrl={getHighSignalConfig().projectUrl}
     />
   );
 }
@@ -130,6 +149,7 @@ export default async function DelegationPage({
     return (
       <div className="mx-auto max-w-7xl px-6 py-10">
         <PageHeader />
+        <Hero pool={await fetchPoolSummary()} overview={null} />
         <div className="card-empty">
           <p className="font-body text-[15px] text-muted">
             Delegate data is unavailable: DELEGATE_SCORE_API_URL is not configured.
@@ -148,12 +168,17 @@ export default async function DelegationPage({
         <PageHeader>
           <WalletSection address={address} overview={null} />
         </PageHeader>
+        <Hero pool={await fetchPoolSummary()} overview={null} />
         <EmptyState address={address} />
       </div>
     );
   }
 
-  const [leaderboard, health] = await Promise.all([fetchLeaderboard(), fetchScoreHealth()]);
+  const [leaderboard, health, pool] = await Promise.all([
+    fetchLeaderboard(),
+    fetchScoreHealth(),
+    fetchPoolSummary(),
+  ]);
   const baseOverview = buildAddressOverview(address, leaderboard.rows, getHighSignalConfig());
   const overviewAddresses = (baseOverview?.addresses ?? []).map((a) => a.address.toLowerCase());
   const [statuses, safeRequests] = await Promise.all([
@@ -176,6 +201,7 @@ export default async function DelegationPage({
         </p>
         <WalletSection address={address} overview={overview} />
       </PageHeader>
+      <Hero pool={pool} overview={overview} />
       {overview ? (
         <>
           <AddressOverviewTable addresses={overview.addresses} />
