@@ -68,6 +68,7 @@ ssv-daox/
 │   │   ├── WalletProvider.tsx       # Client: wagmi, React Query, RainbowKit
 │   │   ├── WalletPanel.tsx          # Client: connect button, address sync, switch prompt
 │   │   ├── HeroCard.tsx             # Server: two contribution paths + pool total
+│   │   ├── VotingPowerBreakdownCard.tsx  # Server: selected address's voting power + Details
 │   │   ├── OpenStepButton.tsx       # Client: button that calls openStep
 │   │   ├── StepPanel.tsx            # Client: collapsed numbered card (title, summary, status badge)
 │   │   ├── ClaimWizard.tsx          # Client: HighSignal claim steps + last run
@@ -100,7 +101,7 @@ ssv-daox/
 │   ├── delegation/           # Delegation logic
 │   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address
 │   │   ├── api/fetch-pin.ts  # Gnosis pin per address; pool pin → PoolSummary, shared by both pages
-│   │   ├── logic/auto-delegation.ts  # Pure: pool pin data → total, DAO-held, community-delegated; SSV formatting
+│   │   ├── logic/auto-delegation.ts  # Pure: pool summary; auto-delegation view model (breakdown); SSV formatting
 │   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out and Safe request merge, switch prompt
 │   │   ├── logic/delegation-plan.ts  # Pure: split-delegation form input → delegations, diff, warnings, errors
 │   │   └── opt-out/          # Opt-out service (DI), typed data, Score API and Safe clients, file stores
@@ -825,8 +826,26 @@ cohort delegates.
     cohort from the overview, and opens the Claim step with `openStep('claim')`.
     Without an overview there is no Claim step, so it links to HighSignal.
   - "Let the DAO delegate for you" explains the pool in plain words. It shows
-    no per-user or per-seat numbers.
+    no per-user or per-seat numbers. For a valid selected address (scored or
+    not, wallet connected or not) it shows the voting power breakdown card.
   - A failed pool lookup shows a status line instead of the totals.
+- **Auto-delegation view model.** `autoDelegationView()`
+  (`lib/delegation/logic/auto-delegation.ts`) is pure. It takes the selected
+  address's pin data (`null` when the lookup failed) and the pool address, and
+  returns the `breakdown`, or `null` for a failed lookup. Later tickets add the
+  connected account, the opt-out status and the action state. Addresses match
+  case-insensitively. The breakdown holds:
+  - your tokens (SSV + cSSV held) = total − incoming + outgoing
+  - delegated to you, with the delegator count
+  - of which from the pool, `null` unless the pool delegates in
+  - delegated out, each entry with `isPool`
+  - total voting power
+- **Breakdown card.** `VotingPowerBreakdownCard` renders those rows. The
+  incoming and outgoing lists sit in a native `<details>` ("Details"),
+  collapsed by default; the pool shows by name (`DelegateName`). The
+  leaderboard tooltip's "Net Delegated" is not shown. A failed pin lookup shows
+  a status line. The page fetches the pin once (`fetchPin`) and also feeds its
+  outgoing delegations to the Delegation step.
 
 ### Claim Status
 

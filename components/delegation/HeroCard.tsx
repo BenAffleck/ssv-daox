@@ -3,17 +3,21 @@ import type { OverviewAddress } from '@/lib/delegation/logic/address-overview';
 import {
   formatDelegatorCount,
   formatPower,
+  type AutoDelegationView,
   type PoolSummary,
 } from '@/lib/delegation/logic/auto-delegation';
 
 import ClaimStatusBadge from './ClaimStatusBadge';
 import OpenStepButton from './OpenStepButton';
+import VotingPowerBreakdownCard from './VotingPowerBreakdownCard';
 
 interface HeroCardProps {
   /** `null` when the pool lookup failed. */
   pool: PoolSummary | null;
   /** The requested address's overview row; `null` without a scored address. */
   candidate: OverviewAddress | null;
+  /** The "Let the DAO delegate for you" path; `null` without a valid selected address. */
+  autoDelegation: AutoDelegationView | null;
   /** Where "Become a delegate" leads when the page has no Claim step. */
   highSignalProjectUrl: string;
 }
@@ -64,7 +68,12 @@ function CandidateStatus({ candidate }: { candidate: OverviewAddress }) {
 }
 
 /** Presents the two ways to contribute to governance and the pool's total power. */
-export default function HeroCard({ pool, candidate, highSignalProjectUrl }: HeroCardProps) {
+export default function HeroCard({
+  pool,
+  candidate,
+  autoDelegation,
+  highSignalProjectUrl,
+}: HeroCardProps) {
   return (
     <section aria-labelledby="hero-title" className="card mb-6 p-5">
       <h2 id="hero-title">Two ways to shape SSV governance</h2>
@@ -97,6 +106,7 @@ export default function HeroCard({ pool, candidate, highSignalProjectUrl }: Hero
             One transaction puts your tokens to work for decentralization, with nothing else to do.
             Power in the DAO auto-delegation pool goes to cohort delegates at the next score run.
           </p>
+          {autoDelegation && <VotingPowerBreakdownCard breakdown={autoDelegation.breakdown} />}
         </div>
       </div>
       <div className="mt-6">

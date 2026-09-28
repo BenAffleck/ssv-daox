@@ -1,0 +1,102 @@
+import {
+  formatDelegatorCount,
+  formatPower,
+  type VotingPowerBreakdown,
+} from '@/lib/delegation/logic/auto-delegation';
+import type { DelegationEntry } from '@/lib/gnosis/types';
+
+import DelegateName from './DelegateName';
+
+function Row({
+  label,
+  note,
+  value,
+  sub = false,
+  total = false,
+}: {
+  label: string;
+  note?: string;
+  value: string;
+  sub?: boolean;
+  total?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-baseline justify-between gap-3 ${sub ? 'pl-4' : ''} ${total ? 'border-t border-border pt-1.5' : ''}`}
+    >
+      <dt className="text-muted">
+        {label}
+        {note && <span className="ml-1 text-xs">· {note}</span>}
+      </dt>
+      <dd className="shrink-0 font-medium text-foreground tabular-nums">{value}</dd>
+    </div>
+  );
+}
+
+function EntryList({ title, entries }: { title: string; entries: DelegationEntry[] }) {
+  return (
+    <div>
+      <p className="font-heading text-xs font-semibold tracking-wide text-muted uppercase">
+        {title}
+      </p>
+      {entries.length === 0 ? (
+        <p className="mt-1 text-muted">None</p>
+      ) : (
+        <ul className="mt-1 space-y-1">
+          {entries.map((entry) => (
+            <li key={entry.address} className="flex items-baseline justify-between gap-3">
+              <DelegateName address={entry.address} className="text-xs break-all" />
+              <span className="shrink-0 text-xs tabular-nums">
+                {entry.power === null ? '—' : formatPower(entry.power)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** The selected address's voting power; `null` when the pin lookup failed. */
+export default function VotingPowerBreakdownCard({
+  breakdown,
+}: {
+  breakdown: VotingPowerBreakdown | null;
+}) {
+  if (!breakdown) {
+    return (
+      <p role="status" className="mt-4 text-[13px] text-muted">
+        The voting power breakdown is unavailable right now. Try again in a few minutes.
+      </p>
+    );
+  }
+  return (
+    <div className="mt-4 border-t border-border pt-4 text-[13px]">
+      <h4 className="mb-2 text-foreground">Your voting power</h4>
+      <dl className="space-y-1.5">
+        <Row label="Your tokens" note="SSV + cSSV held" value={formatPower(breakdown.ownPower)} />
+        <Row
+          label="Delegated to you"
+          note={formatDelegatorCount(breakdown.delegatorCount)}
+          value={formatPower(breakdown.incomingPower)}
+        />
+        {breakdown.fromPoolPower !== null && (
+          <Row
+            label="of which from the DAO pool"
+            value={formatPower(breakdown.fromPoolPower)}
+            sub
+          />
+        )}
+        <Row label="Delegated out" value={`−${formatPower(breakdown.outgoingPower)}`} />
+        <Row label="Total voting power" value={formatPower(breakdown.totalPower)} total />
+      </dl>
+      <details className="mt-3">
+        <summary className="cursor-pointer text-primary">Details</summary>
+        <div className="mt-2 space-y-3">
+          <EntryList title="Delegated to you" entries={breakdown.incoming} />
+          <EntryList title="Delegated out" entries={breakdown.outgoing} />
+        </div>
+      </details>
+    </div>
+  );
+}

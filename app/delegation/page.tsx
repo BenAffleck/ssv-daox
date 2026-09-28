@@ -8,7 +8,7 @@ import WalletPanel from '@/components/delegation/WalletPanel';
 import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
 import { fetchPin, fetchPoolSummary } from '@/lib/delegation/api/fetch-pin';
-import { getHighSignalConfig } from '@/lib/delegation/config';
+import { AUTO_DELEGATION_POOL_ADDRESS, getHighSignalConfig } from '@/lib/delegation/config';
 import {
   buildAddressOverview,
   isAddress,
@@ -16,7 +16,11 @@ import {
   withSafeRequests,
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
-import type { PoolSummary } from '@/lib/delegation/logic/auto-delegation';
+import {
+  autoDelegationView,
+  type AutoDelegationView,
+  type PoolSummary,
+} from '@/lib/delegation/logic/auto-delegation';
 import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
 import {
   fetchOptOutStatuses,
@@ -69,27 +73,34 @@ function WalletSection({
   );
 }
 
-function Hero({ pool, overview }: { pool: PoolSummary | null; overview: AddressOverview | null }) {
+function Hero({
+  pool,
+  overview,
+  autoDelegation = null,
+}: {
+  pool: PoolSummary | null;
+  overview: AddressOverview | null;
+  autoDelegation?: AutoDelegationView | null;
+}) {
   return (
     <HeroCard
       pool={pool}
       candidate={overview?.addresses[0] ?? null}
+      autoDelegation={autoDelegation}
       highSignalProjectUrl={getHighSignalConfig().projectUrl}
     />
   );
 }
 
-async function fetchOutgoingDelegations(address: string): Promise<DelegationEntry[] | null> {
-  return (await fetchPin(address))?.outgoingDelegations ?? null;
-}
-
-async function DelegationSection({
+function DelegationSection({
   address,
+  current,
   ownAddresses,
   scoring,
   step,
 }: {
   address: string;
+  current: DelegationEntry[] | null;
   ownAddresses: string[];
   scoring: TargetScoring;
   step?: number;
@@ -102,7 +113,7 @@ async function DelegationSection({
     <DelegationPanel
       key={address.toLowerCase()}
       address={address}
-      current={await fetchOutgoingDelegations(address)}
+      current={current}
       ownAddresses={ownAddresses}
       scoring={scoring}
       step={step}
@@ -166,10 +177,11 @@ export default async function DelegationPage({
     );
   }
 
-  const [leaderboard, health, pool] = await Promise.all([
+  const [leaderboard, health, pool, pin] = await Promise.all([
     fetchLeaderboard(),
     fetchScoreHealth(),
     fetchPoolSummary(),
+    fetchPin(address),
   ]);
   const baseOverview = buildAddressOverview(address, leaderboard.rows, getHighSignalConfig());
   const overviewAddresses = (baseOverview?.addresses ?? []).map((a) => a.address.toLowerCase());
@@ -184,6 +196,8 @@ export default async function DelegationPage({
     baseOverview && withSafeRequests(withOptOutStatuses(baseOverview, statuses), safeRequests);
   const scoring = targetScoringOf(leaderboard.rows, statuses);
   const ownAddresses = overview?.addresses.map((a) => a.address) ?? [];
+  const autoDelegation = autoDelegationView({ pin, poolAddress: AUTO_DELEGATION_POOL_ADDRESS });
+  const current = pin?.outgoingDelegations ?? null;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
@@ -193,7 +207,7 @@ export default async function DelegationPage({
         </p>
         <WalletSection address={address} overview={overview} />
       </PageHeader>
-      <Hero pool={pool} overview={overview} />
+      <Hero pool={pool} overview={overview} autoDelegation={autoDelegation} />
       {overview ? (
         <>
           <AddressOverviewTable addresses={overview.addresses} />
@@ -210,6 +224,7 @@ export default async function DelegationPage({
           />
           <DelegationSection
             address={address}
+            current={current}
             ownAddresses={ownAddresses}
             scoring={scoring}
             step={3}
@@ -218,7 +233,12 @@ export default async function DelegationPage({
       ) : (
         <>
           <EmptyState address={address} />
-          <DelegationSection address={address} ownAddresses={ownAddresses} scoring={scoring} />
+          <DelegationSection
+            address={address}
+            current={current}
+            ownAddresses={ownAddresses}
+            scoring={scoring}
+          />
         </>
       )}
     </div>
