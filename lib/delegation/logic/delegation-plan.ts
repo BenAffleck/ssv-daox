@@ -5,9 +5,11 @@ import type { DelegationEntry } from '@/lib/gnosis/types';
 
 import type { OptOutStatuses } from '../opt-out/score-api';
 import { isAddress, optOutBadgeOf } from './address-overview';
+import { AUTO_DELEGATION_POOL_NAME, isAutoDelegationPool } from './auto-delegation';
 
 const FULL_BPS = 10000;
 export const MAX_SPLIT_TARGETS = 10;
+const POOL_NOTE = `${AUTO_DELEGATION_POOL_NAME}: the power you delegate goes to the DAO pool, redistributed to cohort seats at the next run.`;
 
 export interface SplitTarget {
   target: string;
@@ -48,6 +50,8 @@ export interface DelegationPlan {
   /** Current delegates the plan removes; the user must confirm dropping them. */
   droppedDelegates: Address[];
   warnings: string[];
+  /** Informational; never block. */
+  notes: string[];
   /** Non-empty when the plan must not be sent. */
   errors: string[];
 }
@@ -64,19 +68,27 @@ interface PlanRequest {
 const EMPTY_DIFF: DelegationDiff = { added: [], changed: [], removed: [] };
 
 function invalid(errors: string[]): DelegationPlan {
-  return { delegations: [], diff: EMPTY_DIFF, droppedDelegates: [], warnings: [], errors };
+  return {
+    delegations: [],
+    diff: EMPTY_DIFF,
+    droppedDelegates: [],
+    warnings: [],
+    notes: [],
+    errors,
+  };
 }
 
 function planned(
   delegations: PlannedDelegation[],
   diff: DelegationDiff,
-  warnings: string[] = [],
+  scoring: TargetScoring,
 ): DelegationPlan {
   return {
     delegations,
     diff,
     droppedDelegates: diff.removed.map((d) => d.address),
-    warnings,
+    warnings: scoringWarnings(delegations, scoring),
+    notes: poolNotes(delegations),
     errors: [],
   };
 }
@@ -100,8 +112,15 @@ export function targetScoringOf(rows: ScoreRow[], statuses: OptOutStatuses): Tar
   return scoring;
 }
 
+function poolNotes(delegations: PlannedDelegation[]): string[] {
+  return delegations.some((d) => isAutoDelegationPool(d.address)) ? [POOL_NOTE] : [];
+}
+
 function scoringWarnings(delegations: PlannedDelegation[], scoring: TargetScoring): string[] {
   return delegations.flatMap(({ address }) => {
+    if (isAutoDelegationPool(address)) {
+      return [];
+    }
     switch (scoring[address.toLowerCase()]) {
       case 'scored':
         return [];
@@ -230,7 +249,7 @@ export function planDelegation({
     if (before.length === 0) {
       return invalid(['You have no delegation to clear.']);
     }
-    return planned([], diffOf(before, []));
+    return planned([], diffOf(before, []), {});
   }
 
   const targets =
@@ -255,5 +274,5 @@ export function planDelegation({
         : `You already delegate everything to ${delegations[0].address}.`,
     ]);
   }
-  return planned(delegations, diff, scoringWarnings(delegations, scoring));
+  return planned(delegations, diff, scoring);
 }

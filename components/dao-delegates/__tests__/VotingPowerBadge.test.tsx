@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { AUTO_DELEGATION_POOL_ADDRESS } from '@/lib/delegation/config';
 import type { VotingPowerData } from '@/lib/gnosis/types';
 
 import VotingPowerBadge from '../VotingPowerBadge';
@@ -43,6 +44,16 @@ describe('VotingPowerBadge breakdown', () => {
 
     const outgoingItem = screen.getByText(DELEGATE_C).closest('li');
     expect(within(outgoingItem!).getByText('-75')).toBeInTheDocument();
+  });
+
+  it('names the auto-delegation pool in the outgoing list', () => {
+    openPopover({
+      ...DATA,
+      outgoingDelegations: [{ address: AUTO_DELEGATION_POOL_ADDRESS.toLowerCase(), power: 75 }],
+    });
+
+    const item = screen.getByText('DAO auto-delegation pool').closest('li');
+    expect(within(item!).getByText('-75')).toBeInTheDocument();
   });
 
   it('renders a dash when the amount for an edge is unknown', () => {

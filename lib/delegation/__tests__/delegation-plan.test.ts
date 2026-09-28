@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Identity, ScoreRow } from '@/lib/dao-delegates/types';
 import type { DelegationEntry } from '@/lib/gnosis/types';
 
+import { AUTO_DELEGATION_POOL_ADDRESS } from '../config';
 import { planDelegation, targetScoringOf } from '../logic/delegation-plan';
 import type { OptOutStatuses } from '../opt-out/score-api';
 
@@ -361,5 +362,48 @@ describe('planDelegation warnings', () => {
     expect(plan.warnings).toEqual([
       `${ALICE} is not scored. The power you delegate to it leaves the scored set.`,
     ]);
+  });
+});
+
+describe('planDelegation to the auto-delegation pool', () => {
+  const POOL_NOTE =
+    'DAO auto-delegation pool: the power you delegate goes to the DAO pool, redistributed to cohort seats at the next run.';
+
+  it('notes an all-to-one pool target instead of warning', () => {
+    const plan = planDelegation({
+      delegator: DELEGATOR,
+      scoring: {},
+      input: { kind: 'all-to-one', target: AUTO_DELEGATION_POOL_ADDRESS.toLowerCase() },
+      current: [],
+    });
+
+    expect(plan.errors).toEqual([]);
+    expect(plan.warnings).toEqual([]);
+    expect(plan.notes).toEqual([POOL_NOTE]);
+  });
+
+  it('notes a pool split row and still warns for other unscored targets', () => {
+    const plan = planDelegation({
+      delegator: DELEGATOR,
+      scoring: {},
+      input: split([AUTO_DELEGATION_POOL_ADDRESS, '70'], [ALICE, '30']),
+      current: [],
+    });
+
+    expect(plan.notes).toEqual([POOL_NOTE]);
+    expect(plan.warnings).toEqual([
+      `${ALICE} is not scored. The power you delegate to it leaves the scored set.`,
+    ]);
+  });
+
+  it('has no notes without a pool target', () => {
+    const plan = planDelegation({
+      delegator: DELEGATOR,
+      scoring: {},
+      input: { kind: 'all-to-one', target: ALICE },
+      current: [],
+    });
+
+    expect(plan.notes).toEqual([]);
   });
 });

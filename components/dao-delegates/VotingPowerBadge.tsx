@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import DelegateName from '@/components/delegation/DelegateName';
 import type { DelegationEntry, VotingPowerData } from '@/lib/gnosis/types';
 
 interface VotingPowerBadgeProps {
@@ -115,7 +116,7 @@ function DelegationList({
       <ul className="max-h-32 space-y-0.5 overflow-y-auto">
         {entries.map((entry) => (
           <li key={entry.address} className="flex items-baseline justify-between gap-2">
-            <code className="font-mono text-[10px] break-all text-foreground">{entry.address}</code>
+            <DelegateName address={entry.address} className="text-[10px] break-all" />
             <span className={`shrink-0 text-[10px] font-medium tabular-nums ${amountClassName}`}>
               {entry.power === null ? '\u2014' : `${sign}${formatDetailedNumber(entry.power)}`}
             </span>

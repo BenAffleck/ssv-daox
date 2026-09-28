@@ -1,5 +1,13 @@
 import type { VotingPowerData } from '@/lib/gnosis/types';
 
+import { AUTO_DELEGATION_POOL_ADDRESS } from '../config';
+
+export const AUTO_DELEGATION_POOL_NAME = 'DAO auto-delegation pool';
+
+export function isAutoDelegationPool(address: string): boolean {
+  return address.toLowerCase() === AUTO_DELEGATION_POOL_ADDRESS.toLowerCase();
+}
+
 export interface PoolSummary {
   totalPower: number;
   /** The pool's own tokens. */

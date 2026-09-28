@@ -1067,7 +1067,7 @@ can send; otherwise the panel asks the user to switch accounts.
    (else a new row).
 3. **Plan.** `planDelegation({ delegator, input, current, scoring })` in
    `lib/delegation/logic/delegation-plan.ts` returns `{ delegations,
-diff: { added, changed, removed }, droppedDelegates, warnings, errors }`.
+diff: { added, changed, removed }, droppedDelegates, warnings, notes, errors }`.
    All to one is a single delegation at 10000 bps. Split percentages are
    strings with up to 2 decimals, converted to integer bps
    (`Math.round(percent * 100)`, which absorbs float error); they must be
@@ -1085,7 +1085,15 @@ diff: { added, changed, removed }, droppedDelegates, warnings, errors }`.
    set. The page reads the statuses in one `fetchOptOutStatuses` batch for
    every leaderboard address plus the overview's siblings, not `row.opt_out`
    (the mock records requests the Score API never sees).
-4. **Preview.** Before (current) and After (planned) lists. If
+   **Notes** are informational and never block. The auto-delegation pool
+   (`isAutoDelegationPool()`) is a supported target: it never gets the
+   "leaves the scored set" warning. A plan with the pool as a target (All to
+   one or a Split row) carries one note instead: its power goes to the DAO
+   pool and is redistributed to cohort seats at the next run.
+4. **Preview.** Before (current) and After (planned) lists. The pool shows
+   by name ("DAO auto-delegation pool", `AUTO_DELEGATION_POOL_NAME`) there, in
+   the drop confirmation and in the leaderboard's voting-power delegation
+   lists, with the address as a tooltip. If
    `droppedDelegates` is non-empty, a checkbox must confirm dropping them.
 5. **Transaction.** `useWriteContract` calls `setDelegation(context,
 delegation, 0)` or `clearDelegation(context)`. The wallet broadcasts it.

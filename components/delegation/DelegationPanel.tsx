@@ -32,6 +32,7 @@ import {
 } from '@/lib/gnosis/registry';
 import type { DelegationEntry } from '@/lib/gnosis/types';
 
+import DelegateName from './DelegateName';
 import StepPanel from './StepPanel';
 
 interface DelegationPanelProps {
@@ -132,7 +133,7 @@ function DelegationList({ title, items }: { title: string; items: PlannedDelegat
         <ul className="mt-2 space-y-1">
           {items.map((d) => (
             <li key={d.address} className="flex justify-between gap-3 text-[13px]">
-              <code className="truncate font-mono text-xs text-foreground">{d.address}</code>
+              <DelegateName address={d.address} className="truncate text-xs" />
               <span className="shrink-0 text-foreground">{formatPercent(d.bps)}</span>
             </li>
           ))}
@@ -520,6 +521,14 @@ export default function DelegationPanel({
         </ul>
       )}
 
+      {plan.notes.length > 0 && !ensPending && (
+        <ul className="mt-3 space-y-1 rounded-lg border border-primary/40 bg-primary/10 p-4 text-[13px] text-foreground">
+          {plan.notes.map((n) => (
+            <li key={n}>{n}</li>
+          ))}
+        </ul>
+      )}
+
       <div className="mt-4 flex flex-col gap-3 md:flex-row">
         <DelegationList title="Before" items={before} />
         <DelegationList
@@ -541,7 +550,7 @@ export default function DelegationPanel({
             {plan.droppedDelegates.map((d, i) => (
               <span key={d}>
                 {i > 0 && ', '}
-                <code className="font-mono text-xs">{d}</code>
+                <DelegateName address={d} className="text-xs" />
               </span>
             ))}
             .
