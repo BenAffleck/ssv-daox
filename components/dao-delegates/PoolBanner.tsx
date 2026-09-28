@@ -43,7 +43,7 @@ export default function PoolBanner({ pool }: PoolBannerProps) {
       </div>
       <Link
         href="/delegation"
-        className="inline-block shrink-0 self-start rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90 sm:self-auto"
+        className="inline-block shrink-0 self-start rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-hover sm:self-auto"
       >
         Let the DAO delegate for you →
       </Link>

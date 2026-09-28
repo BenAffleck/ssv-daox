@@ -5,7 +5,7 @@ import PoolBanner from '@/components/dao-delegates/PoolBanner';
 import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
 import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
-import { fetchPoolSummary } from '@/lib/delegation/fetch-pool-summary';
+import { fetchPoolSummary } from '@/lib/delegation/api/fetch-pin';
 import { fetchOptOutStatuses } from '@/lib/delegation/opt-out/server';
 import { fetchVotingPower } from '@/lib/gnosis';
 import { fetchActiveVoteStatus } from '@/lib/snapshot/api/fetch-active-vote-status';

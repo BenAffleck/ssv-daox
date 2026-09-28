@@ -99,8 +99,8 @@ ssv-daox/
 │   │   └── logic/            # Business logic
 │   ├── delegation/           # Delegation logic
 │   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address
-│   │   ├── fetch-pool-summary.ts     # Pool pin (Gnosis) → PoolSummary, shared by both pages
-│   │   ├── logic/auto-delegation.ts  # Pure: pool pin data → total, DAO-held, community-delegated
+│   │   ├── api/fetch-pin.ts  # Gnosis pin per address; pool pin → PoolSummary, shared by both pages
+│   │   ├── logic/auto-delegation.ts  # Pure: pool pin data → total, DAO-held, community-delegated; SSV formatting
 │   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out and Safe request merge, switch prompt
 │   │   ├── logic/delegation-plan.ts  # Pure: split-delegation form input → delegations, diff, warnings, errors
 │   │   └── opt-out/          # Opt-out service (DI), typed data, Score API and Safe clients, file stores
@@ -367,7 +367,7 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   [Opt-out](#opt-out).
 - A `PoolBanner` above the table shows the DAO auto-delegation pool's total
   and community-delegated power with its delegator count, and links to
-  `/delegation`. It reuses `fetchPoolSummary()` from the hero card (see
+  `/delegation`. It reuses the hero card's `fetchPoolSummary()` (see
   [Auto-delegation](#auto-delegation)). A failed pool lookup hides the banner.
 - When `DELEGATE_SCORE_API_URL` is unset the page renders a notice instead of
   the table. The page revalidates every 5 minutes so a later-configured URL is
@@ -812,7 +812,7 @@ The DAO's **auto-delegation pool** is `AUTO_DELEGATION_POOL_ADDRESS` in
 because it is a governance fact. Score runs redistribute the pool's power to
 cohort delegates.
 
-- **Pool summary.** `fetchPoolSummary()` (`lib/delegation/fetch-pool-summary.ts`)
+- **Pool summary.** `fetchPoolSummary()` (`lib/delegation/api/fetch-pin.ts`)
   fetches the pool's pin response with `fetchVotingPower` (5-minute cache). `summarizePool()`
   (`lib/delegation/logic/auto-delegation.ts`) turns it into:
   - total voting power

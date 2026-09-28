@@ -7,8 +7,8 @@ import OptOutPanel from '@/components/delegation/OptOutPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
 import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
+import { fetchPin, fetchPoolSummary } from '@/lib/delegation/api/fetch-pin';
 import { getHighSignalConfig } from '@/lib/delegation/config';
-import { fetchPoolSummary } from '@/lib/delegation/fetch-pool-summary';
 import {
   buildAddressOverview,
   isAddress,
@@ -23,7 +23,7 @@ import {
   fetchSafeRequests,
   getOptOutService,
 } from '@/lib/delegation/opt-out/server';
-import { fetchVotingPower, type DelegationEntry, type VotingPowerData } from '@/lib/gnosis';
+import type { DelegationEntry } from '@/lib/gnosis';
 import { getMainnetRpcUrl } from '@/lib/wallet/config';
 
 export const revalidate = 300;
@@ -67,12 +67,6 @@ function WalletSection({
       identityAddresses={overview?.addresses.map((a) => a.address) ?? []}
     />
   );
-}
-
-/** Returns `null` when the Gnosis API lookup fails. */
-async function fetchPin(address: string): Promise<VotingPowerData | null> {
-  const votingPower = await fetchVotingPower([address]);
-  return votingPower[address.toLowerCase()] ?? null;
 }
 
 function Hero({ pool, overview }: { pool: PoolSummary | null; overview: AddressOverview | null }) {
