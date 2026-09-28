@@ -9,6 +9,14 @@ export interface PoolSummary {
   delegatorCount: number;
 }
 
+export function formatPower(power: number): string {
+  return `${Math.round(power).toLocaleString()} SSV`;
+}
+
+export function formatDelegatorCount(count: number): string {
+  return `${count.toLocaleString()} ${count === 1 ? 'delegator' : 'delegators'}`;
+}
+
 export function summarizePool(pool: VotingPowerData): PoolSummary {
   return {
     totalPower: pool.votingPower,

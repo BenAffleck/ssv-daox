@@ -7,7 +7,8 @@ import OptOutPanel from '@/components/delegation/OptOutPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
 import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
-import { AUTO_DELEGATION_POOL_ADDRESS, getHighSignalConfig } from '@/lib/delegation/config';
+import { getHighSignalConfig } from '@/lib/delegation/config';
+import { fetchPoolSummary } from '@/lib/delegation/fetch-pool-summary';
 import {
   buildAddressOverview,
   isAddress,
@@ -15,7 +16,7 @@ import {
   withSafeRequests,
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
-import { summarizePool, type PoolSummary } from '@/lib/delegation/logic/auto-delegation';
+import type { PoolSummary } from '@/lib/delegation/logic/auto-delegation';
 import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
 import {
   fetchOptOutStatuses,
@@ -72,11 +73,6 @@ function WalletSection({
 async function fetchPin(address: string): Promise<VotingPowerData | null> {
   const votingPower = await fetchVotingPower([address]);
   return votingPower[address.toLowerCase()] ?? null;
-}
-
-async function fetchPoolSummary(): Promise<PoolSummary | null> {
-  const pool = await fetchPin(AUTO_DELEGATION_POOL_ADDRESS);
-  return pool && summarizePool(pool);
 }
 
 function Hero({ pool, overview }: { pool: PoolSummary | null; overview: AddressOverview | null }) {

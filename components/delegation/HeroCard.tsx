@@ -1,6 +1,10 @@
 import CohortBadge from '@/components/dao-delegates/CohortBadge';
 import type { OverviewAddress } from '@/lib/delegation/logic/address-overview';
-import type { PoolSummary } from '@/lib/delegation/logic/auto-delegation';
+import {
+  formatDelegatorCount,
+  formatPower,
+  type PoolSummary,
+} from '@/lib/delegation/logic/auto-delegation';
 
 import ClaimStatusBadge from './ClaimStatusBadge';
 import OpenStepButton from './OpenStepButton';
@@ -12,10 +16,6 @@ interface HeroCardProps {
   candidate: OverviewAddress | null;
   /** Where "Become a delegate" leads when the page has no Claim step. */
   highSignalProjectUrl: string;
-}
-
-function formatPower(power: number): string {
-  return `${Math.round(power).toLocaleString()} SSV`;
 }
 
 function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
@@ -38,9 +38,6 @@ function PoolTotal({ pool }: { pool: PoolSummary | null }) {
       </p>
     );
   }
-  const delegators = `${pool.delegatorCount.toLocaleString()} ${
-    pool.delegatorCount === 1 ? 'delegator' : 'delegators'
-  }`;
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <Stat label="Total voting power" value={formatPower(pool.totalPower)} />
@@ -48,7 +45,7 @@ function PoolTotal({ pool }: { pool: PoolSummary | null }) {
       <Stat
         label="Community-delegated"
         value={formatPower(pool.communityPower)}
-        note={delegators}
+        note={formatDelegatorCount(pool.delegatorCount)}
       />
     </div>
   );

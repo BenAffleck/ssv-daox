@@ -57,6 +57,7 @@ ssv-daox/
 │   ├── dao-delegates/        # DAO Delegates components
 │   │   ├── DelegatesTable.tsx    # Client: filter/sort state
 │   │   ├── FilterControls.tsx    # Client: filter UI
+│   │   ├── PoolBanner.tsx        # Server: auto-delegation pool total + link to /delegation
 │   │   ├── TableHeader.tsx       # Client: sortable headers
 │   │   ├── DelegateRow.tsx       # Server: row rendering
 │   │   ├── ScoreCell.tsx         # Score / pillar value with "n/a"
@@ -98,6 +99,7 @@ ssv-daox/
 │   │   └── logic/            # Business logic
 │   ├── delegation/           # Delegation logic
 │   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address
+│   │   ├── fetch-pool-summary.ts     # Pool pin (Gnosis) → PoolSummary, shared by both pages
 │   │   ├── logic/auto-delegation.ts  # Pure: pool pin data → total, DAO-held, community-delegated
 │   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out and Safe request merge, switch prompt
 │   │   ├── logic/delegation-plan.ts  # Pure: split-delegation form input → delegations, diff, warnings, errors
@@ -325,6 +327,7 @@ The primary implemented module. Shows a ranked delegate leaderboard with Delegat
 2. Fetch delegation recipients from The Graph (parallel)
 3. Fetch vote participation from Snapshot (parallel)
 4. Fetch voting power (Gnosis) and opt-out statuses (parallel)
+   The auto-delegation pool summary (Gnosis) is fetched in parallel with steps 1–3.
 5. Transform score rows → Delegate objects (inject delegation status, participation rates, opt-out)
 6. Pass to client for filtering/sorting
 ```
@@ -362,6 +365,10 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   per row; the live Score API client splits it into requests of 100 addresses.
   A failed lookup yields no statuses, so the table renders without badges. See
   [Opt-out](#opt-out).
+- A `PoolBanner` above the table shows the DAO auto-delegation pool's total
+  and community-delegated power with its delegator count, and links to
+  `/delegation`. It reuses `fetchPoolSummary()` from the hero card (see
+  [Auto-delegation](#auto-delegation)). A failed pool lookup hides the banner.
 - When `DELEGATE_SCORE_API_URL` is unset the page renders a notice instead of
   the table. The page revalidates every 5 minutes so a later-configured URL is
   picked up.
@@ -805,8 +812,8 @@ The DAO's **auto-delegation pool** is `AUTO_DELEGATION_POOL_ADDRESS` in
 because it is a governance fact. Score runs redistribute the pool's power to
 cohort delegates.
 
-- **Pool summary.** The page fetches the pool's pin response with
-  `fetchVotingPower` (5-minute cache). `summarizePool()`
+- **Pool summary.** `fetchPoolSummary()` (`lib/delegation/fetch-pool-summary.ts`)
+  fetches the pool's pin response with `fetchVotingPower` (5-minute cache). `summarizePool()`
   (`lib/delegation/logic/auto-delegation.ts`) turns it into:
   - total voting power
   - DAO-held = the pool's own tokens (total − incoming + outgoing)

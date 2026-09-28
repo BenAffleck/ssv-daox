@@ -1,9 +1,11 @@
 import { Suspense } from 'react';
 
 import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
+import PoolBanner from '@/components/dao-delegates/PoolBanner';
 import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
 import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
+import { fetchPoolSummary } from '@/lib/delegation/fetch-pool-summary';
 import { fetchOptOutStatuses } from '@/lib/delegation/opt-out/server';
 import { fetchVotingPower } from '@/lib/gnosis';
 import { fetchActiveVoteStatus } from '@/lib/snapshot/api/fetch-active-vote-status';
@@ -45,13 +47,14 @@ export default async function DaoDelegatesPage() {
     );
   }
 
-  const [leaderboard, health, delegationRecipients, voteParticipation, activeVoteData] =
+  const [leaderboard, health, delegationRecipients, voteParticipation, activeVoteData, pool] =
     await Promise.all([
       fetchLeaderboard(),
       fetchScoreHealth(),
       fetchConfiguredDelegationRecipients(),
       fetchVoteParticipation(SNAPSHOT_CONFIG.delegation.spaceFilter),
       fetchActiveVoteStatus(SNAPSHOT_CONFIG.delegation.spaceFilter),
+      fetchPoolSummary(),
     ]);
 
   // Only fetch voting power for addresses that are already receiving delegation
@@ -89,6 +92,8 @@ export default async function DaoDelegatesPage() {
           </p>
         )}
       </PageHeader>
+
+      <PoolBanner pool={pool} />
 
       <Suspense>
         <DelegatesTable delegates={delegates} />
