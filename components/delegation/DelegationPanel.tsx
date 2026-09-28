@@ -144,7 +144,7 @@ export default function DelegationPanel({
   step,
 }: DelegationPanelProps) {
   const { address: connected } = useAccount();
-  const { send: write, submission, resetSubmission, awaitingWallet } = useDelegationWrite();
+  const { send, submission, resetSubmission, awaitingWallet } = useDelegationWrite();
 
   const currentEntries = useMemo(() => current ?? [], [current]);
   const before = useMemo(() => toPlannedDelegations(currentEntries), [currentEntries]);
@@ -246,10 +246,6 @@ export default function DelegationPanel({
     } else if (!splitFull) {
       addSplitRow(own);
     }
-  }
-
-  function send() {
-    return write(mode === 'clear' ? 'clear' : plan.delegations);
   }
 
   const tabClass = (active: boolean) => (active ? 'filter-btn-active' : 'filter-btn');
@@ -433,17 +429,19 @@ export default function DelegationPanel({
       </div>
 
       {plan.errors.length === 0 && plan.droppedDelegates.length > 0 && (
-        <DropConfirmation
-          dropped={plan.droppedDelegates}
-          checked={confirmedDrop}
-          onChange={setConfirmedDrop}
-        />
+        <div className="mt-4">
+          <DropConfirmation
+            dropped={plan.droppedDelegates}
+            checked={confirmedDrop}
+            onChange={setConfirmedDrop}
+          />
+        </div>
       )}
 
       <div className="mt-4 space-y-3">
         <button
           type="button"
-          onClick={send}
+          onClick={() => send(mode === 'clear' ? 'clear' : plan.delegations)}
           disabled={!canSend}
           className="rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >

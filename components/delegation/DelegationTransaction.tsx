@@ -169,7 +169,7 @@ export function DropConfirmation({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="mt-4 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-4 text-[13px] text-foreground">
+    <label className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-4 text-[13px] text-foreground">
       <input
         type="checkbox"
         checked={checked}

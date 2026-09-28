@@ -880,6 +880,7 @@ cohort delegates.
   delegates need the same confirm checkbox (`DropConfirmation`) as the
   Delegation step. `SubmissionStatus` shows the same EOA and Safe status, with
   a note that the card and pool total update within about 5 minutes. The
+  button stays disabled once a transaction is sent, until the page reloads. The
   action is hidden without `MAINNET_RPC_URL`. Opt-out status is not read or
   changed.
 

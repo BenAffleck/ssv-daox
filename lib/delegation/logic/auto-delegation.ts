@@ -2,10 +2,14 @@ import type { Address } from 'viem';
 
 import type { DelegationEntry, VotingPowerData } from '@/lib/gnosis/types';
 
-import { planDelegation, toPlannedDelegations, type PlannedDelegation } from './delegation-plan';
+import {
+  FULL_BPS,
+  planDelegation,
+  toPlannedDelegations,
+  type PlannedDelegation,
+} from './delegation-plan';
 import { sameAddress } from './pool';
 
-const FULL_BPS = 10000;
 // Own power is total − incoming + outgoing over floats, so exact zero can come out as dust.
 const DUST = 1e-9;
 
@@ -58,7 +62,6 @@ export interface VotingPowerBreakdown {
 }
 
 export interface AutoDelegationInput {
-  /** The selected address. */
   address: string;
   /** The connected wallet; `undefined` when none is connected. */
   connected: string | undefined;
@@ -144,8 +147,7 @@ function delegatesAllToPool(outgoing: DelegationEntry[], poolAddress: string): b
 }
 
 function stateOf(
-  { address, connected, poolAddress }: AutoDelegationInput,
-  pin: VotingPowerData | null,
+  { address, connected, pin, poolAddress }: AutoDelegationInput,
   breakdown: VotingPowerBreakdown | null,
 ): AutoDelegationState {
   if (!pin || !breakdown) {
@@ -182,5 +184,5 @@ function stateOf(
 /** The "Let the DAO delegate for you" path for one address. */
 export function autoDelegationView(input: AutoDelegationInput): AutoDelegationView {
   const breakdown = input.pin && toBreakdown(input.pin, input.poolAddress);
-  return { breakdown, state: stateOf(input, input.pin, breakdown) };
+  return { breakdown, state: stateOf(input, breakdown) };
 }

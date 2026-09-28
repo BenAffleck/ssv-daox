@@ -17,7 +17,6 @@ import OpenStepButton from './OpenStepButton';
 import VotingPowerBreakdownCard from './VotingPowerBreakdownCard';
 
 interface AutoDelegationPathProps {
-  /** The selected address. */
   address: string;
   /** The selected address's pin data; `null` when the lookup failed. */
   pin: VotingPowerData | null;
@@ -113,7 +112,11 @@ export default function AutoDelegationPath({
                 />
               )}
               <DelegateButton
-                disabled={awaitingWallet || (state.droppedDelegates.length > 0 && !confirmedDrop)}
+                disabled={
+                  awaitingWallet ||
+                  submission?.kind === 'sent' ||
+                  (state.droppedDelegates.length > 0 && !confirmedDrop)
+                }
                 awaitingWallet={awaitingWallet}
                 onClick={() => send(state.delegations)}
               />
