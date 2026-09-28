@@ -361,6 +361,7 @@ export default function DelegationPanel({
   return (
     <StepPanel
       step={step}
+      anchor="delegation"
       title="Delegate voting power"
       summary="Optional. Give your Snapshot voting power to one address or split it across several."
       status={

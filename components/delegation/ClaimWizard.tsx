@@ -63,6 +63,7 @@ export default function ClaimWizard({ addresses, lastRunAsOf, step }: ClaimWizar
   return (
     <StepPanel
       step={step}
+      anchor="claim"
       title="Claim on HighSignal"
       summary="Link your addresses to HighSignal so your community activity counts toward the score."
       status={<ClaimStatusBadge status={addresses[0].claimStatus} />}

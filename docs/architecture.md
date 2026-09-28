@@ -788,6 +788,13 @@ status, opt-out status or "Awaiting co-signers", delegation count), so the
 state reads without expanding. Bodies stay mounted while hidden, so form state
 survives collapsing.
 
+Each step has a `StepAnchor` (`claim`, `opt-out`, `delegation`) as its id.
+Three things expand the step and scroll to it: a URL fragment on load, a plain
+`<a href="#claim">` (`hashchange`), and `openStep(anchor)`. Buttons MUST use
+`openStep`: Next's `<Link>` and `router.push` change the fragment without firing
+`hashchange`. Collapsing a targeted step clears the fragment, so the same link
+opens it again.
+
 ### Claim Status
 
 Derived per address:

@@ -14,3 +14,6 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: () => true,
   }),
 });
+
+// jsdom does not implement scrolling
+Element.prototype.scrollIntoView = () => {};

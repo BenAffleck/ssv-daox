@@ -197,6 +197,7 @@ export default function OptOutPanel({ addresses, mode, signingAvailable, step }:
   return (
     <StepPanel
       step={step}
+      anchor="opt-out"
       title="Opt out of scoring"
       summary="Optional. Exclude an address from scoring so no voting power is allocated to it."
       status={
