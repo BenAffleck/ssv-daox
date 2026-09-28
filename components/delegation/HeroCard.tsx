@@ -73,7 +73,7 @@ export default function HeroCard({ pool, candidate, highSignalProjectUrl }: Hero
       <h2 id="hero-title">Two ways to shape SSV governance</h2>
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="flex flex-col rounded-lg border border-border p-4">
-          <h4>Become a delegate</h4>
+          <h3>Become a delegate</h3>
           <p className="mt-1 text-[13px] text-muted">
             Stand out in the community and become an active atom. Claim your addresses on
             HighSignal, climb the leaderboard and earn a cohort seat.
@@ -81,7 +81,7 @@ export default function HeroCard({ pool, candidate, highSignalProjectUrl }: Hero
           {candidate && <CandidateStatus candidate={candidate} />}
           <div className="mt-4">
             {candidate ? (
-              <OpenStepButton anchor="claim">Start claim</OpenStepButton>
+              <OpenStepButton anchor="claim">Open the Claim step</OpenStepButton>
             ) : (
               <a
                 href={highSignalProjectUrl}
@@ -95,15 +95,15 @@ export default function HeroCard({ pool, candidate, highSignalProjectUrl }: Hero
           </div>
         </div>
         <div className="flex flex-col rounded-lg border border-border p-4">
-          <h4>Let the DAO delegate for you</h4>
+          <h3>Let the DAO delegate for you</h3>
           <p className="mt-1 text-[13px] text-muted">
             One transaction puts your tokens to work for decentralization, with nothing else to do.
             Power in the DAO auto-delegation pool goes to cohort delegates at the next score run.
           </p>
         </div>
       </div>
-      <div className="mt-5 border-t border-border pt-5">
-        <h5 className="mb-3 text-foreground">DAO auto-delegation pool</h5>
+      <div className="mt-6">
+        <h4 className="mb-3 text-foreground">DAO auto-delegation pool</h4>
         <PoolTotal pool={pool} />
       </div>
     </section>

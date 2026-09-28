@@ -22,7 +22,7 @@ import {
   fetchSafeRequests,
   getOptOutService,
 } from '@/lib/delegation/opt-out/server';
-import { fetchVotingPower, type DelegationEntry } from '@/lib/gnosis';
+import { fetchVotingPower, type DelegationEntry, type VotingPowerData } from '@/lib/gnosis';
 import { getMainnetRpcUrl } from '@/lib/wallet/config';
 
 export const revalidate = 300;
@@ -69,10 +69,14 @@ function WalletSection({
 }
 
 /** Returns `null` when the Gnosis API lookup fails. */
+async function fetchPin(address: string): Promise<VotingPowerData | null> {
+  const votingPower = await fetchVotingPower([address]);
+  return votingPower[address.toLowerCase()] ?? null;
+}
+
 async function fetchPoolSummary(): Promise<PoolSummary | null> {
-  const votingPower = await fetchVotingPower([AUTO_DELEGATION_POOL_ADDRESS]);
-  const pool = votingPower[AUTO_DELEGATION_POOL_ADDRESS.toLowerCase()];
-  return pool ? summarizePool(pool) : null;
+  const pool = await fetchPin(AUTO_DELEGATION_POOL_ADDRESS);
+  return pool && summarizePool(pool);
 }
 
 function Hero({ pool, overview }: { pool: PoolSummary | null; overview: AddressOverview | null }) {
@@ -85,10 +89,8 @@ function Hero({ pool, overview }: { pool: PoolSummary | null; overview: AddressO
   );
 }
 
-/** Returns `null` when the Gnosis API lookup fails. */
 async function fetchOutgoingDelegations(address: string): Promise<DelegationEntry[] | null> {
-  const votingPower = await fetchVotingPower([address]);
-  return votingPower[address.toLowerCase()]?.outgoingDelegations ?? null;
+  return (await fetchPin(address))?.outgoingDelegations ?? null;
 }
 
 async function DelegationSection({

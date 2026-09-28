@@ -5,7 +5,7 @@ import type { GnosisDelegationResponse } from '@/lib/gnosis/types';
 
 import { summarizePool } from '../logic/auto-delegation';
 
-function pin(overrides: Partial<GnosisDelegationResponse> = {}) {
+function poolPin(overrides: Partial<GnosisDelegationResponse> = {}) {
   return toVotingPowerData({
     votingPower: '0',
     incomingPower: '0',
@@ -19,7 +19,7 @@ function pin(overrides: Partial<GnosisDelegationResponse> = {}) {
 
 describe('summarizePool', () => {
   it('counts all power as DAO-held when nobody delegates in', () => {
-    expect(summarizePool(pin({ votingPower: '1260000' }))).toEqual({
+    expect(summarizePool(poolPin({ votingPower: '1260000' }))).toEqual({
       totalPower: 1260000,
       daoHeldPower: 1260000,
       communityPower: 0,
@@ -29,7 +29,7 @@ describe('summarizePool', () => {
 
   it('splits incoming power and delegators out as community-delegated', () => {
     const summary = summarizePool(
-      pin({
+      poolPin({
         votingPower: '1300000',
         incomingPower: '40000',
         delegators: ['0xaaa', '0xbbb'],
@@ -50,7 +50,7 @@ describe('summarizePool', () => {
 
   it('counts power the pool delegates out as DAO-held', () => {
     const summary = summarizePool(
-      pin({ votingPower: '1000000', incomingPower: '40000', outgoingPower: '300000' }),
+      poolPin({ votingPower: '1000000', incomingPower: '40000', outgoingPower: '300000' }),
     );
 
     expect(summary.daoHeldPower).toBe(1260000);
