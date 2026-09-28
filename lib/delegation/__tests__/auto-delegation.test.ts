@@ -81,7 +81,7 @@ describe('autoDelegationView breakdown', () => {
       ownPower: 1000,
       incomingPower: 300,
       delegatorCount: 1,
-      fromPoolPower: null,
+      fromPool: null,
       outgoingPower: 400,
       totalPower: 900,
     });
@@ -102,7 +102,16 @@ describe('autoDelegationView breakdown', () => {
     });
 
     expect(breakdown?.incomingPower).toBe(4500);
-    expect(breakdown?.fromPoolPower).toBe(4000);
+    expect(breakdown?.fromPool).toEqual({ power: 4000 });
+  });
+
+  it('keeps the pool row with an unknown amount when the API omits delegated power', () => {
+    const { breakdown } = autoDelegationView({
+      pin: pinData({ votingPower: '5000', incomingPower: '4000', delegators: [POOL] }),
+      poolAddress: POOL.toLowerCase(),
+    });
+
+    expect(breakdown?.fromPool).toEqual({ power: null });
   });
 
   it('flags the pool among outgoing delegations, matching its address in any case', () => {

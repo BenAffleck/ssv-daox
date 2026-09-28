@@ -832,17 +832,17 @@ cohort delegates.
 - **Auto-delegation view model.** `autoDelegationView()`
   (`lib/delegation/logic/auto-delegation.ts`) is pure. It takes the selected
   address's pin data (`null` when the lookup failed) and the pool address, and
-  returns the `breakdown`, or `null` for a failed lookup. Later tickets add the
-  connected account, the opt-out status and the action state. Addresses match
+  returns the `breakdown`, or `null` for a failed lookup. Addresses match
   case-insensitively. The breakdown holds:
   - your tokens (SSV + cSSV held) = total − incoming + outgoing
   - delegated to you, with the delegator count
-  - of which from the pool, `null` unless the pool delegates in
-  - delegated out, each entry with `isPool`
+  - of which from the pool, `null` unless the pool delegates in; its amount is
+    `null` when the API omits it
+  - the incoming and outgoing entries, each with `isPool`
   - total voting power
 - **Breakdown card.** `VotingPowerBreakdownCard` renders those rows. The
   incoming and outgoing lists sit in a native `<details>` ("Details"),
-  collapsed by default; the pool shows by name (`DelegateName`). The
+  collapsed by default; entries flagged `isPool` show by name (`DelegateName`). The
   leaderboard tooltip's "Net Delegated" is not shown. A failed pin lookup shows
   a status line. The page fetches the pin once (`fetchPin`) and also feeds its
   outgoing delegations to the Delegation step.

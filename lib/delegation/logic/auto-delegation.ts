@@ -4,8 +4,17 @@ import { AUTO_DELEGATION_POOL_ADDRESS } from '../config';
 
 export const AUTO_DELEGATION_POOL_NAME = 'DAO auto-delegation pool';
 
+function sameAddress(a: string, b: string): boolean {
+  return a.toLowerCase() === b.toLowerCase();
+}
+
 export function isAutoDelegationPool(address: string): boolean {
-  return address.toLowerCase() === AUTO_DELEGATION_POOL_ADDRESS.toLowerCase();
+  return sameAddress(address, AUTO_DELEGATION_POOL_ADDRESS);
+}
+
+/** Tokens the address holds itself, as opposed to power delegated to it. */
+function ownPower(pin: VotingPowerData): number {
+  return pin.votingPower - pin.incomingPower + pin.outgoingPower;
 }
 
 export interface PoolSummary {
@@ -28,13 +37,13 @@ export function formatDelegatorCount(count: number): string {
 export function summarizePool(pool: VotingPowerData): PoolSummary {
   return {
     totalPower: pool.votingPower,
-    daoHeldPower: pool.votingPower - pool.incomingPower + pool.outgoingPower,
+    daoHeldPower: ownPower(pool),
     communityPower: pool.incomingPower,
     delegatorCount: pool.delegatorCount,
   };
 }
 
-export interface OutgoingDelegation extends DelegationEntry {
+export interface BreakdownEntry extends DelegationEntry {
   isPool: boolean;
 }
 
@@ -43,11 +52,11 @@ export interface VotingPowerBreakdown {
   ownPower: number;
   incomingPower: number;
   delegatorCount: number;
-  incoming: DelegationEntry[];
-  /** Incoming power from the pool; `null` when the pool delegates nothing in. */
-  fromPoolPower: number | null;
+  incoming: BreakdownEntry[];
+  /** `null` when the pool delegates nothing in; `power` is `null` when the API omitted it. */
+  fromPool: { power: number | null } | null;
   outgoingPower: number;
-  outgoing: OutgoingDelegation[];
+  outgoing: BreakdownEntry[];
   totalPower: number;
 }
 
@@ -62,25 +71,29 @@ export interface AutoDelegationView {
   breakdown: VotingPowerBreakdown | null;
 }
 
-function sameAddress(a: string, b: string): boolean {
-  return a.toLowerCase() === b.toLowerCase();
+function flagPool(entries: DelegationEntry[], poolAddress: string): BreakdownEntry[] {
+  return entries.map((entry) => ({ ...entry, isPool: sameAddress(entry.address, poolAddress) }));
+}
+
+function fromPool(incoming: BreakdownEntry[]): VotingPowerBreakdown['fromPool'] {
+  const pool = incoming.filter((entry) => entry.isPool);
+  if (pool.some((entry) => entry.power === null)) {
+    return { power: null };
+  }
+  const power = pool.reduce((sum, entry) => sum + (entry.power ?? 0), 0);
+  return power > 0 ? { power } : null;
 }
 
 function toBreakdown(pin: VotingPowerData, poolAddress: string): VotingPowerBreakdown {
-  const fromPoolPower = pin.incomingDelegations
-    .filter((entry) => sameAddress(entry.address, poolAddress))
-    .reduce((sum, entry) => sum + (entry.power ?? 0), 0);
+  const incoming = flagPool(pin.incomingDelegations, poolAddress);
   return {
-    ownPower: pin.votingPower - pin.incomingPower + pin.outgoingPower,
+    ownPower: ownPower(pin),
     incomingPower: pin.incomingPower,
     delegatorCount: pin.delegatorCount,
-    incoming: pin.incomingDelegations,
-    fromPoolPower: fromPoolPower > 0 ? fromPoolPower : null,
+    incoming,
+    fromPool: fromPool(incoming),
     outgoingPower: pin.outgoingPower,
-    outgoing: pin.outgoingDelegations.map((entry) => ({
-      ...entry,
-      isPool: sameAddress(entry.address, poolAddress),
-    })),
+    outgoing: flagPool(pin.outgoingDelegations, poolAddress),
     totalPower: pin.votingPower,
   };
 }

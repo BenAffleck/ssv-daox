@@ -7,11 +7,13 @@ import {
 export default function DelegateName({
   address,
   className,
+  isPool = isAutoDelegationPool(address),
 }: {
   address: string;
   className: string;
+  isPool?: boolean;
 }) {
-  if (isAutoDelegationPool(address)) {
+  if (isPool) {
     return (
       <span title={address} className={`text-foreground ${className}`}>
         {AUTO_DELEGATION_POOL_NAME}

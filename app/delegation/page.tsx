@@ -197,7 +197,7 @@ export default async function DelegationPage({
   const scoring = targetScoringOf(leaderboard.rows, statuses);
   const ownAddresses = overview?.addresses.map((a) => a.address) ?? [];
   const autoDelegation = autoDelegationView({ pin, poolAddress: AUTO_DELEGATION_POOL_ADDRESS });
-  const current = pin?.outgoingDelegations ?? null;
+  const outgoingDelegations = pin?.outgoingDelegations ?? null;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
@@ -224,7 +224,7 @@ export default async function DelegationPage({
           />
           <DelegationSection
             address={address}
-            current={current}
+            current={outgoingDelegations}
             ownAddresses={ownAddresses}
             scoring={scoring}
             step={3}
@@ -235,7 +235,7 @@ export default async function DelegationPage({
           <EmptyState address={address} />
           <DelegationSection
             address={address}
-            current={current}
+            current={outgoingDelegations}
             ownAddresses={ownAddresses}
             scoring={scoring}
           />

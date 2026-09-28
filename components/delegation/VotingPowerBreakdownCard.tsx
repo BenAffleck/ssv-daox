@@ -1,11 +1,15 @@
 import {
   formatDelegatorCount,
   formatPower,
+  type BreakdownEntry,
   type VotingPowerBreakdown,
 } from '@/lib/delegation/logic/auto-delegation';
-import type { DelegationEntry } from '@/lib/gnosis/types';
 
 import DelegateName from './DelegateName';
+
+function formatAmount(power: number | null): string {
+  return power === null ? '\u2014' : formatPower(power);
+}
 
 function Row({
   label,
@@ -33,7 +37,7 @@ function Row({
   );
 }
 
-function EntryList({ title, entries }: { title: string; entries: DelegationEntry[] }) {
+function EntryList({ title, entries }: { title: string; entries: BreakdownEntry[] }) {
   return (
     <div>
       <p className="font-heading text-xs font-semibold tracking-wide text-muted uppercase">
@@ -45,7 +49,11 @@ function EntryList({ title, entries }: { title: string; entries: DelegationEntry
         <ul className="mt-1 space-y-1">
           {entries.map((entry) => (
             <li key={entry.address} className="flex items-baseline justify-between gap-3">
-              <DelegateName address={entry.address} className="text-xs break-all" />
+              <DelegateName
+                address={entry.address}
+                isPool={entry.isPool}
+                className="text-xs break-all"
+              />
               <span className="shrink-0 text-xs tabular-nums">
                 {entry.power === null ? '—' : formatPower(entry.power)}
               </span>
@@ -80,10 +88,10 @@ export default function VotingPowerBreakdownCard({
           note={formatDelegatorCount(breakdown.delegatorCount)}
           value={formatPower(breakdown.incomingPower)}
         />
-        {breakdown.fromPoolPower !== null && (
+        {breakdown.fromPool && (
           <Row
             label="of which from the DAO pool"
-            value={formatPower(breakdown.fromPoolPower)}
+            value={formatAmount(breakdown.fromPool.power)}
             sub
           />
         )}
