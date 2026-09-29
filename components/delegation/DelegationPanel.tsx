@@ -16,11 +16,17 @@ import {
   type SplitTarget,
   type TargetScoring,
 } from '@/lib/delegation/logic/delegation-plan';
-import { SSV_SPACE_ID } from '@/lib/gnosis/config';
 import type { DelegationEntry } from '@/lib/gnosis/types';
 
 import DelegateName from './DelegateName';
-import { DropConfirmation, SubmissionStatus, useDelegationWrite } from './DelegationTransaction';
+import {
+  DropConfirmation,
+  isSubmissionLocked,
+  SubmissionStatus,
+  useDelegationWrite,
+  useSubmissionPhase,
+  type SubmissionPhase,
+} from './DelegationTransaction';
 import StepPanel from './StepPanel';
 
 interface DelegationPanelProps {
@@ -31,7 +37,6 @@ interface DelegationPanelProps {
   /** The selected address's identity siblings, offered as consolidation quick picks. */
   ownAddresses: string[];
   scoring: TargetScoring;
-  step?: number;
 }
 
 type Mode = 'all-to-one' | 'split' | 'clear';
@@ -120,6 +125,23 @@ function DelegationList({ title, items }: { title: string; items: PlannedDelegat
 
 const EMPTY_ROW: SplitTarget = { target: '', percent: '' };
 
+function sendLabel(mode: Mode, awaitingWallet: boolean, phase: SubmissionPhase): string {
+  if (awaitingWallet) {
+    return 'Confirm in your wallet…';
+  }
+  const clear = mode === 'clear';
+  switch (phase) {
+    case 'pending':
+      return clear ? 'Clearing…' : 'Delegating…';
+    case 'confirmed':
+      return clear ? 'Cleared' : 'Delegated';
+    case 'proposed':
+      return 'Proposed to your Safe';
+    default:
+      return clear ? 'Clear delegation' : 'Delegate';
+  }
+}
+
 function toSplitTargets(delegations: PlannedDelegation[]): SplitTarget[] {
   const targets: SplitTarget[] = delegations.map((d) => ({
     target: d.address,
@@ -141,10 +163,10 @@ export default function DelegationPanel({
   current,
   ownAddresses,
   scoring,
-  step,
 }: DelegationPanelProps) {
   const { address: connected } = useAccount();
   const { send, submission, resetSubmission, awaitingWallet } = useDelegationWrite();
+  const phase = useSubmissionPhase(submission);
 
   const currentEntries = useMemo(() => current ?? [], [current]);
   const before = useMemo(() => toPlannedDelegations(currentEntries), [currentEntries]);
@@ -201,7 +223,8 @@ export default function DelegationPanel({
     !ensMissing &&
     plan.errors.length === 0 &&
     !needsDropConfirmation &&
-    !awaitingWallet;
+    !awaitingWallet &&
+    !isSubmissionLocked(phase);
 
   // Any edit changes the plan, so a drop confirmation or past submission no longer applies.
   function resetOutcome() {
@@ -252,10 +275,9 @@ export default function DelegationPanel({
 
   return (
     <StepPanel
-      step={step}
       anchor="delegation"
       title="Delegate voting power"
-      summary="Optional. Give your Snapshot voting power to one address or split it across several."
+      summary="Give your voting power to another delegate or split it across several."
       status={
         before.length > 0 && (
           <span className="badge badge-muted whitespace-nowrap">
@@ -263,22 +285,15 @@ export default function DelegationPanel({
           </span>
         )
       }
-      openLabel="Delegate"
     >
-      <p className="text-[13px] text-muted">
-        Delegates <code className="font-mono text-xs text-foreground">{address}</code> in the{' '}
-        <code className="font-mono text-xs text-foreground">{SSV_SPACE_ID}</code> Snapshot space
-        through the Gnosis Guild Split Delegation registry. Power delegated to you is forwarded too.
-      </p>
-
       {current === null && (
-        <p role="alert" className="mt-4 text-[13px] text-danger">
-          Current delegations couldn&apos;t be loaded from the Gnosis delegation API, so the form is
-          disabled. Reload to try again.
+        <p role="alert" className="mt-4 text-[13px] text-danger first:mt-0">
+          Your current delegations couldn&apos;t be loaded, so the form is disabled to avoid
+          overwriting them. Reload to try again.
         </p>
       )}
 
-      <div className="mt-4 flex gap-2" role="group" aria-label="Delegation mode">
+      <div className="mt-4 flex gap-2 first:mt-0" role="group" aria-label="Delegation mode">
         <button
           type="button"
           className={tabClass(mode === 'all-to-one')}
@@ -349,15 +364,16 @@ export default function DelegationPanel({
                   />
                   <span className="text-[13px] text-muted">%</span>
                 </div>
-                <button
-                  type="button"
-                  className="filter-btn"
-                  aria-label={`Remove delegate ${i + 1}`}
-                  disabled={splitTargets.length <= 2}
-                  onClick={() => changeSplitTargets(splitTargets.filter((_, j) => j !== i))}
-                >
-                  Remove
-                </button>
+                {splitTargets.length > 2 && (
+                  <button
+                    type="button"
+                    className="filter-btn"
+                    aria-label={`Remove delegate ${i + 1}`}
+                    onClick={() => changeSplitTargets(splitTargets.filter((_, j) => j !== i))}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
               {resolved[i] && <EnsResolution target={resolved[i]} />}
             </div>
@@ -371,8 +387,7 @@ export default function DelegationPanel({
             Add address
           </button>
           <p className="text-[13px] text-muted">
-            Up to {MAX_SPLIT_TARGETS} addresses. Percentages allow 2 decimals and must add up to
-            exactly 100%.
+            2 to {MAX_SPLIT_TARGETS} addresses. Percentages allow 2 decimals and must total 100%.
           </p>
         </div>
       )}
@@ -445,21 +460,13 @@ export default function DelegationPanel({
           disabled={!canSend}
           className="rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {awaitingWallet
-            ? 'Confirm in your wallet…'
-            : mode === 'clear'
-              ? 'Clear delegation'
-              : 'Delegate'}
+          {sendLabel(mode, awaitingWallet, phase)}
         </button>
-        {!isOwner && (
-          <p className="text-[13px] text-muted">
-            {connected ? 'Switch' : 'Connect'} your wallet to{' '}
-            <code className="font-mono text-xs text-foreground">{address}</code> to delegate.
-          </p>
-        )}
         <SubmissionStatus
           submission={submission}
-          note="The Gnosis delegation API can take a few minutes to show the new delegation."
+          phase={phase}
+          confirmedMessage={mode === 'clear' ? 'Delegation cleared.' : 'Delegation updated.'}
+          note="Before shows the change within about 5 minutes, after a reload."
         />
       </div>
     </StepPanel>

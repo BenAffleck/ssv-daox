@@ -6,6 +6,7 @@ import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetc
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
 import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
 import { fetchPoolSummary } from '@/lib/delegation/api/fetch-pin';
+import { AUTO_DELEGATION_POOL_ADDRESS } from '@/lib/delegation/config';
 import { fetchOptOutStatuses } from '@/lib/delegation/opt-out/server';
 import { fetchVotingPower } from '@/lib/gnosis';
 import { fetchActiveVoteStatus } from '@/lib/snapshot/api/fetch-active-vote-status';
@@ -57,11 +58,17 @@ export default async function DaoDelegatesPage() {
       fetchPoolSummary(),
     ]);
 
-  // Only fetch voting power for addresses that are already receiving delegation
-  // Others can fetch on-demand via the API to reduce initial page load time
+  // Prefetch voting power only for current recipients (Active, Ending) and cohort holders
+  // (Nominated). Others fetch on demand via the API to keep the initial load short.
+  const prefetched = new Set([
+    ...delegationRecipients.map((address) => address.toLowerCase()),
+    ...leaderboard.rows
+      .filter((row) => row.cohort !== null)
+      .map((row) => row.address.toLowerCase()),
+  ]);
   // Not `row.opt_out`: the opt-out mock records requests the Score API never sees.
   const [votingPower, optOutStatuses] = await Promise.all([
-    fetchVotingPower(delegationRecipients),
+    fetchVotingPower([...prefetched]),
     fetchOptOutStatuses(leaderboard.rows.map((row) => row.address)),
   ]);
 
@@ -80,8 +87,7 @@ export default async function DaoDelegatesPage() {
     <div className="mx-auto max-w-7xl px-6 py-10">
       <PageHeader>
         <p className="mt-2 text-[13px] text-muted">
-          Scores from run {leaderboard.runId}, as of {leaderboard.asOf} (UTC). Scores are rounded
-          for display.
+          Scores as of {leaderboard.asOf} UTC, rounded for display.
         </p>
         {isStale && (
           <p className="mt-2 text-[13px] text-warning">
@@ -93,7 +99,7 @@ export default async function DaoDelegatesPage() {
         )}
       </PageHeader>
 
-      <PoolBanner pool={pool} />
+      <PoolBanner pool={pool} poolAddress={AUTO_DELEGATION_POOL_ADDRESS} />
 
       <Suspense>
         <DelegatesTable delegates={delegates} />

@@ -1,18 +1,19 @@
-import Link from 'next/link';
-
 import {
   formatDelegatorCount,
   formatPower,
   type PoolSummary,
 } from '@/lib/delegation/logic/auto-delegation';
 
+import PoolBannerAction from './PoolBannerAction';
+
 interface PoolBannerProps {
   /** `null` when the pool lookup failed; the banner is then hidden. */
   pool: PoolSummary | null;
+  poolAddress: string;
 }
 
 /** Points leaderboard visitors to the DAO auto-delegation pool. */
-export default function PoolBanner({ pool }: PoolBannerProps) {
+export default function PoolBanner({ pool, poolAddress }: PoolBannerProps) {
   if (!pool) {
     return null;
   }
@@ -41,12 +42,7 @@ export default function PoolBanner({ pool }: PoolBannerProps) {
           <span className="tabular-nums">{formatDelegatorCount(pool.delegatorCount)}</span>
         </p>
       </div>
-      <Link
-        href="/delegation"
-        className="inline-block shrink-0 self-start rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-hover sm:self-auto"
-      >
-        Let the DAO delegate for you →
-      </Link>
+      <PoolBannerAction poolAddress={poolAddress} />
     </section>
   );
 }

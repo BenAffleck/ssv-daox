@@ -20,6 +20,7 @@ const BOB = '0x4444444444444444444444444444444444444444';
 const HIGHSIGNAL = {
   projectUrl: 'https://hs.example/p/ssv/',
   settingsUrlTemplate: 'https://hs.example/settings/u/{username}',
+  profileUrlTemplate: 'https://hs.example/u/{username}',
 };
 
 function identity(id: string, addresses: string[], hsUsername: string | null = null): Identity {
@@ -144,16 +145,18 @@ describe('buildAddressOverview', () => {
       expect(overview?.addresses[0].highSignal).toEqual({
         projectUrl: 'https://hs.example/p/ssv/',
         settingsUrl: null,
+        profileUrl: null,
       });
     });
 
-    it('adds the personal settings page for a known username', () => {
+    it('adds the settings and profile pages for a known username', () => {
       const owner = identity('carol', [BOB], 'carol');
       const overview = buildAddressOverview(BOB, [row(BOB, owner)], HIGHSIGNAL);
 
       expect(overview?.addresses[0].highSignal).toEqual({
         projectUrl: 'https://hs.example/p/ssv/',
         settingsUrl: 'https://hs.example/settings/u/carol',
+        profileUrl: 'https://hs.example/u/carol',
       });
     });
 

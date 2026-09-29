@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Info } from 'lucide-react';
 
 import type { OverviewAddress } from '@/lib/delegation/logic/address-overview';
 
@@ -10,9 +10,6 @@ import StepPanel from './StepPanel';
 interface ClaimWizardProps {
   /** The overview's addresses, requested one first. */
   addresses: OverviewAddress[];
-  /** `as_of` of the last score run from `/health`; `null` when unknown. */
-  lastRunAsOf: string | null;
-  step?: number;
 }
 
 function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -52,72 +49,49 @@ function Step({
  * Guides a candidate through proving ownership on HighSignal. HighSignal has
  * no deep links for adding or sharing wallets, so each step is also text.
  */
-export default function ClaimWizard({ addresses, lastRunAsOf, step }: ClaimWizardProps) {
-  const [selectedAddress, setSelectedAddress] = useState(addresses[0]?.address ?? '');
-  const selectedEntry = addresses.find((a) => a.address === selectedAddress) ?? addresses[0];
-  if (!selectedEntry) {
+export default function ClaimWizard({ addresses }: ClaimWizardProps) {
+  const requested = addresses[0];
+  if (!requested) {
     return null;
   }
-  const { projectUrl, settingsUrl } = selectedEntry.highSignal;
+  const { projectUrl, settingsUrl } = requested.highSignal;
+  const claimed = requested.claimStatus !== 'unclaimed';
 
   return (
     <StepPanel
-      step={step}
       anchor="claim"
       title="Claim on HighSignal"
-      summary="Link your addresses to HighSignal so your community activity counts toward the score."
-      status={<ClaimStatusBadge status={addresses[0].claimStatus} />}
-      openLabel="Start claim"
+      summary={
+        claimed
+          ? 'Your address is linked on HighSignal and you are climbing the leaderboard.'
+          : 'Link your address to climb the leaderboard and earn a cohort seat.'
+      }
+      icon={<Info size={20} aria-hidden />}
+      done={claimed}
+      status={<ClaimStatusBadge status={requested.claimStatus} />}
     >
       <div className="space-y-5">
-        <div className="flex flex-wrap items-center gap-3">
-          <label htmlFor="claim-address" className="text-[13px] text-muted">
-            Address
-          </label>
-          <select
-            id="claim-address"
-            value={selectedEntry.address}
-            onChange={(e) => setSelectedAddress(e.target.value)}
-            className="filter-input max-w-full min-w-0 font-mono text-xs"
-          >
-            {addresses.map((a) => (
-              <option key={a.address} value={a.address}>
-                {a.ensName ? `${a.ensName} (${a.address})` : a.address}
-              </option>
-            ))}
-          </select>
-          <ClaimStatusBadge status={selectedEntry.claimStatus} />
-        </div>
-
         <ol className="space-y-4">
-          <Step number={1} title="Sign in on HighSignal with Discord">
-            <p>
-              Open the SSV project on HighSignal and sign in with Discord. This ties your Discord
-              activity to your HighSignal identity.
-            </p>
-            <ExternalLink href={projectUrl}>Open the SSV project on HighSignal</ExternalLink>
+          <Step number={1} title="Sign in with Discord">
+            <p>Open the SSV project on HighSignal and sign in.</p>
+            <ExternalLink href={projectUrl}>Open SSV on HighSignal</ExternalLink>
           </Step>
-          <Step number={2} title="Add your Ethereum addresses">
+          <Step number={2} title="Link your address">
             <p>
               In your HighSignal profile settings, add{' '}
-              <code className="font-mono text-xs text-foreground">{selectedEntry.address}</code> as
-              a linked wallet, plus any other address you own that should be scored. Follow
-              HighSignal&apos;s prompts to connect each wallet.
+              <code className="font-mono text-xs break-all text-foreground">
+                {requested.address}
+              </code>
+              .
             </p>
-            {settingsUrl ? (
-              <ExternalLink href={settingsUrl}>Open your HighSignal settings</ExternalLink>
-            ) : (
-              <p className="mt-2">
-                After signing in, open your profile settings from the HighSignal menu.
-              </p>
-            )}
+            {settingsUrl && <ExternalLink href={settingsUrl}>Open your settings</ExternalLink>}
           </Step>
-          <Step number={3} title="Share them with the SSV project">
+          <Step number={3} title="Share it with SSV">
             <p>
-              Back on the SSV project page, share the linked addresses with SSV. The Delegate Score
-              API only sees addresses you explicitly share with the project.
+              On the HighSignal SSV project page, share your linked address(es). Only explicitly
+              shared ones are scored.
             </p>
-            <ExternalLink href={projectUrl}>Open the SSV project on HighSignal</ExternalLink>
+            <ExternalLink href={projectUrl}>Open SSV on HighSignal</ExternalLink>
           </Step>
         </ol>
 
@@ -126,11 +100,8 @@ export default function ClaimWizard({ addresses, lastRunAsOf, step }: ClaimWizar
             Your claim appears after the next score run.
           </p>
           <p className="mt-1 text-[13px] text-muted">
-            {lastRunAsOf
-              ? `The last run was as of ${lastRunAsOf} (UTC).`
-              : 'The time of the last run is unavailable.'}{' '}
-            The status then moves to &ldquo;{CLAIM_STATUS_LABELS.claimed_pending}&rdquo; and, once
-            the community pillar is scored, &ldquo;{CLAIM_STATUS_LABELS.claimed_scored}&rdquo;.
+            The status then moves to &ldquo;{CLAIM_STATUS_LABELS.claimed_scored}&rdquo; once your
+            community activity counts.
           </p>
         </div>
       </div>

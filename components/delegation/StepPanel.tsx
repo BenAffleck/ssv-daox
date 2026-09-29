@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
+import { Check, ChevronDown } from 'lucide-react';
 
 /** Steps another component can open by link (`#claim`) or with `openStep`. */
 export type StepAnchor = 'claim' | 'opt-out' | 'delegation';
@@ -20,33 +21,35 @@ function isTargeted(anchor: StepAnchor): boolean {
 }
 
 interface StepPanelProps {
-  /** Position in the page's flow; omitted when the panel stands alone. */
-  step?: number;
   title: string;
   summary: React.ReactNode;
   /** Badge shown next to the toggle, so the state reads without expanding. */
   status?: React.ReactNode;
-  /** Toggle label while collapsed. */
-  openLabel: string;
   /** Element id; a URL fragment or `openStep` naming it opens the panel. */
   anchor?: StepAnchor;
+  /** Shown before the title; a `done` step shows a check instead. */
+  icon?: React.ReactNode;
+  /** A completed step: checked and locked shut. */
+  done?: boolean;
   children: React.ReactNode;
 }
 
 /**
- * Collapsed card with a title, one-line summary and status. The body stays
- * mounted while hidden, so form state survives collapsing.
+ * Collapsed card with a title, one-line summary and status. The toggle names
+ * no action, so a stray click never reads as one. The body stays mounted while
+ * hidden, so form state survives collapsing. A `done` step stays collapsed.
  */
 export default function StepPanel({
-  step,
   title,
   summary,
   status,
-  openLabel,
   anchor,
+  icon,
+  done = false,
   children,
 }: StepPanelProps) {
-  const [open, setOpen] = useState(false);
+  const [requestedOpen, setOpen] = useState(false);
+  const open = requestedOpen && !done;
   // Bumped per request, so an already open panel still scrolls into view.
   const [revealRequest, setRevealRequest] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
@@ -81,10 +84,10 @@ export default function StepPanel({
 
   // Runs after the body is shown, so the scroll lands on the final layout.
   useEffect(() => {
-    if (revealRequest > 0) {
+    if (revealRequest > 0 && !done) {
       sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [revealRequest]);
+  }, [revealRequest, done]);
 
   const toggle = () => {
     // A link to the anchor must fire `hashchange` again once collapsed.
@@ -99,29 +102,52 @@ export default function StepPanel({
     <section
       ref={sectionRef}
       id={anchor}
-      className="card mt-6 scroll-mt-20 p-5"
+      className={`card mt-6 scroll-mt-20 p-5 ${done ? 'border-accent/40' : ''}`}
       aria-labelledby={`${id}-title`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 gap-3">
-          {step !== undefined && (
-            <span className="badge badge-primary h-6 w-6 shrink-0 justify-center px-0">{step}</span>
-          )}
-          <div className="min-w-0">
-            <h3 id={`${id}-title`}>{title}</h3>
-            <p className="mt-1 text-[13px] text-muted">{summary}</p>
-          </div>
+        <div className="min-w-0">
+          <h3 id={`${id}-title`} className="flex items-center gap-2">
+            {done ? (
+              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-white">
+                <Check size={13} strokeWidth={3} aria-hidden />
+              </span>
+            ) : (
+              icon && (
+                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center text-primary">
+                  {icon}
+                </span>
+              )
+            )}
+            {title}
+          </h3>
+          <p className="mt-1 text-[13px] text-muted">{summary}</p>
         </div>
         <div className="flex items-center gap-3">
           {status}
           <button
             type="button"
             onClick={toggle}
+            disabled={done}
             aria-expanded={open}
             aria-controls={`${id}-body`}
-            className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-hover"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-foreground transition-colors hover:bg-card-hover disabled:cursor-not-allowed disabled:border-accent/40 disabled:text-accent disabled:hover:bg-card"
           >
-            {open ? 'Hide' : openLabel}
+            {done ? (
+              <>
+                <Check size={14} aria-hidden />
+                Done
+              </>
+            ) : (
+              <>
+                {open ? 'Hide' : 'Show'}
+                <ChevronDown
+                  size={14}
+                  aria-hidden
+                  className={`transition-transform ${open ? 'rotate-180' : ''}`}
+                />
+              </>
+            )}
           </button>
         </div>
       </div>

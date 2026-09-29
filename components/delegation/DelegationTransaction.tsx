@@ -81,73 +81,68 @@ export function useDelegationWrite() {
   return { send, submission, resetSubmission: () => setSubmission(null), awaitingWallet };
 }
 
-function TransactionStatus({
-  hash,
-  safe,
-  note,
-}: {
-  hash: Hash;
-  safe: Address | null;
-  note: string;
-}) {
-  const receipt = useWaitForTransactionReceipt({ hash, query: { enabled: safe === null } });
+export type SubmissionPhase = 'idle' | 'pending' | 'confirmed' | 'failed' | 'proposed' | 'error';
 
-  if (safe) {
-    return (
-      <div role="status" className="space-y-1 text-[13px]">
-        <p className="text-foreground">
-          Proposed to your Safe. Your co-signers must approve it before it executes.{' '}
-          <a
-            href={`https://app.safe.global/transactions/queue?safe=eth:${safe}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            Open the Safe queue
-          </a>
-        </p>
-        <p className="text-muted">{note}</p>
-      </div>
-    );
+/** Where a submission stands; an EOA's transaction is followed to its receipt. */
+export function useSubmissionPhase(submission: Submission | null): SubmissionPhase {
+  const hash = submission?.kind === 'sent' && !submission.safe ? submission.hash : undefined;
+  const receipt = useWaitForTransactionReceipt({ hash, query: { enabled: hash !== undefined } });
+  if (!submission) {
+    return 'idle';
   }
+  if (submission.kind === 'error') {
+    return 'error';
+  }
+  if (submission.safe) {
+    return 'proposed';
+  }
+  if (receipt.isError || receipt.data?.status === 'reverted') {
+    return 'failed';
+  }
+  return receipt.data?.status === 'success' ? 'confirmed' : 'pending';
+}
 
-  const failed = receipt.isError || receipt.data?.status === 'reverted';
-  const confirmed = receipt.data?.status === 'success';
-  const label = failed ? 'Failed' : confirmed ? 'Confirmed' : 'Pending';
-  const tone = failed ? 'text-danger' : confirmed ? 'text-accent' : 'text-warning';
+/** `true` once the write is on its way or done, so it can't be sent twice. */
+export function isSubmissionLocked(phase: SubmissionPhase): boolean {
+  return phase === 'pending' || phase === 'confirmed' || phase === 'proposed';
+}
 
+const TONES = {
+  pending: 'border-warning/40 bg-warning/10',
+  confirmed: 'border-accent/40 bg-accent/10',
+  failed: 'border-danger/40 bg-danger/10',
+  proposed: 'border-primary/40 bg-primary/10',
+};
+
+function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <div role="status" className="space-y-1 text-[13px]">
-      <p>
-        <span className={`font-medium ${tone}`}>{label}</span>{' '}
-        <a
-          href={`${EXPLORER_URL}/tx/${hash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline"
-        >
-          View on Etherscan
-        </a>
-      </p>
-      {confirmed && <p className="text-muted">{note}</p>}
-    </div>
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-primary hover:underline"
+    >
+      {children}
+    </a>
   );
 }
 
 /**
- * An EOA's receipt (Pending → Confirmed/Failed) or a Safe's queue link, or the
- * send error. `note` explains the indexing lag once the write lands.
+ * The submission's outcome: an EOA's receipt (pending, confirmed, failed), a
+ * Safe proposal with its queue link, or the send error. `note` explains the
+ * indexing lag once the write lands.
  */
 export function SubmissionStatus({
   submission,
+  phase,
+  confirmedMessage,
   note,
 }: {
   submission: Submission | null;
+  phase: SubmissionPhase;
+  confirmedMessage: string;
   note: string;
 }) {
-  if (submission?.kind === 'sent') {
-    return <TransactionStatus hash={submission.hash} safe={submission.safe} note={note} />;
-  }
   if (submission?.kind === 'error') {
     return (
       <p role="alert" className="text-[13px] text-danger">
@@ -155,7 +150,48 @@ export function SubmissionStatus({
       </p>
     );
   }
-  return null;
+  if (submission?.kind !== 'sent' || phase === 'idle' || phase === 'error') {
+    return null;
+  }
+  const etherscan = (
+    <ExternalLink href={`${EXPLORER_URL}/tx/${submission.hash}`}>View on Etherscan</ExternalLink>
+  );
+  return (
+    <div role="status" className={`space-y-1 rounded-lg border p-4 text-[13px] ${TONES[phase]}`}>
+      {phase === 'proposed' && submission.safe && (
+        <>
+          <p className="font-medium text-foreground">Proposed to your Safe</p>
+          <p className="text-muted">
+            Your co-signers must approve it before it executes.{' '}
+            <ExternalLink
+              href={`https://app.safe.global/transactions/queue?safe=eth:${submission.safe}`}
+            >
+              Open the Safe queue
+            </ExternalLink>
+          </p>
+          <p className="text-muted">{note}</p>
+        </>
+      )}
+      {phase === 'pending' && (
+        <p>
+          <span className="font-medium text-warning">Transaction pending…</span> {etherscan}
+        </p>
+      )}
+      {phase === 'confirmed' && (
+        <>
+          <p>
+            <span className="font-medium text-accent">{confirmedMessage}</span> {etherscan}
+          </p>
+          <p className="text-muted">{note}</p>
+        </>
+      )}
+      {phase === 'failed' && (
+        <p>
+          <span className="font-medium text-danger">Transaction failed.</span> {etherscan}
+        </p>
+      )}
+    </div>
+  );
 }
 
 /** The user must tick this before a write that removes current delegates. */

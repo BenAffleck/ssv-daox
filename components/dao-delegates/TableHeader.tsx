@@ -62,15 +62,12 @@ export default function TableHeader({
         <SortableHeader field="votingPower">Voting Power</SortableHeader>
         <th className="table-col-header px-3 py-3 text-left">Cohort</th>
         <th className="table-col-header px-3 py-3 text-left">Delegation Status</th>
-        <SortableHeader field="allocatedPower">Allocated Power</SortableHeader>
+        <SortableHeader field="allocatedPower">DAO Delegated Power</SortableHeader>
         <th className="table-col-header px-3 py-3 text-left">
           <div>Vote Activity</div>
           <div className="text-[10px] font-normal tracking-normal text-muted/70 normal-case">
             Last 5 closed
           </div>
-        </th>
-        <th className="px-3 py-3">
-          <span className="sr-only">Manage</span>
         </th>
       </tr>
     </thead>

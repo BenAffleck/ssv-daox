@@ -1,21 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { useAccount } from 'wagmi';
 
+import { useWalletSession } from '@/components/wallet/useWalletSession';
+import { formatAddress } from '@/lib/dao-delegates/utils/address';
 import {
   autoDelegationView,
-  formatDelegatorCount,
   formatPower,
   type AutoDelegationState,
-  type MovesAlong,
 } from '@/lib/delegation/logic/auto-delegation';
+import { sameAddress } from '@/lib/delegation/logic/pool';
 import type { OptOutStatus } from '@/lib/delegation/opt-out/score-api';
 import type { VotingPowerData } from '@/lib/gnosis/types';
 
-import { DropConfirmation, SubmissionStatus, useDelegationWrite } from './DelegationTransaction';
+import ConnectToDelegateButton, { PRIMARY_BUTTON } from './ConnectToDelegateButton';
+import DelegateToDaoPanel from './DelegateToDaoPanel';
+import {
+  DropConfirmation,
+  isSubmissionLocked,
+  SubmissionStatus,
+  useDelegationWrite,
+  useSubmissionPhase,
+} from './DelegationTransaction';
 import OpenStepButton from './OpenStepButton';
-import VotingPowerBreakdownCard from './VotingPowerBreakdownCard';
 
 interface AutoDelegationPathProps {
   address: string;
@@ -26,43 +33,23 @@ interface AutoDelegationPathProps {
   optOut: OptOutStatus | null;
   /** `false` when the page has no Opt-out step to open, so "Opt out first" isn't a link. */
   optOutStepAvailable: boolean;
-  /** `false` without an RPC URL: the breakdown shows, the action doesn't. */
-  walletAvailable: boolean;
 }
 
-const LAG_NOTE = 'Your voting power card and the pool total update within about 5 minutes.';
+const LAG_NOTE = 'Voting power updates within about 5 minutes.';
 
 function powerOrFallback(power: number | null): string {
   return power === null ? 'voting power' : formatPower(power);
 }
 
-function movesAlongNote({ delegatorCount, power }: MovesAlong): string {
-  const whose = `${formatDelegatorCount(delegatorCount)}${delegatorCount === 1 ? "'s" : "'"}`;
-  return `${whose} ${powerOrFallback(power)} moves to the pool too, because delegating passes on power delegated to you.`;
-}
-
-function blockedReason(
-  state: AutoDelegationState,
-  connected: boolean,
-  address: string,
-  optOutStepAvailable: boolean,
-) {
+/** Why the address can't delegate to the pool, worded for its owner or a visitor. */
+function blockedReason(state: AutoDelegationState, isOwner: boolean, optOutLink: boolean) {
   switch (state.kind) {
-    case 'unavailable':
-      return "Your current delegations couldn't be loaded, so the action is disabled to avoid overwriting them. Try again in a few minutes.";
-    case 'switch-account':
-      return (
-        <>
-          {connected ? 'Switch' : 'Connect'} your wallet to{' '}
-          <code className="font-mono text-xs break-all text-foreground">{address}</code> to
-          delegate.
-        </>
-      );
     case 'opt-out-required':
-      return (
+      return isOwner ? (
         <>
-          You receive {powerOrFallback(state.poolPower)} from the DAO pool.{' '}
-          {optOutStepAvailable ? (
+          You receive {powerOrFallback(state.poolPower)} from the DAO pool, so delegating to it
+          would loop.{' '}
+          {optOutLink ? (
             <OpenStepButton anchor="opt-out" variant="link">
               Opt out first
             </OpenStepButton>
@@ -70,104 +57,127 @@ function blockedReason(
             'Opt out first.'
           )}
         </>
+      ) : (
+        `Receives ${powerOrFallback(state.poolPower)} from the DAO pool, so it can't delegate to it.`
       );
     case 'awaiting-run':
-      return "Waiting for the next run to remove the pool's delegation.";
+      return "Opted out. Delegating to the pool opens once the next run removes the pool's delegation.";
     case 'nothing-to-delegate':
       return state.reason === 'pool'
         ? 'This is the DAO pool.'
-        : 'Nothing to delegate on this address.';
+        : 'This address has no voting power to delegate.';
     default:
       return null;
   }
 }
 
-function DelegateButton({
-  disabled,
-  awaitingWallet,
-  onClick,
-}: {
-  disabled: boolean;
-  awaitingWallet: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-50"
-    >
-      {awaitingWallet ? 'Confirm in your wallet…' : 'Delegate to the DAO'}
-    </button>
-  );
-}
-
-/** The selected address's voting power and the one-click "Delegate to the DAO" action. */
+/** The "Delegate to the DAO" panel with its one-click action for the selected address. */
 export default function AutoDelegationPath({
   address,
   pin,
   poolAddress,
   optOut,
   optOutStepAvailable,
-  walletAvailable,
 }: AutoDelegationPathProps) {
-  const { address: connected } = useAccount();
+  const session = useWalletSession();
+  const isOwner = session.phase === 'connected' && sameAddress(session.address, address);
   const { breakdown, state } = autoDelegationView({
     address,
-    connected,
+    connected: session.address,
     pin,
     poolAddress,
     optOut,
   });
   const { send, submission, awaitingWallet } = useDelegationWrite();
+  const phase = useSubmissionPhase(submission);
   const [confirmedDrop, setConfirmedDrop] = useState(false);
 
-  return (
-    <>
-      <VotingPowerBreakdownCard breakdown={breakdown} />
-      {walletAvailable && (
-        <div className="mt-4 space-y-3 text-[13px]">
-          {state.kind === 'already-delegating' ? (
-            <p role="status" className="text-foreground">
-              <span className="font-medium text-accent">
-                You&apos;re delegating {formatPower(state.power)} to the DAO pool.
-              </span>{' '}
-              <OpenStepButton anchor="delegation" variant="link">
-                Change
-              </OpenStepButton>
+  const powerLabel = (power: number) => (
+    <span className="text-accent tabular-nums">{formatPower(power)}</span>
+  );
+
+  function panel(): React.ComponentProps<typeof DelegateToDaoPanel> {
+    switch (state.kind) {
+      case 'unavailable':
+        return {
+          children: (
+            <p className="text-muted">Voting power couldn&apos;t be loaded. Try again later.</p>
+          ),
+        };
+      case 'already-delegating':
+        return {
+          title: <>You&apos;re delegating {powerLabel(state.power)} to the DAO</>,
+          subtitle:
+            "The DAO spreads your voting power across cohorts of delegates. We don't touch your tokens.",
+          action: <OpenStepButton anchor="delegation">Change</OpenStepButton>,
+        };
+      case 'switch-account':
+        if (session.phase === 'loading') {
+          return {};
+        }
+        if (session.phase === 'disconnected') {
+          return { action: <ConnectToDelegateButton /> };
+        }
+        return {
+          children: (
+            <p className="text-muted">
+              Switch your wallet to{' '}
+              <code className="font-mono text-xs text-foreground" title={address}>
+                {formatAddress(address)}
+              </code>{' '}
+              to delegate.
             </p>
-          ) : state.kind === 'ready' ? (
+          ),
+        };
+      case 'ready': {
+        const locked = isSubmissionLocked(phase);
+        const power = (breakdown?.ownPower ?? 0) + (state.movesAlong?.power ?? 0);
+        const confirm = !locked && state.droppedDelegates.length > 0;
+        return {
+          title: <>Delegate your {powerLabel(power)} voting power to the DAO</>,
+          action: !locked && (
+            <button
+              type="button"
+              onClick={() => send(state.delegations)}
+              disabled={awaitingWallet || (state.droppedDelegates.length > 0 && !confirmedDrop)}
+              className={PRIMARY_BUTTON}
+            >
+              {awaitingWallet
+                ? 'Confirm in your wallet…'
+                : phase === 'failed' || phase === 'error'
+                  ? 'Try again'
+                  : 'Delegate to the DAO'}
+            </button>
+          ),
+          children: (confirm || phase !== 'idle') && (
             <>
-              {state.movesAlong && <p className="text-muted">{movesAlongNote(state.movesAlong)}</p>}
-              {state.droppedDelegates.length > 0 && (
+              {confirm && (
                 <DropConfirmation
                   dropped={state.droppedDelegates}
                   checked={confirmedDrop}
                   onChange={setConfirmedDrop}
                 />
               )}
-              <DelegateButton
-                disabled={
-                  awaitingWallet ||
-                  submission?.kind === 'sent' ||
-                  (state.droppedDelegates.length > 0 && !confirmedDrop)
-                }
-                awaitingWallet={awaitingWallet}
-                onClick={() => send(state.delegations)}
+              <SubmissionStatus
+                submission={submission}
+                phase={phase}
+                confirmedMessage="You're delegating to the DAO pool."
+                note={LAG_NOTE}
               />
-              <SubmissionStatus submission={submission} note={LAG_NOTE} />
             </>
-          ) : (
-            <>
-              <DelegateButton disabled awaitingWallet={false} />
-              <p className="text-muted">
-                {blockedReason(state, Boolean(connected), address, optOutStepAvailable)}
-              </p>
-            </>
-          )}
-        </div>
-      )}
-    </>
-  );
+          ),
+        };
+      }
+      default:
+        return {
+          children: (
+            <p className="text-muted">
+              {blockedReason(state, isOwner, isOwner && optOutStepAvailable)}
+            </p>
+          ),
+        };
+    }
+  }
+
+  return <DelegateToDaoPanel {...panel()} />;
 }

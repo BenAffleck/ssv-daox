@@ -10,6 +10,9 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
 }));
 
+// The wallet button needs the wagmi and RainbowKit providers.
+vi.mock('@/components/wallet/WalletButton', () => ({ default: () => null }));
+
 // Mock the module registry so this Header unit test is independent of the live
 // registry contents (which modules are active vs. coming-soon can change).
 vi.mock('@/lib/data/modules', () => {
@@ -105,17 +108,6 @@ describe('Header', () => {
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getByText('DAO Delegates')).toBeInTheDocument();
     expect(screen.getByText('DAO Timeline')).toBeInTheDocument();
-  });
-
-  it('renders Guest user pill', () => {
-    render(
-      <ThemeProvider>
-        <Header />
-      </ThemeProvider>,
-    );
-
-    const guestElements = screen.getAllByText('Guest');
-    expect(guestElements.length).toBeGreaterThan(0);
   });
 
   it('renders More button for coming-soon modules', () => {

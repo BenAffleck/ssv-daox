@@ -33,6 +33,8 @@ export interface HighSignalLinks {
   projectUrl: string;
   /** `null` until the identity has a HighSignal username. */
   settingsUrl: string | null;
+  /** `null` until the identity has a HighSignal username. */
+  profileUrl: string | null;
 }
 
 export interface AddressOverview {
@@ -54,11 +56,12 @@ function claimStatusOf(identity: Identity, row: ScoreRow | undefined): ClaimStat
 
 function highSignalLinksOf(identity: Identity, config: HighSignalConfig): HighSignalLinks {
   const username = identity.hs_username;
+  const withUsername = (template: string) =>
+    username ? template.replaceAll('{username}', encodeURIComponent(username)) : null;
   return {
     projectUrl: config.projectUrl,
-    settingsUrl: username
-      ? config.settingsUrlTemplate.replaceAll('{username}', encodeURIComponent(username))
-      : null,
+    settingsUrl: withUsername(config.settingsUrlTemplate),
+    profileUrl: withUsername(config.profileUrlTemplate),
   };
 }
 

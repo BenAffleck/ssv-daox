@@ -1,6 +1,3 @@
-import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
-
 import OptOutStatusBadge from '@/components/delegation/OptOutStatusBadge';
 import { Delegate, PillarKey } from '@/lib/dao-delegates/types';
 import { optOutBadgeOf } from '@/lib/delegation/logic/address-overview';
@@ -24,12 +21,12 @@ export default function DelegateRow({ delegate, livePillars }: DelegateRowProps)
   const optOutBadge = optOutBadgeOf(delegate.optOut);
 
   return (
-    <tr className="border-b border-border transition-colors hover:bg-card-hover">
+    <tr className="group border-b border-border transition-colors hover:bg-card-hover">
       <td className="px-3 py-3 text-center font-medium text-foreground tabular-nums">
         {delegate.rank ?? '-'}
       </td>
       <td className="px-3 py-3">
-        <NameCell displayName={delegate.displayName} />
+        <NameCell displayName={delegate.displayName} address={delegate.publicAddress} />
         <AddressCell address={delegate.publicAddress} />
       </td>
       <td className="px-3 py-3 text-center">
@@ -75,15 +72,6 @@ export default function DelegateRow({ delegate, livePillars }: DelegateRowProps)
           proposalCount={SNAPSHOT_CONFIG.voteParticipation.proposalCount}
           activeVoteStatus={delegate.activeVoteStatus}
         />
-      </td>
-      <td className="px-3 py-3 text-right">
-        <Link
-          href={`/delegation?address=${delegate.publicAddress}`}
-          className="inline-flex items-center gap-1 text-[13px] whitespace-nowrap text-primary hover:underline"
-        >
-          Open
-          <ChevronRight size={14} />
-        </Link>
       </td>
     </tr>
   );

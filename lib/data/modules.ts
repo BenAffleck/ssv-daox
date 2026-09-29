@@ -32,7 +32,7 @@ export const modules: Module[] = [
     slug: 'delegation',
     name: 'Delegation',
     description:
-      'Your scored addresses and their HighSignal identity siblings, with rank, score, cohort and claim status.',
+      'Your scored addresses and their HighSignal identity siblings, with rank, score, cohort and HighSignal status.',
     status: ModuleStatus.ACTIVE,
     sortOrder: 4,
   },

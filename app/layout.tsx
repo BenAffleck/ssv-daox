@@ -4,6 +4,7 @@ import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
 
 import Header from '@/components/Header';
+import WalletProvider from '@/components/wallet/WalletProvider';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
 
 const poppins = Poppins({
@@ -50,8 +51,10 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-background font-body antialiased">
         <ThemeProvider>
-          <Header />
-          <main>{children}</main>
+          <WalletProvider>
+            <Header />
+            <main>{children}</main>
+          </WalletProvider>
         </ThemeProvider>
       </body>
     </html>

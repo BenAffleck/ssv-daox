@@ -1,13 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount } from 'wagmi';
 
+import { useWalletSession } from '@/components/wallet/useWalletSession';
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
 import { accountSwitchPrompt, isAddress } from '@/lib/delegation/logic/address-overview';
+import {
+  delegationUrlOnWalletChange,
+  type SettledWallet,
+} from '@/lib/delegation/logic/wallet-navigation';
 
 interface WalletPanelProps {
   /** The `?address=` value; may be empty or invalid. */
@@ -16,60 +19,75 @@ interface WalletPanelProps {
   identityAddresses: string[];
 }
 
+function Address({ value }: { value: string }) {
+  return (
+    <code className="font-mono text-xs text-foreground" title={value}>
+      {formatAddress(value)}
+    </code>
+  );
+}
+
 /**
- * Connect button that drives the overview. Connecting opens the account unless
- * `?address=` already selects one; an account switch in the wallet always does.
+ * Moves the page with the wallet (connect, account switch, disconnect) and
+ * says when the connected wallet can't manage the viewed address.
  */
 export default function WalletPanel({ selectedAddress, identityAddresses }: WalletPanelProps) {
   const router = useRouter();
-  const { address } = useAccount();
-  const previousAddress = useRef(address);
-
-  const selectAccount = useCallback(
-    (account: string) => {
-      if (account.toLowerCase() !== selectedAddress.toLowerCase()) {
-        router.replace(`/delegation?address=${account}`);
-      }
-    },
-    [router, selectedAddress],
-  );
+  const session = useWalletSession();
+  const previous = useRef<SettledWallet | null>(null);
 
   useEffect(() => {
-    const previous = previousAddress.current;
-    previousAddress.current = address;
-    if (address && (!isAddress(selectedAddress) || (previous && previous !== address))) {
-      selectAccount(address);
+    if (session.phase === 'loading') {
+      return;
     }
-  }, [address, selectedAddress, selectAccount]);
+    const current: SettledWallet =
+      session.phase === 'connected'
+        ? { phase: 'connected', address: session.address }
+        : { phase: 'disconnected' };
+    const url = delegationUrlOnWalletChange(previous.current, current, selectedAddress);
+    previous.current = current;
+    if (url) {
+      router.replace(url);
+    }
+  }, [session.phase, session.address, selectedAddress, router]);
 
-  const prompt = isAddress(selectedAddress)
-    ? accountSwitchPrompt(selectedAddress, address, identityAddresses)
-    : null;
+  if (session.phase !== 'connected') {
+    return null;
+  }
+  const connected = session.address;
 
-  // The connect button already shows the connected address, so the prompt names only the viewed one.
+  if (!isAddress(selectedAddress)) {
+    return (
+      <div className="mt-6">
+        <Link
+          href={`/delegation?address=${connected}`}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-glow transition-colors hover:bg-primary/90"
+        >
+          Open your address <span className="font-mono text-xs">{formatAddress(connected)}</span>
+        </Link>
+      </div>
+    );
+  }
+
+  const prompt = accountSwitchPrompt(selectedAddress, connected, identityAddresses);
+  if (!prompt) {
+    return null;
+  }
   return (
-    <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
-      <ConnectButton showBalance={false} chainStatus="icon" />
-      {prompt && address && (
-        <p role="status" className="text-[13px] text-muted">
-          <span className="font-medium text-warning">Switch account to sign</span> for{' '}
-          <code className="font-mono text-xs text-foreground" title={selectedAddress}>
-            {formatAddress(selectedAddress)}
-          </code>
-          {prompt === 'sibling' && ', a sibling of your connected wallet'}.
-          {prompt === 'other' && (
-            <>
-              {' '}
-              <Link
-                href={`/delegation?address=${address}`}
-                className="text-primary hover:underline"
-              >
-                View your connected address
-              </Link>
-            </>
-          )}
-        </p>
+    <p role="status" className="mt-4 text-[13px] text-muted">
+      <span className="badge-sm-warning mr-2">Read-only</span>
+      {prompt === 'sibling' ? (
+        <>
+          Switch your wallet to <Address value={selectedAddress} /> to manage it.
+        </>
+      ) : (
+        <>
+          You&apos;re connected as <Address value={connected} />.{' '}
+          <Link href={`/delegation?address=${connected}`} className="text-primary hover:underline">
+            Open your address
+          </Link>
+        </>
       )}
-    </div>
+    </p>
   );
 }

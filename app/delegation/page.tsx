@@ -1,14 +1,21 @@
+import Link from 'next/link';
+
 import AddressLookupForm from '@/components/delegation/AddressLookupForm';
 import AddressOverviewTable from '@/components/delegation/AddressOverviewTable';
 import AutoDelegationPath from '@/components/delegation/AutoDelegationPath';
+import ClaimIntroPanel from '@/components/delegation/ClaimIntroPanel';
 import ClaimWizard from '@/components/delegation/ClaimWizard';
+import DelegateProfile from '@/components/delegation/DelegateProfile';
+import DelegateToDaoPanel from '@/components/delegation/DelegateToDaoPanel';
 import DelegationPanel from '@/components/delegation/DelegationPanel';
-import HeroCard from '@/components/delegation/HeroCard';
 import OptOutPanel from '@/components/delegation/OptOutPanel';
+import OwnerOnly from '@/components/delegation/OwnerOnly';
+import VotingPowerPanel from '@/components/delegation/VotingPowerPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
-import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
+import { fetchLeaderboard } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
-import { fetchPin, fetchPoolSummary } from '@/lib/delegation/api/fetch-pin';
+import { formatAddress } from '@/lib/dao-delegates/utils/address';
+import { fetchPin } from '@/lib/delegation/api/fetch-pin';
 import { AUTO_DELEGATION_POOL_ADDRESS, getHighSignalConfig } from '@/lib/delegation/config';
 import {
   buildAddressOverview,
@@ -17,30 +24,38 @@ import {
   withSafeRequests,
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
-import type { PoolSummary } from '@/lib/delegation/logic/auto-delegation';
+import { autoDelegationView } from '@/lib/delegation/logic/auto-delegation';
 import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
+import { sameAddress } from '@/lib/delegation/logic/pool';
 import {
   fetchOptOutStatuses,
   fetchSafeRequests,
   getOptOutService,
 } from '@/lib/delegation/opt-out/server';
 import type { DelegationEntry } from '@/lib/gnosis';
+import { fetchConfiguredDelegationRecipients } from '@/lib/snapshot/api/fetch-delegation-recipients';
+import {
+  fetchSnapshotProfile,
+  snapshotAvatarUrl,
+  snapshotProfileUrl,
+} from '@/lib/snapshot/api/fetch-profile';
 import { getMainnetRpcUrl } from '@/lib/wallet/config';
 
 export const revalidate = 300;
 
 export const metadata = {
   title: 'Delegation - DAOx',
-  description: 'Your scored addresses and their HighSignal identity siblings',
+  description: 'Delegate scores, voting power and delegation for SSV governance',
 };
 
-function PageHeader({ children }: { children?: React.ReactNode }) {
+function PageHeader({ asOf, children }: { asOf?: string; children?: React.ReactNode }) {
   return (
-    <div className="mb-10">
+    <div className="mb-8">
       <h1 className="mb-2">Delegation</h1>
-      <p className="text-[15px] text-muted">
-        Check your score, then claim on HighSignal, opt out or delegate your voting power.
-      </p>
+      <p className="text-[15px] text-muted">Become a delegate, or let the DAO delegate for you.</p>
+      {asOf && (
+        <p className="mt-2 text-[13px] text-muted">Live mainnet data. Scores as of {asOf} UTC.</p>
+      )}
       {children}
     </div>
   );
@@ -70,37 +85,16 @@ function WalletSection({
   );
 }
 
-function Hero({
-  pool,
-  overview,
-  autoDelegation,
-}: {
-  pool: PoolSummary | null;
-  overview: AddressOverview | null;
-  autoDelegation?: React.ReactNode;
-}) {
-  return (
-    <HeroCard
-      pool={pool}
-      candidate={overview?.addresses[0] ?? null}
-      autoDelegation={autoDelegation}
-      highSignalProjectUrl={getHighSignalConfig().projectUrl}
-    />
-  );
-}
-
 function DelegationSection({
   address,
   current,
   ownAddresses,
   scoring,
-  step,
 }: {
   address: string;
   current: DelegationEntry[] | null;
   ownAddresses: string[];
   scoring: TargetScoring;
-  step?: number;
 }) {
   if (!getMainnetRpcUrl()) {
     return null;
@@ -113,29 +107,41 @@ function DelegationSection({
       current={current}
       ownAddresses={ownAddresses}
       scoring={scoring}
-      step={step}
     />
   );
 }
 
-function emptyMessage(address: string): string {
-  if (!address) {
-    return 'Connect a wallet or enter an address to see its score and identity siblings.';
-  }
-  if (!isAddress(address)) {
-    return `${address} is not an Ethereum address.`;
-  }
-  return `${address} is not in the latest Delegate Score run.`;
-}
-
-function EmptyState({ address }: { address: string }) {
+function LookupCard({ address }: { address: string }) {
   return (
     <div className="card-empty">
-      <p className="font-body text-[15px] text-muted">{emptyMessage(address)}</p>
-      <p className="mt-2 text-[13px] text-muted">
-        You can also open any address from the DAO Delegates leaderboard.
+      <p className="font-body text-[15px] text-foreground">
+        {address && !isAddress(address) ? (
+          <>
+            <code className="font-mono text-[13px]">{address}</code> is not an Ethereum address.
+          </>
+        ) : (
+          'Look up an address'
+        )}
       </p>
       <AddressLookupForm defaultValue={address} />
+      <p className="mt-4 text-[13px] text-muted">
+        Or pick one from the{' '}
+        <Link href="/delegates" className="text-primary hover:underline">
+          DAO Delegates
+        </Link>{' '}
+        leaderboard.
+      </p>
+    </div>
+  );
+}
+
+function NotScored() {
+  return (
+    <div role="status" className="card p-5">
+      <p className="text-[13px] text-muted">
+        This address isn&apos;t in the latest score run. It has no rank, cohort or HighSignal
+        identity yet.
+      </p>
     </div>
   );
 }
@@ -149,7 +155,6 @@ export default async function DelegationPage({
     return (
       <div className="mx-auto max-w-7xl px-6 py-10">
         <PageHeader />
-        <Hero pool={await fetchPoolSummary()} overview={null} />
         <div className="card-empty">
           <p className="font-body text-[15px] text-muted">
             Delegate data is unavailable: DELEGATE_SCORE_API_URL is not configured.
@@ -168,17 +173,16 @@ export default async function DelegationPage({
         <PageHeader>
           <WalletSection address={address} overview={null} />
         </PageHeader>
-        <Hero pool={await fetchPoolSummary()} overview={null} />
-        <EmptyState address={address} />
+        <LookupCard address={address} />
       </div>
     );
   }
 
-  const [leaderboard, health, pool, pin] = await Promise.all([
+  const [leaderboard, pin, profile, delegationRecipients] = await Promise.all([
     fetchLeaderboard(),
-    fetchScoreHealth(),
-    fetchPoolSummary(),
     fetchPin(address),
+    fetchSnapshotProfile(address),
+    fetchConfiguredDelegationRecipients(),
   ]);
   const baseOverview = buildAddressOverview(address, leaderboard.rows, getHighSignalConfig());
   const selected = address.toLowerCase();
@@ -199,63 +203,80 @@ export default async function DelegationPage({
     baseOverview && withSafeRequests(withOptOutStatuses(baseOverview, statuses), safeRequests);
   const scoring = targetScoringOf(leaderboard.rows, statuses);
   const ownAddresses = overview?.addresses.map((a) => a.address) ?? [];
-  const outgoingDelegations = pin?.outgoingDelegations ?? null;
+  const requested = overview?.addresses[0] ?? null;
+  const name =
+    leaderboard.rows.find((r) => sameAddress(r.address, address))?.display_name ??
+    profile?.name ??
+    requested?.ensName ??
+    formatAddress(address);
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
-      <PageHeader>
-        <p className="mt-2 text-[13px] text-muted">
-          Scores from run {leaderboard.runId}, as of {leaderboard.asOf} (UTC).
-        </p>
+      <PageHeader asOf={leaderboard.asOf}>
         <WalletSection address={address} overview={overview} />
       </PageHeader>
-      <Hero
-        pool={pool}
-        overview={overview}
-        autoDelegation={
-          <AutoDelegationPath
-            address={address}
-            pin={pin}
-            poolAddress={AUTO_DELEGATION_POOL_ADDRESS}
-            optOut={statuses[selected] ?? null}
-            optOutStepAvailable={overview !== null}
-            walletAvailable={Boolean(getMainnetRpcUrl())}
-          />
-        }
+      <DelegateProfile
+        address={address}
+        name={name}
+        avatarUrl={snapshotAvatarUrl(address)}
+        profileUrl={snapshotProfileUrl(address)}
+        highSignalProfileUrl={requested?.highSignal.profileUrl ?? null}
+        statement={profile?.statement ?? null}
       />
       {overview ? (
-        <>
-          <AddressOverviewTable addresses={overview.addresses} />
-          <ClaimWizard
-            addresses={overview.addresses}
-            lastRunAsOf={health?.as_of ?? null}
-            step={1}
-          />
-          <OptOutPanel
-            addresses={overview.addresses}
-            mode={getOptOutService().mode}
-            signingAvailable={Boolean(getMainnetRpcUrl())}
-            step={2}
-          />
-          <DelegationSection
-            address={address}
-            current={outgoingDelegations}
-            ownAddresses={ownAddresses}
-            scoring={scoring}
-            step={3}
-          />
-        </>
+        <AddressOverviewTable
+          addresses={overview.addresses}
+          delegatedAddresses={new Set(delegationRecipients.map((a) => a.toLowerCase()))}
+          selectedPin={pin}
+        />
       ) : (
-        <>
-          <EmptyState address={address} />
+        <NotScored />
+      )}
+      {getMainnetRpcUrl() ? (
+        <AutoDelegationPath
+          address={address}
+          pin={pin}
+          poolAddress={AUTO_DELEGATION_POOL_ADDRESS}
+          optOut={statuses[selected] ?? null}
+          optOutStepAvailable={overview !== null}
+        />
+      ) : (
+        <DelegateToDaoPanel />
+      )}
+      <VotingPowerPanel
+        breakdown={
+          autoDelegationView({
+            address,
+            connected: undefined,
+            pin,
+            poolAddress: AUTO_DELEGATION_POOL_ADDRESS,
+            optOut: null,
+          }).breakdown
+        }
+      />
+      <OwnerOnly address={address}>
+        <section aria-labelledby="manage-title" className="mt-10">
+          <h2 id="manage-title">Manage Delegation</h2>
+          {overview ? (
+            <ClaimWizard addresses={overview.addresses} />
+          ) : (
+            <ClaimIntroPanel projectUrl={getHighSignalConfig().projectUrl} />
+          )}
+          {overview && (
+            <OptOutPanel
+              addresses={overview.addresses}
+              mode={getOptOutService().mode}
+              signingAvailable={Boolean(getMainnetRpcUrl())}
+            />
+          )}
           <DelegationSection
             address={address}
-            current={outgoingDelegations}
+            current={pin?.outgoingDelegations ?? null}
             ownAddresses={ownAddresses}
             scoring={scoring}
           />
-        </>
-      )}
+        </section>
+      </OwnerOnly>
     </div>
   );
 }

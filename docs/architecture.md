@@ -43,7 +43,6 @@ ssv-daox/
 │   ├── dao-timeline/         # DAO Timeline module
 │   │   └── page.tsx          # Server component (event aggregation)
 │   ├── delegation/           # Delegation module (/delegation?address=0x…)
-│   │   ├── layout.tsx        # WalletProvider (wagmi + RainbowKit)
 │   │   ├── page.tsx          # Server component (address overview)
 │   │   └── error.tsx         # Error boundary
 │   └── governance/           # Governance Votes module
@@ -54,10 +53,15 @@ ssv-daox/
 │   ├── Header.tsx            # App header (full nav bar + global search trigger)
 │   ├── SearchPalette.tsx     # Global Ctrl+K command palette + trigger button
 │   ├── ModuleCard.tsx        # Landing page cards
+│   ├── wallet/               # App-wide wallet stack
+│   │   ├── WalletProvider.tsx    # Client: wagmi, React Query, RainbowKit, session-restored flag
+│   │   ├── WalletButton.tsx      # Client: header connect / account / wrong-network button
+│   │   └── useWalletSession.ts   # loading | disconnected | connected
 │   ├── dao-delegates/        # DAO Delegates components
 │   │   ├── DelegatesTable.tsx    # Client: filter/sort state
 │   │   ├── FilterControls.tsx    # Client: filter UI
-│   │   ├── PoolBanner.tsx        # Server: auto-delegation pool total + link to /delegation
+│   │   ├── PoolBanner.tsx        # Server: auto-delegation pool total
+│   │   ├── PoolBannerAction.tsx  # Client: wallet-aware "Delegate to the DAO" link
 │   │   ├── TableHeader.tsx       # Client: sortable headers
 │   │   ├── DelegateRow.tsx       # Server: row rendering
 │   │   ├── ScoreCell.tsx         # Score / pillar value with "n/a"
@@ -65,14 +69,18 @@ ssv-daox/
 │   ├── delegation/           # Delegation components
 │   │   ├── AddressOverviewTable.tsx # Address + identity siblings
 │   │   ├── AddressLookupForm.tsx    # GET form for the empty state
-│   │   ├── WalletProvider.tsx       # Client: wagmi, React Query, RainbowKit
-│   │   ├── WalletPanel.tsx          # Client: connect button, address sync, switch prompt
-│   │   ├── HeroCard.tsx             # Server: two contribution paths + pool total
+│   │   ├── WalletPanel.tsx          # Client: page follows the wallet, read-only notice
+│   │   ├── OwnerOnly.tsx            # Client: renders children for the owner wallet; useIsOwner
+│   │   ├── DelegateProfile.tsx      # Client: avatar, name, Snapshot statement
+│   │   ├── DelegateToDaoPanel.tsx   # "Delegate to the DAO" step panel
+│   │   ├── VotingPowerPanel.tsx     # Server: voting power breakdown panel
+│   │   ├── ClaimIntroPanel.tsx      # "Claim on HighSignal" without an overview
+│   │   ├── ConnectToDelegateButton.tsx # Client: connect prompt for disconnected wallets
 │   │   ├── AutoDelegationPath.tsx   # Client: breakdown card + "Delegate to the DAO" action
 │   │   ├── VotingPowerBreakdownCard.tsx  # Selected address's voting power + Details
 │   │   ├── DelegationTransaction.tsx     # Client: registry write hook, EOA/Safe status, drop confirmation
 │   │   ├── OpenStepButton.tsx       # Client: button (or link-styled) that calls openStep
-│   │   ├── StepPanel.tsx            # Client: collapsed numbered card (title, summary, status badge)
+│   │   ├── StepPanel.tsx            # Client: collapsed card (title, summary, status badge, Show/Hide)
 │   │   ├── ClaimWizard.tsx          # Client: HighSignal claim steps + last run
 │   │   ├── OptOutPanel.tsx          # Client: EIP-712 opt-out / opt-in + Demo banner
 │   │   ├── OptOutStatusBadge.tsx
@@ -197,14 +205,16 @@ Uses CSS variables + `data-theme` attribute on `<html>`.
 
 The header (`components/Header.tsx`) is a `'use client'` component providing a three-zone navigation bar:
 
-**Layout:** `[Logo Container] — [Home | Module Nav Items | More ▾] — [ThemeToggle | Guest Pill]`
+**Layout:** `[Logo Container] — [Home | Module Nav Items | More ▾] — [Search | ThemeToggle | WalletButton]`
 
 **Features:**
 
 - Logo in bordered container linking to `/`
 - Nav items for each active module with Lucide React icons, active route detection via `usePathname()`
 - "More" dropdown listing coming-soon modules (dimmed, with badge)
-- Guest user profile pill (placeholder for future auth)
+- `WalletButton` ([Wallet](#wallet)): "Connect wallet", the connected account
+  (opens RainbowKit's account modal) or "Wrong network". It stays in the top
+  bar on mobile, next to search and the hamburger.
 - Responsive: hamburger menu on mobile with slide-down panel
 
 **CSS classes:** `.nav-item` / `.nav-item-active` in `@layer components` (follows `.filter-btn` pattern)
@@ -330,7 +340,9 @@ The primary implemented module. Shows a ranked delegate leaderboard with Delegat
 1. Fetch the leaderboard + health from the Delegate Score API (parallel)
 2. Fetch delegation recipients from The Graph (parallel)
 3. Fetch vote participation from Snapshot (parallel)
-4. Fetch voting power (Gnosis) and opt-out statuses (parallel)
+4. Fetch voting power (Gnosis) for DAO delegation recipients and cohort holders
+   (Active, Ending, Nominated), and opt-out statuses (parallel). Other rows
+   fetch voting power on demand.
    The auto-delegation pool summary (Gnosis) is fetched in parallel with steps 1–3.
 5. Transform score rows → Delegate objects (inject delegation status, participation rates, opt-out)
 6. Pass to client for filtering/sorting
@@ -353,16 +365,20 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   `run_id` change while paging fails the request.
 - `GET /health` answers `503` with the same body when data is stale or absent.
   The page then shows the as-of and age as a warning but still renders.
-- The page header cites the `run_id` and `as_of` the rows were read from.
+- The page header cites the `as_of` the rows were read from, not the `run_id`.
 - Scores are unrounded in the API and rounded to one decimal for display.
 - Each pillar (community, holdings, votes) has its own sortable column next to
   Score. A pillar with `missing_<pillar>: true` shows as "n/a" and sorts last;
   a pillar that is `null` for every row is not live and its column is hidden.
-- The Cohort column shows the delegate's cohort; the sortable Allocated Power
-  column shows the voting power the run assigns to the address (its share of
-  its identity's cohort seat). "Delegation Status" compares the cohort with live
-  delegation (The Graph): Active (delegated, keeps a cohort), Add (gains a
-  cohort), Remove (delegated, loses its cohort).
+- The Cohort column shows the delegate's cohort; the sortable "DAO Delegated
+  Power" column shows the allocated power the run assigns to the address (its
+  share of its identity's cohort seat). The Delegation page's address table
+  uses the same label. "Delegation Status" compares the cohort with live
+  delegation (The Graph): Active (delegated, keeps a cohort), Nominated (gains a
+  cohort; the DAO delegates at the next update), Ending (delegated, loses its
+  cohort). The labels are statuses, not actions, and carry a `title` that
+  explains them.
+- The delegate's name links to `/delegation?address=<address>`. A chevron follows it, and hovering the row turns both primary, so the row reads as a link.
 - A row whose latest request is an opt-out shows "Opt-out pending" or, once a
   run has applied it, "Opted out" in place of its Delegation Status. The page
   reads every row's status in one `fetchOptOutStatuses` call (`lib/delegation/opt-out/server.ts`), never
@@ -370,9 +386,15 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   A failed lookup yields no statuses, so the table renders without badges. See
   [Opt-out](#opt-out).
 - A `PoolBanner` above the table shows the DAO auto-delegation pool's total
-  and community-delegated power with its delegator count, and links to
-  `/delegation`. It reuses the hero card's `fetchPoolSummary()` (see
-  [Auto-delegation](#auto-delegation)). A failed pool lookup hides the banner.
+  and community-delegated power with its delegator count. It uses
+  `fetchPoolSummary()` (see [Auto-delegation](#auto-delegation)). A failed pool
+  lookup hides the banner.
+- `PoolBannerAction` (client) is the banner's link. With a connected wallet it
+  fetches `/api/voting-power/[address]` and, when `autoDelegationView()` is
+  `ready`, reads "Delegate your {power} voting power to the DAO" (power in accent green:
+  tokens held + third-party power that moves along) and links to
+  `/delegation?address={wallet}`. Otherwise it reads "Delegate your voting
+  power to the DAO" and links to `/delegation`.
 - When `DELEGATE_SCORE_API_URL` is unset the page renders a notice instead of
   the table. The page revalidates every 5 minutes so a later-configured URL is
   picked up.
@@ -780,7 +802,44 @@ on the strip, so a drag that leaves the element still tracks.
 
 Foundation for claiming, opting out and split delegation (spec #4).
 `/delegation?address=0x…` shows that address and every sibling address in its
-HighSignal identity. A connected wallet selects its own address.
+HighSignal identity. Connecting a wallet opens its own address (see
+[Wallet](#wallet)).
+
+### Page Layout
+
+Everyone sees the status view; only the owner sees the actions.
+
+1. Header: "Live mainnet data. Scores as of `as_of` UTC." (no run number) and
+   the `WalletPanel` notice.
+2. `DelegateProfile`: Snapshot avatar, name, address and delegate statement.
+3. `AddressOverviewTable`, or a "not in the latest score run" notice.
+4. "Delegate to the DAO": `AutoDelegationPath` inside `DelegateToDaoPanel`,
+   the page's primary action. Never collapsed; brand border and `shadow-glow`.
+   Title and subtitle carry the message, the one-click button sits right.
+   With the owner's wallet connected the title names the power that moves:
+   "Delegate your {power} voting power to the DAO" (tokens held plus
+   third-party power moving along, in accent green). While delegating
+   everything to the pool it reads "You're delegating {power} to the DAO"
+   with "Change". The drop confirmation and transaction status sit below; power moving along is shown only in the breakdown.
+5. `VotingPowerPanel` ("Voting power breakdown").
+6. "Manage Delegation", wrapped in `OwnerOnly`: rendered only while the
+   connected wallet is the selected address. Not connected, or connected as
+   another address, the page is read-only.
+
+Without a valid address (landing or invalid input) the page is a pure lookup
+page: the header, the `WalletPanel` notice and the lookup card. Without
+`DELEGATE_SCORE_API_URL` it shows a notice only.
+
+**Delegate profile.** `fetchSnapshotProfile(address)`
+(`lib/snapshot/api/fetch-profile.ts`, 5-minute cache) reads the Snapshot
+user's `name` and the delegate `statement` in `SSV_SPACE_ID` from the hub.
+A failed lookup returns `null` and the card renders without a statement. The
+name is the leaderboard `display_name`, else the Snapshot name, else the ENS
+name, else the short address. The avatar is Snapshot's stamp service
+(`cdn.stamp.fyi`), which falls back to a generated image. The statement is
+Markdown: `statementSegments()` (`lib/snapshot/utils/statement.ts`) keeps
+http(s) links (Markdown or bare), drops emphasis and never renders HTML. It
+clamps to 3 lines with "Show more". A "You" badge marks the owner's address.
 
 ### Data Pipeline
 
@@ -790,17 +849,26 @@ HighSignal identity. A connected wallet selects its own address.
    the address (case-insensitive), puts the requested address first and its
    siblings after in identity order. A sibling without a leaderboard row is
    kept as unscored. Returns `null` for an address in no identity.
-3. `AddressOverviewTable` - Rank, score, cohort, allocated power, claim status
-4. Three `StepPanel`s, collapsed by default, in this order:
-   1. `ClaimWizard` - HighSignal claim steps for any overview address, with the
-      last run's `as_of` from `fetchScoreHealth()` (fetched alongside the leaderboard)
+3. `AddressOverviewTable` - Rank, score, voting power (the leaderboard's
+   `VotingPowerBadge`; the requested address uses its pin data, siblings load
+   on demand), cohort, delegation status (the
+   leaderboard's `DelegationStatusBadge`, from `fetchConfiguredDelegationRecipients()`),
+   allocated power, HighSignal status (column "HighSignal Status"), opt-out
+4. Up to three unnumbered `StepPanel`s for the owner, collapsed by default.
+   They are independent actions, not a sequence:
+   1. `ClaimWizard` - HighSignal claim steps for the requested address (no
+      address picker; the collapsed header carries the only status badge). Once the requested address is claimed it
+      stays visible as a done step (`StepPanel done`): green check, a
+      disabled "Done" toggle, body locked shut. Claim status is per identity.
    2. `OptOutPanel` - see [Opt-out](#opt-out)
    3. `DelegationPanel` - see the Split Delegation section
 
 Each collapsed header shows a one-line summary and a status badge (claim
-status, opt-out status or "Awaiting co-signers", delegation count), so the
-state reads without expanding. Bodies stay mounted while hidden, so form state
-survives collapsing.
+status, opt-out status or "Awaiting co-signers", "Demo" in mock mode,
+delegation count), so the state reads without expanding. The toggle reads
+"Show"/"Hide", never an action verb, so a stray click can't read as opting
+out or delegating. Bodies stay mounted while hidden, so form state survives
+collapsing.
 
 Each step has a `StepAnchor` (`claim`, `opt-out`, `delegation`) as its id.
 Three things expand the step and scroll to it: a URL fragment on load, a plain
@@ -822,16 +890,13 @@ cohort delegates.
   - total voting power
   - DAO-held = the pool's own tokens (total − incoming + outgoing)
   - community-delegated = incoming power, with the delegator count
-- **Hero card.** `HeroCard` sits above the address overview in every page
-  state (no address, invalid, unscored, scored, Score API unconfigured). It
-  presents two paths and the pool total:
-  - "Become a delegate" shows the requested address's claim status, rank and
-    cohort from the overview, and opens the Claim step with `openStep('claim')`.
-    Without an overview there is no Claim step, so it links to HighSignal.
-  - "Let the DAO delegate for you" explains the pool in plain words. It shows
-    no per-user or per-seat numbers. For a valid selected address (scored or
-    not, wallet connected or not) it shows the voting power breakdown card.
-  - A failed pool lookup shows a status line instead of the totals.
+- **Panels.** The pool total lives only on the leaderboard's `PoolBanner`.
+  - `DelegateToDaoPanel` ("Delegate to the DAO") says in one line what
+    happens and holds the action. It needs a selected address.
+  - `VotingPowerPanel` shows the breakdown card for a valid selected address
+    (scored or not, wallet connected or not), below "Delegate to the DAO".
+  - "Claim on HighSignal" (`ClaimWizard`, or `ClaimIntroPanel` without an
+    overview) carries an info icon in the check's place until claimed.
 - **Auto-delegation view model.** `autoDelegationView()`
   (`lib/delegation/logic/auto-delegation.ts`) is pure. It takes the selected
   address, the connected account, the address's pin data (`null` when the
@@ -846,42 +911,47 @@ cohort delegates.
     `null` when the API omits it
   - the incoming and outgoing entries, each with `isPool`
   - total voting power
-- **Breakdown card.** `VotingPowerBreakdownCard` renders those rows. The
+- **Breakdown card.** `VotingPowerBreakdownCard` renders those rows with
+  neutral labels ("Tokens held", "Delegated in"), since visitors see it too. The
   incoming and outgoing lists sit in a native `<details>` ("Details"),
   collapsed by default; entries flagged `isPool` show by name (`DelegateName`). The
   leaderboard tooltip's "Net Delegated" is not shown. A failed pin lookup shows
   a status line. The page fetches the pin once (`fetchPin`) and also feeds its
   outgoing delegations to the Delegation step.
 - **Action states.** `state.kind` is the first that applies:
-  1. `unavailable`: the pin lookup failed. The action is disabled, so a write
-     never overwrites delegations the user can't see.
+  1. `unavailable`: the pin lookup failed. No action renders, so a write
+     never overwrites delegations the user can't see; the card says
+     delegating is paused.
   2. `nothing-to-delegate` with `reason: 'pool'`: the selected address is the
      pool itself ("This is the DAO pool"), whoever views it.
   3. Loop guard: the pool is among the address's incoming delegators (a
      cohort seat holder). A split delegation passes on all incoming power, so
      delegating to the pool would loop (pool → address → pool). The live pin
      data decides; the opt-out status only picks the state:
-     - `opt-out-required`: not opted out (no request, or an opt-in). The
-       action is replaced by "You receive X from the DAO pool" and an "Opt out
-       first" link that runs `openStep('opt-out')`. `poolPower` is `null` when
-       the API omits the amount.
+     - `opt-out-required`: not opted out (no request, or an opt-in). The owner
+       reads "You receive X from the DAO pool, so delegating to it would
+       loop" and an "Opt out first" link that runs `openStep('opt-out')`; a
+       visitor reads "Receives X from the DAO pool, so it can't delegate to
+       it". `poolPower` is `null` when the API omits the amount.
      - `awaiting-run`: an opt-out is pending or applied, but the pool still
-       delegates in. It shows "Waiting for the next run to remove the pool's
-       delegation."
+       delegates in. It says delegating opens once the next run removes the
+       pool's delegation.
 
      Once the pool's delegation is gone, the states below apply. The guard
      precedes `switch-account`, `nothing-to-delegate`, `already-delegating`
      and `ready`, so any viewer sees why the address can't delegate to the
      pool. The page adds the selected address to its opt-out status batch; a
-     failed status lookup reads as not opted out. Without an address overview
-     the page has no Opt-out step, so "Opt out first" is plain text.
+     failed status lookup reads as not opted out. Without an address overview,
+     or for a visitor, the page has no Opt-out step, so "Opt out first" is
+     plain text.
 
   4. `switch-account`: no wallet, or the connected wallet isn't the selected
-     address. The action says to connect or switch; `WalletPanel` shows the
-     account-switch prompt.
+     address. Disconnected: a "Connect wallet to delegate" button opens the
+     connect modal. Connected elsewhere: "Switch your wallet to 0x12…ab to
+     delegate". While the session is `loading`, nothing renders.
   5. `nothing-to-delegate` with `reason: 'no-power'`: own tokens + incoming
-     power from non-pool delegators = 0 ("Nothing to delegate on this
-     address").
+     power from non-pool delegators = 0 ("This address has no voting power
+     to delegate").
   6. `already-delegating`: the only outgoing delegation is the pool at 10000
      bps. A success line reads "You're delegating X to the DAO pool", with a
      "Change" link that runs `openStep('delegation')`.
@@ -891,25 +961,27 @@ cohort delegates.
      when the API omits an amount). The card notes that their power moves to
      the pool too, because a split delegation passes on delegated power.
 - **"Delegate to the DAO".** `AutoDelegationPath` (client) computes the view
-  with `useAccount()` and renders the breakdown card and the action. The
+  with `useWalletSession()` and renders the breakdown card and the action.
+  Blocked states show only their reason, never a disabled button. The
   `ready` state comes from `planDelegation()` with an All to one input to the
   pool (10000 bps, expiration 0, `SSV_SPACE_ID`), so the action reuses the
   Split Delegation plan and write path (`useDelegationWrite`,
   `setDelegation`). It replaces the address's whole delegation. Dropped
   delegates need the same confirm checkbox (`DropConfirmation`) as the
-  Delegation step. `SubmissionStatus` shows the same EOA and Safe status, with
-  a note that the card and pool total update within about 5 minutes. The
-  button stays disabled once a transaction is sent, until the page reloads. The
+  Delegation step. See [Transaction states](#transaction-states). The
   action is hidden without `MAINNET_RPC_URL`. Opt-out status is read for the
   loop guard only, never changed.
 
-### Claim Status
+### HighSignal Status
 
-Derived per address:
+Whether the address is claimed on HighSignal (`ClaimStatus`), derived per
+address. Every leaderboard row is scored, so the labels say nothing about the
+score itself:
 
-- `unclaimed`: the identity has no `hs_username`.
-- `claimed_pending`: `hs_username` is set, community pillar missing or absent.
-- `claimed_scored`: `hs_username` is set, community pillar present.
+- `unclaimed` ("Unclaimed"): the identity has no `hs_username`.
+- `claimed_pending` ("Claimed, pending"): `hs_username` is set, community
+  pillar missing or absent. It counts from the next score run.
+- `claimed_scored` ("Claimed"): `hs_username` is set, community pillar present.
 
 ### Claim Wizard (HighSignal)
 
@@ -922,12 +994,13 @@ claim") shows three steps for the address picked from the overview:
 
 HighSignal has no deep links for steps 2 and 3, so each step is described in
 text as well as linked. The final note says the claim appears after the next
-score run and shows the last run's `as_of` (`/health`).
+score run, then reads "Claimed".
 
 `buildAddressOverview(address, rows, highSignal)` attaches `highSignal` links
-per address: `projectUrl` always, and `settingsUrl` only when the identity has
-an `hs_username` (URL-encoded into `{username}`). First-time users therefore
-get the project page; step 2 links the settings page once it is known.
+per address: `projectUrl` always, and `settingsUrl` and `profileUrl` only when
+the identity has an `hs_username` (URL-encoded into `{username}`). First-time
+users therefore get the project page; step 2 links the settings page once it is
+known, and `DelegateProfile` links the public profile before the Snapshot link.
 `getHighSignalConfig()` (`lib/delegation/config.ts`) reads the URLs.
 
 ### Opt-out
@@ -1100,20 +1173,23 @@ shows only the "Opt-out pending" and "Opted out" states. `optOutBadgeOf` and
 | opt-in, pending  | Opt-in pending         | Sign opt-out |
 | opt-in, applied  | -                      | Sign opt-out |
 
-`OptOutPanel` acts on any overview address, the requested one first. It is
-enabled only when the connected wallet is that address; otherwise it asks the
-user to switch accounts. It words `expired` and `superseded` refusals for
+`OptOutPanel` acts on the requested address and renders only for its owner
+(`OwnerOnly`). In mock mode the collapsed header carries a "Demo" badge. It
+words `expired` and `superseded` refusals for
 users. A Safe's co-signers must sign within the nonce's day; the owner can
 close the page and resume with **Check again** ([Safe resume](#safe-resume)).
 
 ### States
 
-- No `address` or an unknown one: empty state with an address lookup form.
+- No `address` or an invalid one: the hero and an address lookup card; a
+  connected wallet adds "Open your address".
+- A valid address outside the score run: the profile, a "not in the latest
+  score run" notice, the hero and, for the owner, the Delegation step.
 - `DELEGATE_SCORE_API_URL` unset: the same notice as DAO Delegates.
 - `MAINNET_RPC_URL` unset: a configuration notice replaces the wallet controls;
   the read-only overview still renders.
 
-Each DAO Delegates row has an "Open" link to `/delegation?address=<address>`.
+Each DAO Delegates row's name links to `/delegation?address=<address>`.
 
 ### Split Delegation
 
@@ -1121,8 +1197,8 @@ Each DAO Delegates row has an "Open" link to `/delegation?address=<address>`.
 (`0xDE1e8A7E184Babd9F0E3af18f40634e9Ed6F0905`, `DelegateRegistry.sol` in
 `gnosisguild/split-delegation`). The context is always `SSV_SPACE_ID`
 (`mainnet.ssvnetwork.eth`). It renders for any valid `?address=`, scored or
-not, when `MAINNET_RPC_URL` is set. Only the wallet connected as that address
-can send; otherwise the panel asks the user to switch accounts.
+not, when `MAINNET_RPC_URL` is set and the connected wallet is that address
+(`OwnerOnly`).
 
 **Write flow:**
 
@@ -1134,7 +1210,8 @@ can send; otherwise the panel asks the user to switch accounts.
 2. **Form.** "All to one" (prefilled with the largest current delegate),
    "Split" (prefilled with every current delegate; the default when there
    are several) or "Clear delegation". Split takes 2 to 10 rows of target
-   and percentage. A target containing a dot is an ENS name, normalised and
+   and percentage; "Remove" shows only above 2 rows. `.filter-btn` has a
+   visible disabled state. A target containing a dot is an ENS name, normalised and
    resolved over the RPC proxy (wagmi's ENS query options, one query per row).
    **Consolidation quick picks** ("Your addresses") list the connected
    address and the selected address's identity siblings, minus the selected
@@ -1195,26 +1272,60 @@ returns a hash, the panel reads the sender's bytecode. A contract account
 (e.g. a Safe over WalletConnect) returns a Safe transaction hash that is never
 mined as-is, so the panel says it was proposed to the Safe, links the Safe
 queue and doesn't wait for a receipt.
+
+#### Transaction states
+
+`useSubmissionPhase(submission)` (`DelegationTransaction.tsx`) returns
+`idle`, `pending`, `confirmed`, `failed`, `proposed` (Safe) or `error` (not
+sent, e.g. rejected in the wallet). `SubmissionStatus` renders a tinted
+status box per phase. Both the Delegation step and "Delegate to the DAO"
+adapt their button:
+
+| Phase                    | Delegation step button              | "Delegate to the DAO" |
+| ------------------------ | ----------------------------------- | --------------------- |
+| in the wallet            | "Confirm in your wallet…"           | same                  |
+| `pending`                | "Delegating…", disabled             | hidden                |
+| `confirmed` / `proposed` | "Delegated" / "Proposed…", disabled | hidden                |
+| `failed` / `error`       | enabled again                       | "Try again"           |
+
+`isSubmissionLocked(phase)` is `true` for `pending`, `confirmed` and
+`proposed`, so a write can't be sent twice. Any edit in the Delegation step
+resets the submission.
 The pin API is cached for 5 minutes and lags indexing, so a confirmed change
 can take a few minutes to show up in Before.
 
 ### Wallet
 
-wagmi + viem + RainbowKit, mainnet only. `app/delegation/layout.tsx` wraps the
-module in `WalletProvider` (wagmi, React Query, RainbowKit themed from the app
-theme). The config lives in `lib/wallet/wagmi-config.ts`.
+wagmi + viem + RainbowKit, mainnet only. The root layout wraps every page in
+`WalletProvider` (`components/wallet/`: wagmi, React Query, RainbowKit themed
+from the app theme), so the header's `WalletButton` works everywhere. The
+config lives in `lib/wallet/wagmi-config.ts`.
+
+- **Session phases:** `useWalletSession()` returns `loading`, `disconnected`
+  or `connected`. wagmi restores the last session on mount and always passes
+  through `connecting`/`reconnecting` first; `WalletProvider` subscribes to
+  the store status and sets a restored flag once that settles. Until then,
+  and during any connect, the phase is `loading`, so a returning user never
+  sees a connect prompt flash.
 
 - **Connectors:** with `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, injected,
   MetaMask, Rabby, Safe and WalletConnect. Without it, injected only, and
   `createWagmiConfig` logs a console warning.
 - **Transport:** the only transport is `http('/api/rpc')`. There is no public
   RPC fallback. Wallets broadcast transactions themselves.
-- **Address sync** (`WalletPanel`): connecting fills a missing `?address=`
-  with the account, but keeps an explicit one (e.g. from a leaderboard link).
-  An account switch in the wallet always navigates to `?address=<account>`.
-- **Switch prompt:** `accountSwitchPrompt(selected, connected, identityAddresses)`
-  returns `sibling`, `other` or `null`. When it isn't `null`, the panel asks
-  the user to switch accounts before signing for the selected address.
+- **Page follows the wallet** (`WalletPanel`): `delegationUrlOnWalletChange`
+  (`lib/delegation/logic/wallet-navigation.ts`) compares settled wallet
+  states:
+  - restoring a session on page load never navigates; the lookup page shows
+    "Open your address" instead;
+  - connecting opens the account unless `?address=` already selects one
+    (e.g. from a leaderboard link);
+  - an account switch opens the new account;
+  - disconnecting while viewing the wallet's own address returns to
+    `/delegation`; on another address the page stays.
+- **Read-only notice:** `accountSwitchPrompt(selected, connected, identityAddresses)`
+  returns `sibling`, `other` or `null`. A sibling asks to switch the wallet
+  to the viewed address; another address links to the connected one.
 
 ### RPC Proxy
 
@@ -1246,9 +1357,10 @@ MAINNET_RPC_URL=https://mainnet.infura.io/v3/<key>
 # Optional. Unset: injected wallets only, plus a console warning.
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
 
-# HighSignal routes for the claim wizard. Both default to the values below.
+# HighSignal routes for the claim wizard and profile link. All default to the values below.
 HIGHSIGNAL_PROJECT_URL=https://app.highsignal.xyz/p/ssv/
 HIGHSIGNAL_SETTINGS_URL_TEMPLATE=https://app.highsignal.xyz/settings/u/{username}
+HIGHSIGNAL_PROFILE_URL_TEMPLATE=https://app.highsignal.xyz/u/{username}
 
 # Opt-out Score API mock. On unless "false"; on shows the "Demo" banner.
 OPT_OUT_MOCK=true

@@ -36,11 +36,16 @@ Minimize moving parts while maximizing developer experience and production relia
 
 ### External data
 
-| Source          | Choice                     | Rationale                                                                                                                         |
-| --------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Delegate scores | **SSV Delegate Score API** | Replaces the retired Karma API. Read-only JSON with an OpenAPI contract, daily runs, cohort allocation, cached 5 min via `fetch`. |
+| Source            | Choice                       | Rationale                                                                                                                                                                                                                                       |
+| ----------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Delegate scores   | **SSV Delegate Score API**   | Replaces the retired Karma API. Read-only JSON with an OpenAPI contract, daily runs, cohort allocation, cached 5 min via `fetch`.                                                                                                               |
+| Delegate profiles | **Snapshot hub + stamp.fyi** | Name and delegate statement from the Snapshot GraphQL hub DAOx already queries (cached 5 min). Avatars from Snapshot's `cdn.stamp.fyi`, which resolves profile and ENS avatars and falls back to a generated one, so no IPFS gateway is needed. |
 
-### Wallet (Delegation module)
+### Wallet (app-wide)
+
+The providers wrap every page from the root layout, so the header's connect
+button works on every module. The cost is the wallet bundle on every page;
+it replaced a non-functional "Guest" pill.
 
 | Concern         | Choice                       | Rationale                                                                                                                                                                                                             |
 | --------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

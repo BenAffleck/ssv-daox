@@ -3,20 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Calendar,
-  ChevronDown,
-  FileText,
-  Home,
-  Menu,
-  Split,
-  User,
-  Users,
-  Vote,
-  X,
-} from 'lucide-react';
+import { Calendar, ChevronDown, FileText, Home, Menu, Split, Users, Vote, X } from 'lucide-react';
 
 import SearchPalette, { SearchTrigger } from '@/components/SearchPalette';
+import WalletButton from '@/components/wallet/WalletButton';
 import { getExternalToolsSorted } from '@/lib/data/external-tools';
 import { getActiveModules, getComingSoonModules, getModulesSorted } from '@/lib/data/modules';
 import ThemeToggle from '@/lib/theme/ThemeToggle';
@@ -155,15 +145,13 @@ export default function Header() {
         <div className="hidden items-center gap-2 md:flex">
           <SearchTrigger />
           <ThemeToggle />
-          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted">
-            <User size={14} />
-            Guest
-          </div>
+          <WalletButton />
         </div>
 
-        {/* Mobile right cluster: search icon + hamburger */}
+        {/* Mobile right cluster: search icon + wallet + hamburger */}
         <div className="flex items-center gap-2 md:hidden">
           <SearchTrigger variant="icon" />
+          <WalletButton />
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="nav-item"
@@ -216,10 +204,6 @@ export default function Header() {
 
           <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
             <ThemeToggle />
-            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted">
-              <User size={14} />
-              Guest
-            </div>
           </div>
         </div>
       )}

@@ -73,18 +73,18 @@ describe('DelegateRow delegation status', () => {
     expect(screen.queryByText('Active')).not.toBeInTheDocument();
   });
 
-  it('replaces Remove with a pending opt-out', () => {
+  it('replaces Ending with a pending opt-out', () => {
     renderRow({ [ADDRESS.toLowerCase()]: { action: 'opt-out', status: 'pending' } }, null);
 
     expect(screen.getByText('Opt-out pending')).toBeInTheDocument();
-    expect(screen.queryByText('Remove')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ending')).not.toBeInTheDocument();
   });
 
   it('replaces the delegation status with an applied opt-out', () => {
     renderRow({ [ADDRESS.toLowerCase()]: { action: 'opt-out', status: 'applied' } }, null);
 
     expect(screen.getByText('Opted out')).toBeInTheDocument();
-    expect(screen.queryByText('Remove')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ending')).not.toBeInTheDocument();
   });
 
   it.each([
@@ -95,5 +95,16 @@ describe('DelegateRow delegation status', () => {
 
     expect(screen.getByText('Active')).toBeInTheDocument();
     expect(screen.queryByText(/Opt/)).not.toBeInTheDocument();
+  });
+});
+
+describe('DelegateRow name', () => {
+  it("links to the delegate's Delegation page", () => {
+    renderRow({});
+
+    expect(screen.getByRole('link', { name: 'alice' })).toHaveAttribute(
+      'href',
+      `/delegation?address=${ADDRESS}`,
+    );
   });
 });

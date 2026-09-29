@@ -73,18 +73,17 @@ export default function VotingPowerBreakdownCard({
 }) {
   if (!breakdown) {
     return (
-      <p role="status" className="mt-4 text-[13px] text-muted">
-        The voting power breakdown is unavailable right now. Try again in a few minutes.
+      <p role="status" className="text-[13px] text-muted">
+        Voting power couldn&apos;t be loaded, so delegating is paused. Try again in a few minutes.
       </p>
     );
   }
   return (
-    <div className="mt-4 border-t border-border pt-4 text-[13px]">
-      <h4 className="mb-2 text-foreground">Your voting power</h4>
+    <div className="text-[13px]">
       <dl className="space-y-1.5">
-        <Row label="Your tokens" note="SSV + cSSV held" value={formatPower(breakdown.ownPower)} />
+        <Row label="Tokens held" note="SSV + cSSV" value={formatPower(breakdown.ownPower)} />
         <Row
-          label="Delegated to you"
+          label="Delegated in"
           note={formatDelegatorCount(breakdown.delegatorCount)}
           value={formatPower(breakdown.incomingPower)}
         />
@@ -95,13 +94,16 @@ export default function VotingPowerBreakdownCard({
             sub
           />
         )}
-        <Row label="Delegated out" value={`−${formatPower(breakdown.outgoingPower)}`} />
+        <Row
+          label="Delegated out"
+          value={`${breakdown.outgoingPower > 0 ? '−' : ''}${formatPower(breakdown.outgoingPower)}`}
+        />
         <Row label="Total voting power" value={formatPower(breakdown.totalPower)} total />
       </dl>
       <details className="mt-3">
         <summary className="cursor-pointer text-primary">Details</summary>
         <div className="mt-2 space-y-3">
-          <EntryList title="Delegated to you" entries={breakdown.incoming} />
+          <EntryList title="Delegated in" entries={breakdown.incoming} />
           <EntryList title="Delegated out" entries={breakdown.outgoing} />
         </div>
       </details>

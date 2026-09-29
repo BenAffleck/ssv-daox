@@ -27,7 +27,6 @@ interface OptOutPanelProps {
   mode: OptOutMode;
   /** `false` when MAINNET_RPC_URL is unset and signatures can't be checked. */
   signingAvailable: boolean;
-  step?: number;
 }
 
 type Outcome = { kind: 'success' | 'error'; message: string } | null;
@@ -91,7 +90,7 @@ function isUserRejection(error: unknown): boolean {
  * Signs an EIP-712 opt-out or opt-in request with the wallet that owns the
  * address. An opt-out, pending or applied, is reversed by an opt-in.
  */
-export default function OptOutPanel({ addresses, mode, signingAvailable, step }: OptOutPanelProps) {
+export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOutPanelProps) {
   const router = useRouter();
   const { address: connected } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
@@ -196,32 +195,36 @@ export default function OptOutPanel({ addresses, mode, signingAvailable, step }:
 
   return (
     <StepPanel
-      step={step}
       anchor="opt-out"
-      title="Opt out of scoring"
-      summary="Optional. Exclude an address from scoring so no voting power is allocated to it."
-      status={
-        awaitingCoSigners ? (
-          <span className="badge badge-warning whitespace-nowrap">Awaiting co-signers</span>
-        ) : (
-          optOutBadgeOf(entry.optOut) && <OptOutStatusBadge status={entry.optOut} />
-        )
+      title={action === 'opt-out' ? 'Opt out of scoring' : 'Opt back in to scoring'}
+      summary={
+        action === 'opt-out'
+          ? 'Exclude this address from scoring, so no voting power is allocated by the DAO.'
+          : 'Bring this address back into scoring.'
       }
-      openLabel={action === 'opt-out' ? 'Opt out' : 'Opt back in'}
+      status={
+        <>
+          {mode === 'mock' && <span className="badge badge-muted">Demo</span>}
+          {awaitingCoSigners ? (
+            <span className="badge badge-warning whitespace-nowrap">Awaiting co-signers</span>
+          ) : (
+            optOutBadgeOf(entry.optOut) && <OptOutStatusBadge status={entry.optOut} />
+          )}
+        </>
+      }
     >
       {mode === 'mock' && (
         <div role="status" className="mb-4 rounded-lg border border-warning/40 bg-warning/10 p-4">
           <p className="text-[13px] font-medium text-warning">Demo</p>
           <p className="mt-1 text-[13px] text-foreground">
-            The Score API can&apos;t receive opt-outs yet. DAOx checks your signature and records
-            the request locally, but it has no effect on scoring.
+            The Score API can&apos;t receive opt-outs yet. Your signature is checked and recorded,
+            but scoring doesn&apos;t change.
           </p>
         </div>
       )}
 
       <p className="text-[13px] text-muted">
-        Applies to <code className="font-mono text-xs text-foreground">{entry.address}</code> only,
-        takes effect at the next score run, and can be reversed by opting back in.
+        Takes effect at the next score run. You can reverse it at any time.
       </p>
 
       {awaitingCoSigners && (
@@ -249,7 +252,7 @@ export default function OptOutPanel({ addresses, mode, signingAvailable, step }:
             Safe {ACTION_LABELS[safeRequest.action].toLowerCase()} expired
           </p>
           <p className="mt-1 text-[13px] text-muted">
-            The request expired before all co-signers signed. Sign again below to start a new one.
+            Not all co-signers signed in time. Sign again to start a new request.
           </p>
         </div>
       )}
@@ -260,7 +263,7 @@ export default function OptOutPanel({ addresses, mode, signingAvailable, step }:
             type="button"
             onClick={submit}
             disabled={!isOwner || busy || checking}
-            className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-hover disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy
               ? 'Waiting for signature…'
@@ -268,16 +271,9 @@ export default function OptOutPanel({ addresses, mode, signingAvailable, step }:
                 ? 'Sign opt-out'
                 : 'Sign opt-in'}
           </button>
-          {!isOwner && (
-            <p className="text-[13px] text-muted">
-              {connected ? 'Switch' : 'Connect'} your wallet to{' '}
-              <code className="font-mono text-xs text-foreground">{entry.address}</code> to sign.
-            </p>
-          )}
           <p className="text-[13px] text-muted">
-            Signing from a Safe? Your co-signers may still need to sign in the Safe app. The request
-            expires a day after you start it, so collect their signatures within that time. You can
-            close this page and come back to check on it.
+            Using a Safe? Co-signers must sign in the Safe app within a day. You can close this page
+            and check back.
           </p>
         </div>
       ) : (
