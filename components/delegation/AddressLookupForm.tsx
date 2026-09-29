@@ -4,8 +4,8 @@ export default function AddressLookupForm({ defaultValue = '' }: { defaultValue?
       <input
         name="address"
         defaultValue={defaultValue}
-        placeholder="0x…"
-        aria-label="Ethereum address"
+        placeholder="0x… or name.eth"
+        aria-label="Ethereum address or ENS name"
         className="filter-input flex-1 font-mono"
         required
       />

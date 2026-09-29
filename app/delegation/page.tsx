@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 import AddressLookupForm from '@/components/delegation/AddressLookupForm';
 import AddressOverviewTable from '@/components/delegation/AddressOverviewTable';
@@ -16,6 +17,7 @@ import { fetchLeaderboard } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
 import { fetchPin } from '@/lib/delegation/api/fetch-pin';
+import { resolveEnsName, type EnsResolution } from '@/lib/delegation/api/resolve-ens';
 import { AUTO_DELEGATION_POOL_ADDRESS, getHighSignalConfig } from '@/lib/delegation/config';
 import {
   buildAddressOverview,
@@ -26,6 +28,7 @@ import {
 } from '@/lib/delegation/logic/address-overview';
 import { autoDelegationView } from '@/lib/delegation/logic/auto-delegation';
 import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
+import { normalizedEnsName } from '@/lib/delegation/logic/ens';
 import { sameAddress } from '@/lib/delegation/logic/pool';
 import {
   fetchOptOutStatuses,
@@ -111,13 +114,30 @@ function DelegationSection({
   );
 }
 
-function LookupCard({ address }: { address: string }) {
+function lookupProblem(resolution: EnsResolution | null): string {
+  switch (resolution?.status) {
+    case 'not_found':
+      return 'does not resolve to an address.';
+    case 'unavailable':
+      return 'could not be resolved. ENS lookup is unavailable; enter the 0x address.';
+    default:
+      return 'is not an Ethereum address or ENS name.';
+  }
+}
+
+function LookupCard({
+  address,
+  resolution,
+}: {
+  address: string;
+  resolution: EnsResolution | null;
+}) {
   return (
     <div className="card-empty">
       <p className="font-body text-[15px] text-foreground">
-        {address && !isAddress(address) ? (
+        {address ? (
           <>
-            <code className="font-mono text-[13px]">{address}</code> is not an Ethereum address.
+            <code className="font-mono text-[13px]">{address}</code> {lookupProblem(resolution)}
           </>
         ) : (
           'Look up an address'
@@ -168,12 +188,17 @@ export default async function DelegationPage({
   const address = (Array.isArray(param) ? param[0] : param)?.trim() ?? '';
 
   if (!isAddress(address)) {
+    const ensName = normalizedEnsName(address);
+    const resolution = ensName ? await resolveEnsName(ensName) : null;
+    if (resolution?.status === 'resolved') {
+      redirect(`/delegation?address=${resolution.address}`);
+    }
     return (
       <div className="mx-auto max-w-7xl px-6 py-10">
         <PageHeader>
           <WalletSection address={address} overview={null} />
         </PageHeader>
-        <LookupCard address={address} />
+        <LookupCard address={address} resolution={resolution} />
       </div>
     );
   }

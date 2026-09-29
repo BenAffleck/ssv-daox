@@ -42,7 +42,7 @@ ssv-daox/
 │   │   └── page.tsx          # Server component (data orchestration)
 │   ├── dao-timeline/         # DAO Timeline module
 │   │   └── page.tsx          # Server component (event aggregation)
-│   ├── delegation/           # Delegation module (/delegation?address=0x…)
+│   ├── delegation/           # Delegation module (/delegation?address=0x… or name.eth)
 │   │   ├── page.tsx          # Server component (address overview)
 │   │   └── error.tsx         # Error boundary
 │   └── governance/           # Governance Votes module
@@ -111,6 +111,8 @@ ssv-daox/
 │   ├── delegation/           # Delegation logic
 │   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address
 │   │   ├── api/fetch-pin.ts  # Gnosis pin per address; pool pin → PoolSummary, shared by both pages
+│   │   ├── api/resolve-ens.ts  # ENS name → mainnet address via MAINNET_RPC_URL
+│   │   ├── logic/ens.ts              # Pure: ENS name detection + normalization
 │   │   ├── logic/pool.ts             # Pure: pool name, isAutoDelegationPool, address matching
 │   │   ├── logic/auto-delegation.ts  # Pure: pool summary; auto-delegation view model (breakdown, action state); SSV formatting
 │   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out and Safe request merge, switch prompt
@@ -826,6 +828,14 @@ Everyone sees the status view; only the owner sees the actions.
    connected wallet is the selected address. Not connected, or connected as
    another address, the page is read-only.
 
+**ENS lookup.** An `?address=` that is not a `0x` address but normalizes as
+an ENS name (`normalizedEnsName()`, `lib/delegation/logic/ens.ts`, ENSIP-15
+via viem) is resolved on mainnet through `MAINNET_RPC_URL`
+(`resolveEnsName()`, `lib/delegation/api/resolve-ens.ts`). A resolved name
+redirects to `/delegation?address=<0x…>`, so everything below works on the
+address. A name without an address record, an unset RPC URL or a failed RPC
+call keeps the lookup page with a matching message.
+
 Without a valid address (landing or invalid input) the page is a pure lookup
 page: the header, the `WalletPanel` notice and the lookup card. Without
 `DELEGATE_SCORE_API_URL` it shows a notice only.
@@ -1183,6 +1193,8 @@ close the page and resume with **Check again** ([Safe resume](#safe-resume)).
 
 - No `address` or an invalid one: the hero and an address lookup card; a
   connected wallet adds "Open your address".
+- An ENS name: redirects to its address; unresolved or unavailable, the
+  lookup card says so.
 - A valid address outside the score run: the profile, a "not in the latest
   score run" notice, the hero and, for the owner, the Delegation step.
 - `DELEGATE_SCORE_API_URL` unset: the same notice as DAO Delegates.
