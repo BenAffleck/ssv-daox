@@ -1,5 +1,6 @@
 import type { Address } from 'viem';
 
+import { AUTO_DELEGATION_PROGRAM_CAP } from '@/lib/delegation/config';
 import type { OptOutStatus } from '@/lib/delegation/opt-out/score-api';
 import type { DelegationEntry, VotingPowerData } from '@/lib/gnosis/types';
 
@@ -21,6 +22,8 @@ function ownPower(pin: VotingPowerData): number {
 
 export interface PoolSummary {
   totalPower: number;
+  /** Power score runs allocate: the total, up to the program cap. */
+  allocatedPower: number;
   /** The pool's own tokens. */
   daoHeldPower: number;
   /** Power delegated in by the community. */
@@ -28,8 +31,13 @@ export interface PoolSummary {
   delegatorCount: number;
 }
 
+/** Whole SSV without the unit, for an amount set beside a unit-bearing one. */
+export function formatAmount(power: number): string {
+  return Math.round(power).toLocaleString();
+}
+
 export function formatPower(power: number): string {
-  return `${Math.round(power).toLocaleString()} SSV`;
+  return `${formatAmount(power)} SSV`;
 }
 
 export function formatDelegatorCount(count: number): string {
@@ -39,6 +47,7 @@ export function formatDelegatorCount(count: number): string {
 export function summarizePool(pool: VotingPowerData): PoolSummary {
   return {
     totalPower: pool.votingPower,
+    allocatedPower: Math.min(pool.votingPower, AUTO_DELEGATION_PROGRAM_CAP),
     daoHeldPower: ownPower(pool),
     communityPower: pool.incomingPower,
     delegatorCount: pool.delegatorCount,

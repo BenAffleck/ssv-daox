@@ -22,6 +22,7 @@ describe('summarizePool', () => {
   it('counts all power as DAO-held when nobody delegates in', () => {
     expect(summarizePool(pinData({ votingPower: '1260000' }))).toEqual({
       totalPower: 1260000,
+      allocatedPower: 500000,
       daoHeldPower: 1260000,
       communityPower: 0,
       delegatorCount: 0,
@@ -43,6 +44,7 @@ describe('summarizePool', () => {
 
     expect(summary).toEqual({
       totalPower: 1300000,
+      allocatedPower: 500000,
       daoHeldPower: 1260000,
       communityPower: 40000,
       delegatorCount: 2,
@@ -55,6 +57,10 @@ describe('summarizePool', () => {
     );
 
     expect(summary.daoHeldPower).toBe(1260000);
+  });
+
+  it('allocates all power while the pool holds less than the program cap', () => {
+    expect(summarizePool(pinData({ votingPower: '320000' })).allocatedPower).toBe(320000);
   });
 });
 

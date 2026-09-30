@@ -111,7 +111,7 @@ ssv-daox/
 │   │   ├── api/              # Delegate Score API fetcher
 │   │   └── logic/            # Business logic
 │   ├── delegation/           # Delegation logic
-│   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address
+│   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address and program cap
 │   │   ├── api/fetch-pin.ts  # Gnosis pin per address; pool pin → PoolSummary, shared by both pages
 │   │   ├── api/resolve-ens.ts  # ENS name → mainnet address via MAINNET_RPC_URL
 │   │   ├── logic/ens.ts              # Pure: ENS name detection + normalization
@@ -402,8 +402,9 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   [Opt-out](#opt-out).
 - A `PoolBanner` above the table shows the DAO auto-delegation pool's total
   and community-delegated power with its delegator count. It uses
-  `fetchPoolSummary()` (see [Auto-delegation](#auto-delegation)). A failed pool
-  lookup hides the banner.
+  `fetchPoolSummary()` (see [Auto-delegation](#auto-delegation)). Beside the
+  total it shows the allocated power against the program cap ("x of 500,000
+  SSV cap reached"). A failed pool lookup hides the banner.
 - `PoolBannerAction` (client) is the banner's link. With a connected wallet it
   fetches `/api/voting-power/[address]` and, when `autoDelegationView()` is
   `ready`, reads "Delegate your {power} voting power to the DAO" (power in accent green:
@@ -907,12 +908,15 @@ opens it again.
 The DAO's **auto-delegation pool** is `AUTO_DELEGATION_POOL_ADDRESS` in
 `lib/delegation/config.ts`. It is a constant, not an environment variable,
 because it is a governance fact. Score runs redistribute the pool's power to
-cohort delegates.
+cohort delegates. The scoring endpoint allocates at most
+`AUTO_DELEGATION_PROGRAM_CAP` (500,000 SSV), a governance rule hard-coded in the
+same file, even when the pool holds more.
 
 - **Pool summary.** `fetchPoolSummary()` (`lib/delegation/api/fetch-pin.ts`)
   fetches the pool's pin response with `fetchVotingPower` (5-minute cache). `summarizePool()`
   (`lib/delegation/logic/auto-delegation.ts`) turns it into:
   - total voting power
+  - allocated = total, up to `AUTO_DELEGATION_PROGRAM_CAP`
   - DAO-held = the pool's own tokens (total − incoming + outgoing)
   - community-delegated = incoming power, with the delegator count
 - **Panels.** The pool total lives only on the leaderboard's `PoolBanner`.
