@@ -51,13 +51,14 @@ export const metadata = {
   description: 'Delegate scores, voting power and delegation for SSV governance',
 };
 
-function PageHeader({ asOf, children }: { asOf?: string; children?: React.ReactNode }) {
+function PageHeader({ tagline, children }: { tagline?: boolean; children?: React.ReactNode }) {
   return (
     <div className="mb-8">
       <h1 className="mb-2">Delegation</h1>
-      <p className="text-[15px] text-muted">Become a delegate, or let the DAO delegate for you.</p>
-      {asOf && (
-        <p className="mt-2 text-[13px] text-muted">Live mainnet data. Scores as of {asOf} UTC.</p>
+      {tagline && (
+        <p className="text-[15px] text-muted">
+          Become a delegate, or let the DAO delegate for you.
+        </p>
       )}
       {children}
     </div>
@@ -174,7 +175,7 @@ export default async function DelegationPage({
   if (!DELEGATE_SCORE_CONFIG.apiBaseUrl) {
     return (
       <div className="mx-auto max-w-7xl px-6 py-10">
-        <PageHeader />
+        <PageHeader tagline />
         <div className="card-empty">
           <p className="font-body text-[15px] text-muted">
             Delegate data is unavailable: DELEGATE_SCORE_API_URL is not configured.
@@ -195,7 +196,7 @@ export default async function DelegationPage({
     }
     return (
       <div className="mx-auto max-w-7xl px-6 py-10">
-        <PageHeader>
+        <PageHeader tagline>
           <WalletSection address={address} overview={null} />
         </PageHeader>
         <LookupCard address={address} resolution={resolution} />
@@ -237,7 +238,7 @@ export default async function DelegationPage({
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
-      <PageHeader asOf={leaderboard.asOf}>
+      <PageHeader>
         <WalletSection address={address} overview={overview} />
       </PageHeader>
       <DelegateProfile
@@ -302,6 +303,9 @@ export default async function DelegationPage({
           />
         </section>
       </OwnerOnly>
+      <p className="mt-10 text-right text-[12px] text-muted">
+        Live mainnet data. Scores as of {leaderboard.asOf} UTC.
+      </p>
     </div>
   );
 }
