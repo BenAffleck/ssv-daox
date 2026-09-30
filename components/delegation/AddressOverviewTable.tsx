@@ -57,6 +57,7 @@ export default function AddressOverviewTable({
                     sameAddress(entry.address, addresses[0].address) ? selectedPin : null
                   }
                   address={entry.address}
+                  showDetails={false}
                 />
               </td>
               <td className="px-4 py-3">

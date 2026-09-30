@@ -15,12 +15,14 @@ function Row({
   label,
   note,
   value,
+  valueClassName = 'text-foreground',
   sub = false,
   total = false,
 }: {
   label: string;
   note?: string;
   value: string;
+  valueClassName?: string;
   sub?: boolean;
   total?: boolean;
 }) {
@@ -32,12 +34,22 @@ function Row({
         {label}
         {note && <span className="ml-1 text-xs">· {note}</span>}
       </dt>
-      <dd className="shrink-0 font-medium text-foreground tabular-nums">{value}</dd>
+      <dd className={`shrink-0 font-medium tabular-nums ${valueClassName}`}>{value}</dd>
     </div>
   );
 }
 
-function EntryList({ title, entries }: { title: string; entries: BreakdownEntry[] }) {
+function EntryList({
+  title,
+  entries,
+  sign,
+  amountClassName,
+}: {
+  title: string;
+  entries: BreakdownEntry[];
+  sign: '+' | '−';
+  amountClassName: string;
+}) {
   return (
     <div>
       <p className="font-heading text-xs font-semibold tracking-wide text-muted uppercase">
@@ -54,8 +66,8 @@ function EntryList({ title, entries }: { title: string; entries: BreakdownEntry[
                 isPool={entry.isPool}
                 className="text-xs break-all"
               />
-              <span className="shrink-0 text-xs tabular-nums">
-                {entry.power === null ? '—' : formatPower(entry.power)}
+              <span className={`shrink-0 text-xs tabular-nums ${amountClassName}`}>
+                {entry.power === null ? '—' : `${sign}${formatPower(entry.power)}`}
               </span>
             </li>
           ))}
@@ -85,26 +97,39 @@ export default function VotingPowerBreakdownCard({
         <Row
           label="Delegated in"
           note={formatDelegatorCount(breakdown.delegatorCount)}
-          value={formatPower(breakdown.incomingPower)}
+          value={`${breakdown.incomingPower > 0 ? '+' : ''}${formatPower(breakdown.incomingPower)}`}
+          valueClassName="text-accent"
         />
         {breakdown.fromPool && (
           <Row
             label="of which from the DAO pool"
             value={formatAmount(breakdown.fromPool.power)}
+            valueClassName="text-accent"
             sub
           />
         )}
         <Row
           label="Delegated out"
           value={`${breakdown.outgoingPower > 0 ? '−' : ''}${formatPower(breakdown.outgoingPower)}`}
+          valueClassName="text-danger"
         />
         <Row label="Total voting power" value={formatPower(breakdown.totalPower)} total />
       </dl>
       <details className="mt-3">
         <summary className="cursor-pointer text-primary">Details</summary>
         <div className="mt-2 space-y-3">
-          <EntryList title="Delegated in" entries={breakdown.incoming} />
-          <EntryList title="Delegated out" entries={breakdown.outgoing} />
+          <EntryList
+            title="Delegated in"
+            entries={breakdown.incoming}
+            sign="+"
+            amountClassName="text-accent"
+          />
+          <EntryList
+            title="Delegated out"
+            entries={breakdown.outgoing}
+            sign="−"
+            amountClassName="text-danger"
+          />
         </div>
       </details>
     </div>
