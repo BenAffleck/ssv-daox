@@ -75,7 +75,6 @@ export default function WalletPanel({ selectedAddress, identityAddresses }: Wall
   }
   return (
     <p role="status" className="mt-4 text-[13px] text-muted">
-      <span className="badge-sm-warning mr-2">Read-only</span>
       {prompt === 'sibling' ? (
         <>
           Switch your wallet to <Address value={selectedAddress} /> to manage it.

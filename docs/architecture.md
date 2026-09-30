@@ -811,8 +811,8 @@ HighSignal identity. Connecting a wallet opens its own address (see
 
 Everyone sees the status view; only the owner sees the actions.
 
-1. Header: "Live mainnet data. Scores as of `as_of` UTC." (no run number) and
-   the `WalletPanel` notice.
+1. Header: the `WalletPanel` notice. The tagline "Become a delegate, or let
+   the DAO delegate for you." shows only on the lookup page.
 2. `DelegateProfile`: Snapshot avatar, name, address and delegate statement.
 3. `AddressOverviewTable`, or a "not in the latest score run" notice.
 4. "Delegate to the DAO": `AutoDelegationPath` inside `DelegateToDaoPanel`,
@@ -827,6 +827,8 @@ Everyone sees the status view; only the owner sees the actions.
 6. "Manage Delegation", wrapped in `OwnerOnly`: rendered only while the
    connected wallet is the selected address. Not connected, or connected as
    another address, the page is read-only.
+7. Footer, right-aligned in small muted text: "Live mainnet data. Scores as
+   of `as_of` UTC." (no run number).
 
 **ENS lookup.** An `?address=` that is not a `0x` address but normalizes as
 an ENS name (`normalizedEnsName()`, `lib/delegation/logic/ens.ts`, ENSIP-15
@@ -1340,7 +1342,7 @@ config lives in `lib/wallet/wagmi-config.ts`.
   - an account switch opens the new account;
   - disconnecting while viewing the wallet's own address returns to
     `/delegation`; on another address the page stays.
-- **Read-only notice:** `accountSwitchPrompt(selected, connected, identityAddresses)`
+- **Account switch notice:** `accountSwitchPrompt(selected, connected, identityAddresses)`
   returns `sibling`, `other` or `null`. A sibling asks to switch the wallet
   to the viewed address; another address links to the connected one.
 
