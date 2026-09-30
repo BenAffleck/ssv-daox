@@ -345,12 +345,23 @@ The primary implemented module. Shows a ranked delegate leaderboard with Delegat
 2. Fetch delegation recipients from The Graph (parallel)
 3. Fetch vote participation from Snapshot (parallel)
 4. Fetch voting power (Gnosis) for DAO delegation recipients and cohort holders
-   (Active, Ending, Nominated), and opt-out statuses (parallel). Other rows
-   fetch voting power on demand.
-   The auto-delegation pool summary (Gnosis) is fetched in parallel with steps 1–3.
+   (Active, Ending, Nominated) as soon as the recipients arrive, alongside
+   step 3 and the opt-out statuses. Other rows fetch voting power on demand.
 5. Transform score rows → Delegate objects (inject delegation status, participation rates, opt-out)
 6. Pass to client for filtering/sorting
 ```
+
+The page awaits only the leaderboard and health, so the header renders
+first. The pool banner and the table stream in behind their own `Suspense`
+boundaries; the table's fallback is `DelegatesTableSkeleton`, shared with
+`loading.tsx`. Voting power is the slow part: one Gnosis `pin` request per
+address. `fetchVotingPower` runs them through a pool of
+`GNOSIS_CONFIG.concurrency` (10) workers, so a slow request holds one slot,
+not a batch, and aborts each after `GNOSIS_CONFIG.timeoutMs` (10s). A
+timed-out address is left out and its row loads on demand. The timeout bounds
+each request, not the table: 40 hanging requests take 4 × 10s. The pin URL
+uses the lowercase address, so the page, `/delegation` and the route share
+cache entries.
 
 Rank, score and cohort come from the API; the app no longer ranks, assigns
 programs or keeps fixed delegation lists itself. Every delegate is eligible, so
@@ -448,7 +459,7 @@ Uses the same space ID as delegation (`SNAPSHOT_DELEGATION_SPACE_FILTER`).
 
 ### Voting Power Breakdown
 
-The Voting Power column shows a compact total plus an info icon that opens a portal-rendered breakdown popover (`components/dao-delegates/VotingPowerBadge.tsx`). Rows without pre-fetched data render a fetch icon that loads on demand from `/api/voting-power/[address]`.
+The Voting Power column shows a compact total plus an info icon that opens a portal-rendered breakdown popover (`components/dao-delegates/VotingPowerBadge.tsx`). Rows without pre-fetched data render a fetch icon that loads on demand from `/api/voting-power/[address]`. The route uses `fetchPin`, so it shares the page's 5-minute cached pin requests and their timeout.
 
 **Data source:** Gnosis Guild Delegation API `pin` endpoint (`lib/gnosis/`), posted with the SSV split-delegation strategy payload. Values are SSV + cSSV.
 

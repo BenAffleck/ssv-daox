@@ -209,26 +209,35 @@ export default async function DelegationPage({
     );
   }
 
-  const [leaderboard, pin, profile, delegationRecipients] = await Promise.all([
-    fetchLeaderboard(),
+  const selected = address.toLowerCase();
+  // The opt-out lookups need only the leaderboard, so they don't wait for the pin or profile.
+  const scoreContext = fetchLeaderboard().then(async (leaderboard) => {
+    const baseOverview = buildAddressOverview(address, leaderboard.rows, getHighSignalConfig());
+    const overviewAddresses = (baseOverview?.addresses ?? []).map((a) => a.address.toLowerCase());
+    const [statuses, safeRequests] = await Promise.all([
+      // One batch: the selected address (loop guard), the overview's unscored siblings and every
+      // leaderboard address (target warnings).
+      fetchOptOutStatuses([
+        ...new Set([
+          selected,
+          ...overviewAddresses,
+          ...leaderboard.rows.map((r) => r.address.toLowerCase()),
+        ]),
+      ]),
+      fetchSafeRequests(overviewAddresses),
+    ]);
+    return { leaderboard, baseOverview, statuses, safeRequests };
+  });
+  const [
+    { leaderboard, baseOverview, statuses, safeRequests },
+    pin,
+    profile,
+    delegationRecipients,
+  ] = await Promise.all([
+    scoreContext,
     fetchPin(address),
     fetchSnapshotProfile(address),
     fetchConfiguredDelegationRecipients(),
-  ]);
-  const baseOverview = buildAddressOverview(address, leaderboard.rows, getHighSignalConfig());
-  const selected = address.toLowerCase();
-  const overviewAddresses = (baseOverview?.addresses ?? []).map((a) => a.address.toLowerCase());
-  const [statuses, safeRequests] = await Promise.all([
-    // One batch: the selected address (loop guard), the overview's unscored siblings and every
-    // leaderboard address (target warnings).
-    fetchOptOutStatuses([
-      ...new Set([
-        selected,
-        ...overviewAddresses,
-        ...leaderboard.rows.map((r) => r.address.toLowerCase()),
-      ]),
-    ]),
-    fetchSafeRequests(overviewAddresses),
   ]);
   const overview =
     baseOverview && withSafeRequests(withOptOutStatuses(baseOverview, statuses), safeRequests);

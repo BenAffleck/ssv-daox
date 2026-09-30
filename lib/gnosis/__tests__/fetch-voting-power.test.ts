@@ -34,6 +34,10 @@ const SAMPLE_RESPONSE = {
   blockNumber: '20000000',
 };
 
+function addresses(count: number): string[] {
+  return Array.from({ length: count }, (_, i) => `0x${String(i).padStart(40, '0')}`);
+}
+
 function ok(body: unknown) {
   return { ok: true, status: 200, json: async () => body };
 }
@@ -62,7 +66,9 @@ describe('fetchVotingPower', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
 
     const [url, init] = mockFetch.mock.calls[0];
-    expect(url).toBe(`${GNOSIS_CONFIG.apiBaseUrl}/${GNOSIS_CONFIG.spaceId}/pin/${address}`);
+    expect(url).toBe(
+      `${GNOSIS_CONFIG.apiBaseUrl}/${GNOSIS_CONFIG.spaceId}/pin/${address.toLowerCase()}`,
+    );
     expect(init.method).toBe('POST');
     expect(init.headers).toMatchObject({ 'Content-Type': 'application/json' });
     expect(JSON.parse(init.body)).toEqual(SSV_STRATEGY_PAYLOAD);
@@ -91,17 +97,61 @@ describe('fetchVotingPower', () => {
     expect(Object.keys(result)).toEqual([mixedCase.toLowerCase()]);
   });
 
-  it('batches requests according to GNOSIS_CONFIG.batchSize', async () => {
-    const addresses = Array.from({ length: 12 }, (_, i) => `0x${String(i).padStart(40, '0')}`);
+  it('fetches every address, at most GNOSIS_CONFIG.concurrency at a time', async () => {
+    const all = addresses(25);
+    let inFlight = 0;
+    let maxInFlight = 0;
+    mockFetch.mockImplementation(async () => {
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      inFlight--;
+      return ok(SAMPLE_RESPONSE);
+    });
 
-    mockFetch.mockResolvedValue(ok(SAMPLE_RESPONSE));
+    const result = await fetchVotingPower(all);
 
-    const result = await fetchVotingPower(addresses);
+    expect(Object.keys(result)).toHaveLength(all.length);
+    expect(maxInFlight).toBe(GNOSIS_CONFIG.concurrency);
+  });
 
-    expect(mockFetch).toHaveBeenCalledTimes(addresses.length);
-    expect(Object.keys(result)).toHaveLength(addresses.length);
-    for (const addr of addresses) {
-      expect(result[addr.toLowerCase()]).toBeDefined();
+  it('keeps fetching other addresses while one request is slow', async () => {
+    const all = addresses(30);
+    let releaseSlow!: () => void;
+    const slow = new Promise<void>((resolve) => (releaseSlow = resolve));
+    const started: string[] = [];
+    mockFetch.mockImplementation(async (url: string) => {
+      started.push(url);
+      if (url.endsWith(all[0])) {
+        await slow;
+      }
+      return ok(SAMPLE_RESPONSE);
+    });
+
+    const pending = fetchVotingPower(all);
+    await vi.waitFor(() => expect(started).toHaveLength(all.length));
+    releaseSlow();
+
+    expect(Object.keys(await pending)).toHaveLength(all.length);
+  });
+
+  it('gives up on a request after GNOSIS_CONFIG.timeoutMs', async () => {
+    vi.useFakeTimers();
+    try {
+      const hungAddr = '0x1111111111111111111111111111111111111111';
+      mockFetch.mockImplementation(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+          }),
+      );
+
+      const pending = fetchVotingPower([hungAddr]);
+      await vi.advanceTimersByTimeAsync(GNOSIS_CONFIG.timeoutMs);
+
+      expect(await pending).toEqual({});
+    } finally {
+      vi.useRealTimers();
     }
   });
 

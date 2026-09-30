@@ -12,7 +12,9 @@ import type { GnosisDelegationResponse, VotingPowerData, VotingPowerMap } from '
  * @returns VotingPowerData or null if fetch fails
  */
 async function fetchSingleVotingPower(address: string): Promise<VotingPowerData | null> {
-  const url = `${GNOSIS_CONFIG.apiBaseUrl}/${GNOSIS_CONFIG.spaceId}/pin/${address}`;
+  const url = `${GNOSIS_CONFIG.apiBaseUrl}/${GNOSIS_CONFIG.spaceId}/pin/${address.toLowerCase()}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), GNOSIS_CONFIG.timeoutMs);
 
   try {
     const response = await fetch(url, {
@@ -21,6 +23,7 @@ async function fetchSingleVotingPower(address: string): Promise<VotingPowerData 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(GNOSIS_CONFIG.strategyPayload),
+      signal: controller.signal,
       next: { revalidate: GNOSIS_CONFIG.cacheSeconds },
     });
 
@@ -35,52 +38,32 @@ async function fetchSingleVotingPower(address: string): Promise<VotingPowerData 
   } catch (error) {
     console.error(`[Gnosis API] Error fetching voting power for ${address}:`, error);
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 /**
- * Process a batch of addresses concurrently
- * @param addresses - Array of addresses to process
- * @returns Map of address to voting power data
- */
-async function processBatch(addresses: string[]): Promise<VotingPowerMap> {
-  const results = await Promise.all(
-    addresses.map(async (address) => {
-      const data = await fetchSingleVotingPower(address);
-      return { address: address.toLowerCase(), data };
-    }),
-  );
-
-  const map: VotingPowerMap = {};
-  for (const { address, data } of results) {
-    if (data) {
-      map[address] = data;
-    }
-  }
-  return map;
-}
-
-/**
- * Fetches voting power for multiple addresses with batching
+ * Fetches voting power for multiple addresses, at most `GNOSIS_CONFIG.concurrency` at a time
  * @param addresses - Array of delegate addresses
  * @returns Map of lowercase addresses to their voting power data
  */
 export async function fetchVotingPower(addresses: string[]): Promise<VotingPowerMap> {
-  if (addresses.length === 0) {
-    return {};
-  }
-
   const result: VotingPowerMap = {};
-  const batchSize = GNOSIS_CONFIG.batchSize;
+  let next = 0;
 
-  // Process in batches to avoid rate limiting
-  for (let i = 0; i < addresses.length; i += batchSize) {
-    const batch = addresses.slice(i, i + batchSize);
-    const batchResults = await processBatch(batch);
-
-    // Merge batch results
-    Object.assign(result, batchResults);
+  // A worker takes the next address as soon as its request ends, so a slow one holds a single slot.
+  async function worker() {
+    while (next < addresses.length) {
+      const address = addresses[next++];
+      const data = await fetchSingleVotingPower(address);
+      if (data) {
+        result[address.toLowerCase()] = data;
+      }
+    }
   }
 
+  const workers = Math.min(GNOSIS_CONFIG.concurrency, addresses.length);
+  await Promise.all(Array.from({ length: workers }, worker));
   return result;
 }

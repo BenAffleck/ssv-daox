@@ -1,10 +1,12 @@
 import { Suspense } from 'react';
 
 import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
+import DelegatesTableSkeleton from '@/components/dao-delegates/DelegatesTableSkeleton';
 import PoolBanner from '@/components/dao-delegates/PoolBanner';
 import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
 import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
+import type { ScoreRow } from '@/lib/dao-delegates/types';
 import { fetchPoolSummary } from '@/lib/delegation/api/fetch-pin';
 import { AUTO_DELEGATION_POOL_ADDRESS } from '@/lib/delegation/config';
 import { fetchOptOutStatuses } from '@/lib/delegation/opt-out/server';
@@ -34,6 +36,55 @@ function PageHeader({ children }: { children?: React.ReactNode }) {
   );
 }
 
+async function PoolBannerSection() {
+  return <PoolBanner pool={await fetchPoolSummary()} poolAddress={AUTO_DELEGATION_POOL_ADDRESS} />;
+}
+
+async function DelegatesTableSection({ rows }: { rows: ScoreRow[] }) {
+  const spaceId = SNAPSHOT_CONFIG.delegation.spaceFilter;
+  // Voting power starts as soon as the recipients are known, alongside the Snapshot fetches.
+  const recipientsWithPower = fetchConfiguredDelegationRecipients().then(
+    async (recipients) =>
+      [recipients, await fetchVotingPower(prefetchedAddresses(rows, recipients))] as const,
+  );
+  const [[delegationRecipients, votingPower], voteParticipation, activeVoteData, optOutStatuses] =
+    await Promise.all([
+      recipientsWithPower,
+      fetchVoteParticipation(spaceId),
+      fetchActiveVoteStatus(spaceId),
+      // Not `row.opt_out`: the opt-out mock records requests the Score API never sees.
+      fetchOptOutStatuses(rows.map((row) => row.address)),
+    ]);
+
+  const delegates = transformDelegates(
+    rows,
+    delegationRecipients,
+    voteParticipation,
+    votingPower,
+    activeVoteData,
+    optOutStatuses,
+  );
+
+  return (
+    <Suspense>
+      <DelegatesTable delegates={delegates} />
+    </Suspense>
+  );
+}
+
+/**
+ * Current recipients (Active, Ending) and cohort holders (Nominated). Other rows fetch voting
+ * power on demand via the API to keep the initial load short.
+ */
+function prefetchedAddresses(rows: ScoreRow[], delegationRecipients: string[]): string[] {
+  return [
+    ...new Set([
+      ...delegationRecipients.map((address) => address.toLowerCase()),
+      ...rows.filter((row) => row.cohort !== null).map((row) => row.address.toLowerCase()),
+    ]),
+  ];
+}
+
 export default async function DaoDelegatesPage() {
   if (!DELEGATE_SCORE_CONFIG.apiBaseUrl) {
     return (
@@ -48,38 +99,7 @@ export default async function DaoDelegatesPage() {
     );
   }
 
-  const [leaderboard, health, delegationRecipients, voteParticipation, activeVoteData, pool] =
-    await Promise.all([
-      fetchLeaderboard(),
-      fetchScoreHealth(),
-      fetchConfiguredDelegationRecipients(),
-      fetchVoteParticipation(SNAPSHOT_CONFIG.delegation.spaceFilter),
-      fetchActiveVoteStatus(SNAPSHOT_CONFIG.delegation.spaceFilter),
-      fetchPoolSummary(),
-    ]);
-
-  // Prefetch voting power only for current recipients (Active, Ending) and cohort holders
-  // (Nominated). Others fetch on demand via the API to keep the initial load short.
-  const prefetched = new Set([
-    ...delegationRecipients.map((address) => address.toLowerCase()),
-    ...leaderboard.rows
-      .filter((row) => row.cohort !== null)
-      .map((row) => row.address.toLowerCase()),
-  ]);
-  // Not `row.opt_out`: the opt-out mock records requests the Score API never sees.
-  const [votingPower, optOutStatuses] = await Promise.all([
-    fetchVotingPower([...prefetched]),
-    fetchOptOutStatuses(leaderboard.rows.map((row) => row.address)),
-  ]);
-
-  const delegates = transformDelegates(
-    leaderboard.rows,
-    delegationRecipients,
-    voteParticipation,
-    votingPower,
-    activeVoteData,
-    optOutStatuses,
-  );
+  const [leaderboard, health] = await Promise.all([fetchLeaderboard(), fetchScoreHealth()]);
 
   const isStale = health !== null && health.status !== 'ok';
 
@@ -99,10 +119,13 @@ export default async function DaoDelegatesPage() {
         )}
       </PageHeader>
 
-      <PoolBanner pool={pool} poolAddress={AUTO_DELEGATION_POOL_ADDRESS} />
-
+      {/* Both wait on Gnosis pin requests, so they stream in behind the header. */}
       <Suspense>
-        <DelegatesTable delegates={delegates} />
+        <PoolBannerSection />
+      </Suspense>
+
+      <Suspense fallback={<DelegatesTableSkeleton />}>
+        <DelegatesTableSection rows={leaderboard.rows} />
       </Suspense>
     </div>
   );

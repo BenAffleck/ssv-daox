@@ -19,9 +19,15 @@ export const SSV_SPACE_ID = 'mainnet.ssvnetwork.eth';
 export const GNOSIS_CACHE_SECONDS = 300;
 
 /**
- * Maximum concurrent API requests to avoid rate limiting
+ * Maximum concurrent pin requests. The API served 40 concurrent requests
+ * without throttling (2026-09); 10 keeps a margin.
  */
-export const GNOSIS_BATCH_SIZE = 5;
+export const GNOSIS_CONCURRENCY = 10;
+
+/**
+ * A pin request slower than this is dropped; the row then loads on demand.
+ */
+export const GNOSIS_TIMEOUT_MS = 10_000;
 
 /**
  * SSV Network voting strategy payload for the pin endpoint
@@ -93,6 +99,7 @@ export const GNOSIS_CONFIG = {
   apiBaseUrl: GNOSIS_API_BASE_URL,
   spaceId: SSV_SPACE_ID,
   cacheSeconds: GNOSIS_CACHE_SECONDS,
-  batchSize: GNOSIS_BATCH_SIZE,
+  concurrency: GNOSIS_CONCURRENCY,
+  timeoutMs: GNOSIS_TIMEOUT_MS,
   strategyPayload: SSV_STRATEGY_PAYLOAD,
 } as const;
