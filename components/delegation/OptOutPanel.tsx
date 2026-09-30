@@ -196,11 +196,11 @@ export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOu
   return (
     <StepPanel
       anchor="opt-out"
-      title={action === 'opt-out' ? 'Opt out of scoring' : 'Opt back in to scoring'}
+      title={action === 'opt-out' ? 'Opt out of delegation' : 'Opt back in to delegation'}
       summary={
         action === 'opt-out'
-          ? 'Exclude this address from scoring, so no voting power is allocated by the DAO.'
-          : 'Bring this address back into scoring.'
+          ? 'The DAO stops delegating voting power to this address. It stays scored and ranked.'
+          : 'The DAO can delegate voting power to this address again.'
       }
       status={
         <>
