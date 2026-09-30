@@ -15,6 +15,7 @@ import VotingPowerPanel from '@/components/delegation/VotingPowerPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
 import { fetchLeaderboard } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
+import type { ScoreRow } from '@/lib/dao-delegates/types';
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
 import { fetchPin } from '@/lib/delegation/api/fetch-pin';
 import { resolveEnsName, type EnsResolution } from '@/lib/delegation/api/resolve-ens';
@@ -27,6 +28,7 @@ import {
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
 import { autoDelegationView } from '@/lib/delegation/logic/auto-delegation';
+import { delegateOptionsOf } from '@/lib/delegation/logic/delegate-search';
 import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
 import { normalizedEnsName } from '@/lib/delegation/logic/ens';
 import { sameAddress } from '@/lib/delegation/logic/pool';
@@ -93,11 +95,13 @@ function DelegationSection({
   current,
   ownAddresses,
   scoring,
+  rows,
 }: {
   address: string;
   current: DelegationEntry[] | null;
   ownAddresses: string[];
   scoring: TargetScoring;
+  rows: ScoreRow[];
 }) {
   if (!getMainnetRpcUrl()) {
     return null;
@@ -110,6 +114,7 @@ function DelegationSection({
       current={current}
       ownAddresses={ownAddresses}
       scoring={scoring}
+      delegates={delegateOptionsOf(rows, scoring)}
     />
   );
 }
@@ -299,6 +304,7 @@ export default async function DelegationPage({
             current={pin?.outgoingDelegations ?? null}
             ownAddresses={ownAddresses}
             scoring={scoring}
+            rows={leaderboard.rows}
           />
         </section>
       </OwnerOnly>

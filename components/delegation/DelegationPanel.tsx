@@ -7,6 +7,7 @@ import { useAccount, useConfig } from 'wagmi';
 import { mainnet } from 'wagmi/chains';
 import { getEnsAddressQueryOptions } from 'wagmi/query';
 
+import type { DelegateOption } from '@/lib/delegation/logic/delegate-search';
 import {
   formatPercent,
   MAX_SPLIT_TARGETS,
@@ -19,6 +20,7 @@ import {
 import type { DelegationEntry } from '@/lib/gnosis/types';
 
 import DelegateName from './DelegateName';
+import DelegateSearchInput, { SelectedDelegate } from './DelegateSearchInput';
 import {
   DropConfirmation,
   isSubmissionLocked,
@@ -37,6 +39,8 @@ interface DelegationPanelProps {
   /** The selected address's identity siblings, offered as consolidation quick picks. */
   ownAddresses: string[];
   scoring: TargetScoring;
+  /** Scored delegates suggested in the target inputs. */
+  delegates: DelegateOption[];
 }
 
 type Mode = 'all-to-one' | 'split' | 'clear';
@@ -163,6 +167,7 @@ export default function DelegationPanel({
   current,
   ownAddresses,
   scoring,
+  delegates,
 }: DelegationPanelProps) {
   const { address: connected } = useAccount();
   const { send, submission, resetSubmission, awaitingWallet } = useDelegationWrite();
@@ -323,17 +328,15 @@ export default function DelegationPanel({
       {mode === 'all-to-one' && (
         <div className="mt-4 space-y-1">
           <label htmlFor="delegation-target" className="text-[13px] text-muted">
-            Delegate address or ENS name
+            Delegate address, ENS name, or search scored delegates
           </label>
-          <input
+          <DelegateSearchInput
             id="delegation-target"
             value={target}
-            onChange={(e) => changeTarget(e.target.value)}
-            placeholder="0x… or name.eth"
-            className="filter-input w-full font-mono"
-            autoComplete="off"
-            spellCheck={false}
+            onChange={changeTarget}
+            options={delegates}
           />
+          <SelectedDelegate value={target} options={delegates} />
           {resolved[0] && <EnsResolution target={resolved[0]} />}
         </div>
       )}
@@ -343,14 +346,12 @@ export default function DelegationPanel({
           {splitTargets.map((t, i) => (
             <div key={i} className="space-y-1">
               <div className="flex gap-2">
-                <input
+                <DelegateSearchInput
                   aria-label={`Delegate ${i + 1} address or ENS name`}
                   value={t.target}
-                  onChange={(e) => updateSplitTarget(i, { target: e.target.value })}
-                  placeholder="0x… or name.eth"
-                  className="filter-input min-w-0 flex-1 font-mono"
-                  autoComplete="off"
-                  spellCheck={false}
+                  onChange={(value) => updateSplitTarget(i, { target: value })}
+                  options={delegates}
+                  className="min-w-0 flex-1"
                 />
                 <div className="flex items-center gap-1">
                   <input
@@ -375,6 +376,7 @@ export default function DelegationPanel({
                   </button>
                 )}
               </div>
+              <SelectedDelegate value={t.target} options={delegates} />
               {resolved[i] && <EnsResolution target={resolved[i]} />}
             </div>
           ))}

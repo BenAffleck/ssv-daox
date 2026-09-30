@@ -1225,6 +1225,11 @@ not, when `MAINNET_RPC_URL` is set and the connected wallet is that address
    and percentage; "Remove" shows only above 2 rows. `.filter-btn` has a
    visible disabled state. A target containing a dot is an ENS name, normalised and
    resolved over the RPC proxy (wagmi's ENS query options, one query per row).
+   Each target is a `DelegateSearchInput` combobox: free text stays valid, and
+   it suggests scored (not opted-out) leaderboard delegates, fuzzy-matched by
+   name, ENS name or address (`lib/delegation/logic/delegate-search.ts`; empty
+   input lists the top ranks). A pick sets the address; a scored target shows
+   its name and rank below the input.
    **Consolidation quick picks** ("Your addresses") list the connected
    address and the selected address's identity siblings, minus the selected
    address. A pick fills the All to one target, or the first empty Split row
