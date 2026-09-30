@@ -10,25 +10,18 @@ test.describe('Landing Page', () => {
 
     // Check that modules are displayed
     await expect(page.getByRole('heading', { name: 'DAO Delegates' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Governance Proposals' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Governance Votes' })).toBeVisible();
   });
 
-  test('displays Featured DAO Community section', async ({ page }) => {
+  test('displays the External Tools section', async ({ page }) => {
     await page.goto('/');
 
-    // Check section heading
-    await expect(
-      page.getByRole('heading', { name: 'Featured DAO Community', level: 2 }),
-    ).toBeVisible();
-    await expect(page.getByText('Tools built by the SSV community')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'External Tools', level: 2 })).toBeVisible();
 
-    // Check Stake Easy card is displayed
-    await expect(page.getByText('Stake Easy')).toBeVisible();
-    await expect(page.getByText('Simplified staking experience for SSV Network')).toBeVisible();
-
-    // Check Community badge (the small badge inside the card)
-    const communityBadge = page.locator('span', { hasText: 'Community' }).first();
-    await expect(communityBadge).toBeVisible();
+    // Stake Easy is a featured tool
+    const stakeEasy = page.getByRole('link', { name: /Stake Easy/ });
+    await expect(stakeEasy.getByRole('heading', { name: 'Stake Easy' })).toBeVisible();
+    await expect(stakeEasy.getByText('Featured')).toBeVisible();
   });
 
   test('community tool link opens in new tab', async ({ page }) => {

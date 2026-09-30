@@ -1,9 +1,13 @@
 import { expect, test } from '@playwright/test';
 
+import { DELEGATES_LOAD_TIMEOUT, DELEGATES_TEST_TIMEOUT } from './delegates-load';
+
 test.describe('Vote Participation', () => {
+  test.describe.configure({ timeout: DELEGATES_TEST_TIMEOUT });
+
   test('displays vote participation column in delegates table', async ({ page }) => {
     // Navigate to dao-delegates page
-    await page.goto('/delegates');
+    await page.goto('/delegates', { timeout: DELEGATES_LOAD_TIMEOUT });
 
     // Wait for the table to load
     await expect(page.getByRole('heading', { name: 'DAO Delegates' })).toBeVisible();
@@ -17,7 +21,7 @@ test.describe('Vote Participation', () => {
   });
 
   test('percentage badge has correct tooltip', async ({ page }) => {
-    await page.goto('/delegates');
+    await page.goto('/delegates', { timeout: DELEGATES_LOAD_TIMEOUT });
 
     // Wait for the table to load
     await expect(page.getByRole('heading', { name: 'DAO Delegates' })).toBeVisible();
