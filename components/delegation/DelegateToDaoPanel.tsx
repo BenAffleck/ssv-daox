@@ -1,3 +1,5 @@
+export const DELEGATE_TO_DAO_ANCHOR = 'delegate-to-dao';
+
 const DEFAULT_SUBTITLE =
   "One transaction hands your voting power to the DAO pool. The DAO spreads your voting power across cohorts of delegates. We don't touch your tokens.";
 
@@ -19,8 +21,9 @@ export default function DelegateToDaoPanel({
 }: DelegateToDaoPanelProps) {
   return (
     <section
+      id={DELEGATE_TO_DAO_ANCHOR}
       aria-labelledby="delegate-to-dao-title"
-      className="card mt-6 border-primary/50 p-5 shadow-glow"
+      className="card mt-6 scroll-mt-24 border-primary/50 p-5 shadow-glow"
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">

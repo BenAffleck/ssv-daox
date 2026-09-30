@@ -2,7 +2,9 @@
 
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Wallet } from 'lucide-react';
+import { useDisconnect } from 'wagmi';
 
+import AccountMenu from './AccountMenu';
 import { useWalletSession } from './useWalletSession';
 
 const BASE =
@@ -11,10 +13,11 @@ const BASE =
 /** Connect, account and wrong-network states of the connected wallet. */
 export default function WalletButton() {
   const session = useWalletSession();
+  const { disconnect } = useDisconnect();
 
   return (
     <ConnectButton.Custom>
-      {({ account, chain, openAccountModal, openChainModal, openConnectModal }) => {
+      {({ account, chain, openChainModal, openConnectModal }) => {
         if (session.phase === 'loading') {
           return (
             <span
@@ -47,15 +50,12 @@ export default function WalletButton() {
           );
         }
         return (
-          <button
-            type="button"
-            onClick={openAccountModal}
-            title={account.address}
-            className={`${BASE} border border-border bg-card text-foreground hover:bg-card-hover`}
-          >
-            <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-accent" />
-            <span className="max-w-36 truncate">{account.displayName}</span>
-          </button>
+          <AccountMenu
+            address={account.address}
+            displayName={account.displayName}
+            ensAvatar={account.ensAvatar}
+            onDisconnect={() => disconnect()}
+          />
         );
       }}
     </ConnectButton.Custom>

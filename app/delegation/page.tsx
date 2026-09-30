@@ -260,6 +260,7 @@ export default async function DelegationPage({
       {getMainnetRpcUrl() ? (
         <AutoDelegationPath
           address={address}
+          identityAddresses={ownAddresses}
           pin={pin}
           poolAddress={AUTO_DELEGATION_POOL_ADDRESS}
           optOut={statuses[selected] ?? null}

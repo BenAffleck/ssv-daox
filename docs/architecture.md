@@ -56,6 +56,7 @@ ssv-daox/
 │   ├── wallet/               # App-wide wallet stack
 │   │   ├── WalletProvider.tsx    # Client: wagmi, React Query, RainbowKit, session-restored flag
 │   │   ├── WalletButton.tsx      # Client: header connect / account / wrong-network button
+│   │   ├── AccountMenu.tsx       # Client: connected account dropdown (profile, copy, Etherscan, disconnect)
 │   │   └── useWalletSession.ts   # loading | disconnected | connected
 │   ├── dao-delegates/        # DAO Delegates components
 │   │   ├── DelegatesTable.tsx    # Client: filter/sort state
@@ -76,6 +77,7 @@ ssv-daox/
 │   │   ├── VotingPowerPanel.tsx     # Server: voting power breakdown panel
 │   │   ├── ClaimIntroPanel.tsx      # "Claim on HighSignal" without an overview
 │   │   ├── ConnectToDelegateButton.tsx # Client: connect prompt for disconnected wallets
+│   │   ├── useConnectToDelegate.ts  # Client: connect, then open the wallet's own address
 │   │   ├── AutoDelegationPath.tsx   # Client: breakdown card + "Delegate to the DAO" action
 │   │   ├── VotingPowerBreakdownCard.tsx  # Selected address's voting power + Details
 │   │   ├── DelegationTransaction.tsx     # Client: registry write hook, EOA/Safe status, drop confirmation
@@ -215,7 +217,7 @@ The header (`components/Header.tsx`) is a `'use client'` component providing a t
 - Nav items for each active module with Lucide React icons, active route detection via `usePathname()`
 - "More" dropdown listing coming-soon modules (dimmed, with badge)
 - `WalletButton` ([Wallet](#wallet)): "Connect wallet", the connected account
-  (opens RainbowKit's account modal) or "Wrong network". It stays in the top
+  (opens `AccountMenu`) or "Wrong network". It stays in the top
   bar on mobile, next to search and the hamburger.
 - Responsive: hamburger menu on mobile with slide-down panel
 
@@ -957,8 +959,13 @@ cohort delegates.
 
   4. `switch-account`: no wallet, or the connected wallet isn't the selected
      address. Disconnected: a "Connect wallet to delegate" button opens the
-     connect modal. Connected elsewhere: "Switch your wallet to 0x12…ab to
-     delegate". While the session is `loading`, nothing renders.
+     connect modal (`useConnectToDelegate`). Connecting from it opens the
+     wallet's own address at `#delegate-to-dao`. Dismissing the modal cancels
+     that. Connected as an identity sibling: "Switch your wallet to 0x12…ab
+     to delegate". Connected as any other wallet: "You're connected as
+     0x34…cd" with a "Go to your address" link. It never asks a visitor to
+     switch to a wallet they may not own. While the session is `loading`,
+     nothing renders.
   5. `nothing-to-delegate` with `reason: 'no-power'`: own tokens + incoming
      power from non-pool delegators = 0 ("This address has no voting power
      to delegate").
@@ -1320,6 +1327,12 @@ config lives in `lib/wallet/wagmi-config.ts`.
   and during any connect, the phase is `loading`, so a returning user never
   sees a connect prompt flash.
 
+- **Account menu:** the connected account button opens `AccountMenu`, a
+  WAI-ARIA menu button (arrow keys, Home/End, Escape, outside click) instead
+  of RainbowKit's account modal. Items: "Delegation profile"
+  (`/delegation?address={wallet}`), "Copy address", "View on Etherscan" and
+  "Disconnect" (wagmi `useDisconnect`), last and in danger color. The
+  profile stays one click from the menu so disconnect remains discoverable.
 - **Connectors:** with `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, injected,
   MetaMask, Rabby, Safe and WalletConnect. Without it, injected only, and
   `createWagmiConfig` logs a console warning.
@@ -1331,7 +1344,8 @@ config lives in `lib/wallet/wagmi-config.ts`.
   - restoring a session on page load never navigates; the lookup page shows
     "Open your address" instead;
   - connecting opens the account unless `?address=` already selects one
-    (e.g. from a leaderboard link);
+    (e.g. from a leaderboard link). "Connect wallet to delegate" is the
+    exception: it opens the wallet's own address;
   - an account switch opens the new account;
   - disconnecting while viewing the wallet's own address returns to
     `/delegation`; on another address the page stays.

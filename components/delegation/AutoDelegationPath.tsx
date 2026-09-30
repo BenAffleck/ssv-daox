@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 import { useWalletSession } from '@/components/wallet/useWalletSession';
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
+import { accountSwitchPrompt } from '@/lib/delegation/logic/address-overview';
 import {
   autoDelegationView,
   formatPower,
@@ -23,9 +25,12 @@ import {
   useSubmissionPhase,
 } from './DelegationTransaction';
 import OpenStepButton from './OpenStepButton';
+import { ownDelegateToDaoUrl, useConnectToDelegate } from './useConnectToDelegate';
 
 interface AutoDelegationPathProps {
   address: string;
+  /** The selected address and its identity siblings. */
+  identityAddresses: string[];
   /** The selected address's pin data; `null` when the lookup failed. */
   pin: VotingPowerData | null;
   poolAddress: string;
@@ -74,12 +79,14 @@ function blockedReason(state: AutoDelegationState, isOwner: boolean, optOutLink:
 /** The "Delegate to the DAO" panel with its one-click action for the selected address. */
 export default function AutoDelegationPath({
   address,
+  identityAddresses,
   pin,
   poolAddress,
   optOut,
   optOutStepAvailable,
 }: AutoDelegationPathProps) {
   const session = useWalletSession();
+  const connectToDelegate = useConnectToDelegate(address);
   const isOwner = session.phase === 'connected' && sameAddress(session.address, address);
   const { breakdown, state } = autoDelegationView({
     address,
@@ -116,16 +123,34 @@ export default function AutoDelegationPath({
           return {};
         }
         if (session.phase === 'disconnected') {
-          return { action: <ConnectToDelegateButton /> };
+          return { action: <ConnectToDelegateButton onClick={connectToDelegate} /> };
+        }
+        if (accountSwitchPrompt(address, session.address, identityAddresses) === 'sibling') {
+          return {
+            children: (
+              <p className="text-muted">
+                Switch your wallet to{' '}
+                <code className="font-mono text-xs text-foreground" title={address}>
+                  {formatAddress(address)}
+                </code>{' '}
+                to delegate.
+              </p>
+            ),
+          };
         }
         return {
+          action: (
+            <Link href={ownDelegateToDaoUrl(session.address)} className={PRIMARY_BUTTON}>
+              Go to your address
+            </Link>
+          ),
           children: (
             <p className="text-muted">
-              Switch your wallet to{' '}
-              <code className="font-mono text-xs text-foreground" title={address}>
-                {formatAddress(address)}
-              </code>{' '}
-              to delegate.
+              You&apos;re connected as{' '}
+              <code className="font-mono text-xs text-foreground" title={session.address}>
+                {formatAddress(session.address)}
+              </code>
+              . Delegate from your own address.
             </p>
           ),
         };
