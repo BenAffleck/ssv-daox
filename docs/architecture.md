@@ -319,6 +319,16 @@ delegation recipients, vote participation, voting power) is still fetched live.
 Replacing the source means swapping `load-delegates.ts` for a new fetcher that
 produces `KarmaDelegateCSV[]`.
 
+### Legacy Domain Redirect
+
+`delegate.ssv.network` is attached to the Vercel project without a domain-level
+redirect. Host-matched rules in `next.config.ts` answer with a 308:
+
+- `/profile/{address}[/...]` → `https://daox.ssv.network/delegation?address={address}`
+- every other path → `https://daox.ssv.network/delegates`
+
+The profile rule must stay first. Incoming query strings pass through.
+
 ### Vote Participation & Active Vote Status
 
 Shows each delegate's voting activity in two sections:
