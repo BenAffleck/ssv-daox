@@ -7,7 +7,7 @@ vi.mock('@/components/wallet/useWalletSession', () => ({
   useWalletSession: () => ({ phase: 'disconnected', address: undefined }),
 }));
 
-const POOL_ADDRESS = '0xb35096b074fdb9bBac63E3AdaE0Bbde512B2E6b6';
+const POOL_ADDRESS = '0x9a62c932F5a8Eb807F655E3D948EdaE174D39D3B';
 
 const POOL = {
   totalPower: 1300000,

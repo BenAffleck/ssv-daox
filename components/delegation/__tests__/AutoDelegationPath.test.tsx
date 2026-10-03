@@ -10,7 +10,7 @@ import AutoDelegationPath from '../AutoDelegationPath';
 const VIEWED = '0x1111111111111111111111111111111111111111';
 const SIBLING = '0x2222222222222222222222222222222222222222';
 const STRANGER = '0x3333333333333333333333333333333333333333';
-const POOL = '0xb35096b074fdb9bBac63E3AdaE0Bbde512B2E6b6';
+const POOL = '0x9a62c932F5a8Eb807F655E3D948EdaE174D39D3B';
 
 let session: WalletSession = { phase: 'disconnected', address: undefined };
 vi.mock('@/components/wallet/useWalletSession', () => ({ useWalletSession: () => session }));

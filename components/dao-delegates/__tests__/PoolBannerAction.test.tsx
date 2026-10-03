@@ -6,7 +6,7 @@ import type { VotingPowerData } from '@/lib/gnosis/types';
 
 import PoolBannerAction from '../PoolBannerAction';
 
-const POOL = '0xb35096b074fdb9bBac63E3AdaE0Bbde512B2E6b6';
+const POOL = '0x9a62c932F5a8Eb807F655E3D948EdaE174D39D3B';
 const WALLET = '0x1111111111111111111111111111111111111111';
 
 let session: WalletSession = { phase: 'disconnected', address: undefined };
