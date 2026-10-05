@@ -229,7 +229,7 @@ The header (`components/Header.tsx`) is a `'use client'` component providing a t
 
 ### 4. External Data Integration
 
-All external data uses dependency injection for testability.
+API clients call `fetch` directly. Tests stub `global.fetch` (see `lib/dao-delegates/__tests__/fetch-leaderboard.test.ts`).
 
 **Data sources:**
 
@@ -1613,7 +1613,7 @@ npm run type-check # TypeScript check
 3. **State:** Local state + props drilling; Context only for global state (theme)
 4. **Caching:** 5-min revalidation for external API fetches
 5. **Error handling:** Fail-fast for critical data, graceful degradation for optional features
-6. **Testing:** Mock external data via dependency injection
+6. **Testing:** Stub `global.fetch` for external data
 
 ---
 

@@ -1,7 +1,7 @@
 ## General Rules (IMPORTANT!)
 
 - After adding a major feature or technology, ALWAYS update `docs/architecture.md` and `docs/techstack.md`.
-- Do NOT run `tsc` or `npx tsc` directly on files. The project uses Next.js path aliases (`@/`) and JSX configuration that require the full Next.js build context. Always use `npm run build` to check for TypeScript errors.
+- Check types with `npm run type-check` (whole project, tests included; the pre-commit hook and CI run it). Run `tsc` only through that script: on single files it loses the `@/` aliases.
 
 ## Key Files
 
