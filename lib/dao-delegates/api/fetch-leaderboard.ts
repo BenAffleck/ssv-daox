@@ -7,6 +7,11 @@ interface LeaderboardPage {
   rows: ScoreRow[];
 }
 
+interface AllocationSummary {
+  /** `null` when the run is uncapped. */
+  cap: number | null;
+}
+
 async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(`${DELEGATE_SCORE_CONFIG.apiBaseUrl}${path}`, {
     next: { revalidate: DELEGATE_SCORE_CONFIG.cacheSeconds },
@@ -64,4 +69,13 @@ export async function fetchScoreHealth(): Promise<ScoreHealth | null> {
     console.error('[Delegate Score API] Health check failed:', error);
     return null;
   }
+}
+
+/** The cap frozen in the latest run: the most pool power it allocates. `null` when uncapped. */
+export async function fetchAllocationCap(): Promise<number | null> {
+  const { cap } = await getJson<AllocationSummary>('/v1/allocation');
+  if (typeof cap !== 'number' && cap !== null) {
+    throw new Error('Delegate Score API /v1/allocation returned no cap');
+  }
+  return cap;
 }

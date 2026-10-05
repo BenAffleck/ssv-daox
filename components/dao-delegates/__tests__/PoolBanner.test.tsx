@@ -11,6 +11,7 @@ const POOL_ADDRESS = '0x9a62c932F5a8Eb807F655E3D948EdaE174D39D3B';
 
 const POOL = {
   totalPower: 1300000,
+  cap: 500000,
   allocatedPower: 500000,
   daoHeldPower: 1260000,
   communityPower: 40000,
@@ -26,12 +27,23 @@ describe('PoolBanner', () => {
     expect(screen.getByText('2 delegators')).toBeInTheDocument();
   });
 
-  it('shows the allocated power against the program cap', () => {
-    render(<PoolBanner pool={{ ...POOL, allocatedPower: 320000 }} poolAddress={POOL_ADDRESS} />);
+  it("shows the allocated power against the run's cap", () => {
+    render(
+      <PoolBanner
+        pool={{ ...POOL, cap: 750000, allocatedPower: 320000 }}
+        poolAddress={POOL_ADDRESS}
+      />,
+    );
 
     expect(screen.getByRole('region', { name: 'DAO auto-delegation pool' })).toHaveTextContent(
-      `${(320000).toLocaleString()} of ${(500000).toLocaleString()} SSV cap reached`,
+      `${(320000).toLocaleString()} of ${(750000).toLocaleString()} SSV cap reached`,
     );
+  });
+
+  it('leaves out the cap when the run is uncapped', () => {
+    render(<PoolBanner pool={{ ...POOL, cap: null }} poolAddress={POOL_ADDRESS} />);
+
+    expect(screen.queryByText(/cap reached/)).not.toBeInTheDocument();
   });
 
   it('links to the Delegation page', () => {

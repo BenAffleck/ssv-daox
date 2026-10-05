@@ -18,10 +18,13 @@ function pinData(overrides: Partial<GnosisDelegationResponse> = {}) {
   });
 }
 
+const CAP = 500000;
+
 describe('summarizePool', () => {
   it('counts all power as DAO-held when nobody delegates in', () => {
-    expect(summarizePool(pinData({ votingPower: '1260000' }))).toEqual({
+    expect(summarizePool(pinData({ votingPower: '1260000' }), CAP)).toEqual({
       totalPower: 1260000,
+      cap: CAP,
       allocatedPower: 500000,
       daoHeldPower: 1260000,
       communityPower: 0,
@@ -40,10 +43,12 @@ describe('summarizePool', () => {
           { delegator: '0xbbb', delegatedPower: 10000 },
         ],
       }),
+      CAP,
     );
 
     expect(summary).toEqual({
       totalPower: 1300000,
+      cap: CAP,
       allocatedPower: 500000,
       daoHeldPower: 1260000,
       communityPower: 40000,
@@ -54,13 +59,18 @@ describe('summarizePool', () => {
   it('counts power the pool delegates out as DAO-held', () => {
     const summary = summarizePool(
       pinData({ votingPower: '1000000', incomingPower: '40000', outgoingPower: '300000' }),
+      CAP,
     );
 
     expect(summary.daoHeldPower).toBe(1260000);
   });
 
-  it('allocates all power while the pool holds less than the program cap', () => {
-    expect(summarizePool(pinData({ votingPower: '320000' })).allocatedPower).toBe(320000);
+  it("allocates all power while the pool's power is below the cap", () => {
+    expect(summarizePool(pinData({ votingPower: '320000' }), CAP).allocatedPower).toBe(320000);
+  });
+
+  it('allocates all power when the run is uncapped', () => {
+    expect(summarizePool(pinData({ votingPower: '1260000' }), null).allocatedPower).toBe(1260000);
   });
 });
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchLeaderboard, fetchScoreHealth } from '../api/fetch-leaderboard';
+import { fetchAllocationCap, fetchLeaderboard, fetchScoreHealth } from '../api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '../config';
 import type { ScoreRow } from '../types';
 
@@ -137,5 +137,43 @@ describe('fetchScoreHealth', () => {
     mockFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
 
     expect(await fetchScoreHealth()).toBeNull();
+  });
+});
+
+describe('fetchAllocationCap', () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+    vi.stubEnv('DELEGATE_SCORE_API_URL', BASE_URL);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("reads the latest run's cap from the allocation", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ run_id: 8, as_of: '2026-09-21', delegated: 1300000, cap: 500000 }),
+    });
+
+    expect(await fetchAllocationCap()).toBe(500000);
+    expect(mockFetch.mock.calls[0][0]).toBe(`${BASE_URL}/v1/allocation`);
+  });
+
+  it('fails when the API is unreachable', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+
+    await expect(fetchAllocationCap()).rejects.toThrow('ECONNREFUSED');
+  });
+
+  it('fails when the allocation carries no cap', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ run_id: 8, as_of: '2026-09-21', delegated: 1300000 }),
+    });
+
+    await expect(fetchAllocationCap()).rejects.toThrow('no cap');
   });
 });

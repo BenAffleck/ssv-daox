@@ -28,9 +28,3 @@ export function getHighSignalConfig(): HighSignalConfig {
  * cohort seats. A governance fact, so not an environment variable.
  */
 export const AUTO_DELEGATION_POOL_ADDRESS = '0x9a62c932F5a8Eb807F655E3D948EdaE174D39D3B';
-
-/**
- * Most voting power score runs allocate from the pool. A governance rule;
- * the scoring endpoint's allocations stop at this cap.
- */
-export const AUTO_DELEGATION_PROGRAM_CAP = 500_000;

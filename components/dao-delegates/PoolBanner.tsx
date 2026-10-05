@@ -1,4 +1,3 @@
-import { AUTO_DELEGATION_PROGRAM_CAP } from '@/lib/delegation/config';
 import {
   formatAmount,
   formatDelegatorCount,
@@ -35,13 +34,14 @@ export default function PoolBanner({ pool, poolAddress }: PoolBannerProps) {
             </span>{' '}
             total
           </span>
-          <span>
-            <span className="font-medium text-foreground tabular-nums">
-              {formatAmount(pool.allocatedPower)}
-            </span>{' '}
-            of <span className="tabular-nums">{formatPower(AUTO_DELEGATION_PROGRAM_CAP)}</span> cap
-            reached
-          </span>
+          {pool.cap !== null && (
+            <span>
+              <span className="font-medium text-foreground tabular-nums">
+                {formatAmount(pool.allocatedPower)}
+              </span>{' '}
+              of <span className="tabular-nums">{formatPower(pool.cap)}</span> cap reached
+            </span>
+          )}
           <span>
             <span className="font-medium text-foreground tabular-nums">
               {formatPower(pool.communityPower)}
