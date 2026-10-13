@@ -17,7 +17,7 @@ import { fetchLeaderboard } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
 import type { ScoreRow } from '@/lib/dao-delegates/types';
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
-import { fetchPin } from '@/lib/delegation/api/fetch-pin';
+import { fetchPin, fetchPoolRecipients } from '@/lib/delegation/api/fetch-pin';
 import { resolveEnsName, type EnsResolution } from '@/lib/delegation/api/resolve-ens';
 import { AUTO_DELEGATION_POOL_ADDRESS, getHighSignalConfig } from '@/lib/delegation/config';
 import {
@@ -38,7 +38,6 @@ import {
   getOptOutService,
 } from '@/lib/delegation/opt-out/server';
 import type { DelegationEntry } from '@/lib/gnosis';
-import { fetchConfiguredDelegationRecipients } from '@/lib/snapshot/api/fetch-delegation-recipients';
 import {
   fetchSnapshotProfile,
   snapshotAvatarUrl,
@@ -237,7 +236,7 @@ export default async function DelegationPage({
     scoreContext,
     fetchPin(address),
     fetchSnapshotProfile(address),
-    fetchConfiguredDelegationRecipients(),
+    fetchPoolRecipients(),
   ]);
   const overview =
     baseOverview && withSafeRequests(withOptOutStatuses(baseOverview, statuses), safeRequests);
@@ -266,7 +265,7 @@ export default async function DelegationPage({
       {overview ? (
         <AddressOverviewTable
           addresses={overview.addresses}
-          delegatedAddresses={new Set(delegationRecipients.map((a) => a.toLowerCase()))}
+          delegatedAddresses={new Set(delegationRecipients)}
           selectedPin={pin}
         />
       ) : (

@@ -65,6 +65,16 @@ describe('summarizePool', () => {
     expect(summary.daoHeldPower).toBe(1260000);
   });
 
+  it('totals the power the pool delegates out with what it keeps', () => {
+    const summary = summarizePool(
+      pinData({ votingPower: '0', incomingPower: '147832', outgoingPower: '297832' }),
+      CAP,
+    );
+
+    expect(summary.totalPower).toBe(297832);
+    expect(summary.allocatedPower).toBe(297832);
+  });
+
   it("allocates all power while the pool's power is below the cap", () => {
     expect(summarizePool(pinData({ votingPower: '320000' }), CAP).allocatedPower).toBe(320000);
   });

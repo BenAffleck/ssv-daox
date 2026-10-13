@@ -46,10 +46,12 @@ export function formatDelegatorCount(count: number): string {
 }
 
 export function summarizePool(pool: VotingPowerData, cap: number | null): PoolSummary {
+  // `votingPower` is what the pool keeps after delegating; the pool passes nearly everything on.
+  const totalPower = pool.votingPower + pool.outgoingPower;
   return {
-    totalPower: pool.votingPower,
+    totalPower,
     cap,
-    allocatedPower: cap === null ? pool.votingPower : Math.min(pool.votingPower, cap),
+    allocatedPower: cap === null ? totalPower : Math.min(totalPower, cap),
     daoHeldPower: ownPower(pool),
     communityPower: pool.incomingPower,
     delegatorCount: pool.delegatorCount,

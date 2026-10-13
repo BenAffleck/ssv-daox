@@ -10,59 +10,16 @@ import type { GovernanceSpace } from './types';
 export const SNAPSHOT_API_URL = 'https://hub.snapshot.org/graphql';
 
 /**
- * The Graph Snapshot subgraph ID
- */
-const SNAPSHOT_SUBGRAPH_ID = '4YgtogVaqoM8CErHWDK8mKQ825BcVdKB8vBYmb4avAQo';
-
-/**
- * Gets The Graph API endpoint for Snapshot subgraph (for delegations)
- * Requires API key from thegraph.com/studio/apikeys
- * Computed dynamically to support test mocking
- */
-export function getSnapshotSubgraphUrl(): string {
-  return process.env.THEGRAPH_API_KEY
-    ? `https://gateway.thegraph.com/api/${process.env.THEGRAPH_API_KEY}/subgraphs/id/${SNAPSHOT_SUBGRAPH_ID}`
-    : '';
-}
-
-/**
  * Cache duration in seconds for Snapshot data
  * 5 minutes (consistent with other API caches)
  */
 export const SNAPSHOT_CACHE_SECONDS = 300;
 
-/**
- * Parses comma-separated addresses from environment variable
- * Validates and normalizes to lowercase
- *
- * @param envValue - Comma-separated string of Ethereum addresses
- * @returns Array of validated lowercase addresses
- */
-function parseAddresses(envValue: string | undefined): string[] {
-  if (!envValue || !envValue.trim()) {
-    return [];
-  }
-
-  return envValue
-    .split(',')
-    .map((addr) => addr.trim().toLowerCase())
-    .filter((addr) => {
-      const isValid = addr.startsWith('0x') && addr.length === 42;
-      if (!isValid && addr) {
-        console.warn(`Invalid address filtered out: ${addr}`);
-      }
-      return isValid;
-    });
-}
-
 export const SNAPSHOT_CONFIG = {
   apiUrl: SNAPSHOT_API_URL,
-  getSubgraphUrl: getSnapshotSubgraphUrl,
   cacheSeconds: SNAPSHOT_CACHE_SECONDS,
   delegation: {
-    sourceAddresses: parseAddresses(process.env.SNAPSHOT_DELEGATION_SOURCE_ADDRESSES),
     spaceFilter: process.env.SNAPSHOT_DELEGATION_SPACE_FILTER || '',
-    maxResults: 1000,
   },
   voteParticipation: {
     proposalCount: 5,

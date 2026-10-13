@@ -7,12 +7,11 @@ import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetc
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
 import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
 import type { ScoreRow } from '@/lib/dao-delegates/types';
-import { fetchPoolSummary } from '@/lib/delegation/api/fetch-pin';
+import { fetchPoolRecipients, fetchPoolSummary } from '@/lib/delegation/api/fetch-pin';
 import { AUTO_DELEGATION_POOL_ADDRESS } from '@/lib/delegation/config';
 import { fetchOptOutStatuses } from '@/lib/delegation/opt-out/server';
 import { fetchVotingPower } from '@/lib/gnosis';
 import { fetchActiveVoteStatus } from '@/lib/snapshot/api/fetch-active-vote-status';
-import { fetchConfiguredDelegationRecipients } from '@/lib/snapshot/api/fetch-delegation-recipients';
 import { fetchVoteParticipation } from '@/lib/snapshot/api/fetch-vote-participation';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 
@@ -43,7 +42,7 @@ async function PoolBannerSection() {
 async function DelegatesTableSection({ rows }: { rows: ScoreRow[] }) {
   const spaceId = SNAPSHOT_CONFIG.delegation.spaceFilter;
   // Voting power starts as soon as the recipients are known, alongside the Snapshot fetches.
-  const recipientsWithPower = fetchConfiguredDelegationRecipients().then(
+  const recipientsWithPower = fetchPoolRecipients().then(
     async (recipients) =>
       [recipients, await fetchVotingPower(prefetchedAddresses(rows, recipients))] as const,
   );

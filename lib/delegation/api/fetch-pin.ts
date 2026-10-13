@@ -10,6 +10,12 @@ export async function fetchPin(address: string): Promise<VotingPowerData | null>
   return votingPower[address.toLowerCase()] ?? null;
 }
 
+/** Lowercase addresses the pool delegates to; empty when the Gnosis API lookup fails. */
+export async function fetchPoolRecipients(): Promise<string[]> {
+  const pool = await fetchPin(AUTO_DELEGATION_POOL_ADDRESS);
+  return pool?.outgoingDelegations.map((entry) => entry.address.toLowerCase()) ?? [];
+}
+
 /** Returns `null` when the Gnosis API lookup fails; throws when the Score API fails. */
 export async function fetchPoolSummary(): Promise<PoolSummary | null> {
   const [pool, cap] = await Promise.all([

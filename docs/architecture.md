@@ -235,7 +235,7 @@ API clients call `fetch` directly. Tests stub `global.fetch` (see `lib/dao-deleg
 
 - **Delegate Score API** - Ranked delegates, scores and cohort allocation (requires `DELEGATE_SCORE_API_URL`)
 - **Snapshot Hub API** - Proposals, votes and vote participation
-- **The Graph Subgraph** - Delegation relationships (requires `THEGRAPH_API_KEY`)
+- **Split Delegation API** - Voting power and delegation relationships, including the pool's recipients
 
 **Pattern:**
 
@@ -342,7 +342,7 @@ The primary implemented module. Shows a ranked delegate leaderboard with Delegat
 
 ```
 1. Fetch the leaderboard + health from the Delegate Score API (parallel)
-2. Fetch delegation recipients from The Graph (parallel)
+2. Fetch delegation recipients from the pool pin (Split Delegation API) (parallel)
 3. Fetch vote participation from Snapshot (parallel)
 4. Fetch voting power (Gnosis) for DAO delegation recipients and cohort holders
    (Active, Ending, Nominated) as soon as the recipients arrive, alongside
@@ -390,8 +390,8 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
 - The Cohort column shows the delegate's cohort; the sortable "DAO Delegated
   Power" column shows the allocated power the run assigns to the address (its
   share of its identity's cohort seat). The Delegation page's address table
-  uses the same label. "Delegation Status" compares the cohort with live
-  delegation (The Graph): Active (delegated, keeps a cohort), Nominated (gains a
+  uses the same label. "Delegation Status" compares the cohort with the pool's
+  live delegation (the Split Delegation API's `delegateTree` for the pool, via `fetchPoolRecipients()`): Active (delegated, keeps a cohort), Nominated (gains a
   cohort; the DAO delegates at the next update), Ending (delegated, loses its
   cohort). The labels are statuses, not actions, and carry a `title` that
   explains them.
@@ -524,9 +524,6 @@ DELEGATE_SCORE_API_URL=http://127.0.0.1:8000
 MAINNET_RPC_URL=https://mainnet.infura.io/v3/<key>
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=   # optional
 
-# Required for delegation status feature
-THEGRAPH_API_KEY=your_key
-SNAPSHOT_DELEGATION_SOURCE_ADDRESSES=0x...,0x...
 SNAPSHOT_DELEGATION_SPACE_FILTER=ssv.dao.eth
 ```
 
@@ -881,7 +878,7 @@ clamps to 3 lines with "Show more". A "You" badge marks the owner's address.
 3. `AddressOverviewTable` - Rank, score, voting power (the leaderboard's
    `VotingPowerBadge`; the requested address uses its pin data, siblings load
    on demand), cohort, delegation status (the
-   leaderboard's `DelegationStatusBadge`, from `fetchConfiguredDelegationRecipients()`),
+   leaderboard's `DelegationStatusBadge`, from `fetchPoolRecipients()`),
    allocated power, HighSignal status (column "HighSignal Status"), opt-out
 4. Up to three unnumbered `StepPanel`s for the owner, collapsed by default.
    They are independent actions, not a sequence:

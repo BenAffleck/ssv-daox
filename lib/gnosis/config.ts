@@ -1,11 +1,11 @@
 /**
- * Gnosis Guild Delegation API configuration
+ * Split Delegation API configuration (snapshot.box, formerly Gnosis Guild)
  */
 
 /**
  * Base URL for the Gnosis delegation API
  */
-export const GNOSIS_API_BASE_URL = 'https://delegate-api.gnosisguild.org/api/v1';
+export const GNOSIS_API_BASE_URL = 'https://split-delegation.snapshot.box/api/v1';
 
 /**
  * SSV Network space identifier on mainnet

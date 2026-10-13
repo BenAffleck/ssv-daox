@@ -1,6 +1,6 @@
 /**
  * Type definitions for Gnosis Guild Delegation API
- * API: https://delegate-api.gnosisguild.org
+ * API: https://split-delegation.snapshot.box
  */
 
 /**
