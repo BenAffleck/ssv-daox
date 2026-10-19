@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import NextRoundPower from '@/components/dao-delegates/NextRoundPower';
 import { useWalletSession } from '@/components/wallet/useWalletSession';
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
 import { accountSwitchPrompt } from '@/lib/delegation/logic/address-overview';
@@ -11,6 +12,7 @@ import {
   type AutoDelegationState,
 } from '@/lib/delegation/logic/auto-delegation';
 import { sameAddress } from '@/lib/delegation/logic/pool';
+import { powerChangeOf } from '@/lib/delegation/logic/power-change';
 import type { OptOutStatus } from '@/lib/delegation/opt-out/score-api';
 import type { VotingPowerData } from '@/lib/gnosis/types';
 
@@ -38,6 +40,8 @@ interface AutoDelegationPathProps {
   optOut: OptOutStatus | null;
   /** `false` when the page has no Opt-out step to open, so "Opt out first" isn't a link. */
   optOutStepAvailable: boolean;
+  /** Power the next score run allocates to the address; `null` when it isn't scored. */
+  nextPower: number | null;
 }
 
 const LAG_NOTE = 'Voting power updates within about 5 minutes.';
@@ -63,6 +67,7 @@ export default function AutoDelegationPath({
   poolAddress,
   optOut,
   optOutStepAvailable,
+  nextPower,
 }: AutoDelegationPathProps) {
   const session = useWalletSession();
   const connectToDelegate = useConnectToDelegate(address);
@@ -177,11 +182,13 @@ export default function AutoDelegationPath({
       case 'awaiting-run': {
         const received = breakdown?.fromPool?.power ?? null;
         const optedOut = state.kind === 'awaiting-run';
+        const change = powerChangeOf(received, nextPower);
         const who = isOwner ? 'you' : 'this address';
         return {
           title: (
             <>
-              The DAO delegates {received === null ? 'voting power' : powerLabel(received)} to {who}
+              The DAO delegates {received === null ? 'voting power' : powerLabel(received)}
+              {change && <NextRoundPower change={change} />} to {who}
             </>
           ),
           subtitle: optedOut

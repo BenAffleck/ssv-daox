@@ -400,8 +400,13 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   Score. A pillar with `missing_<pillar>: true` shows as "n/a" and sorts last;
   a pillar that is `null` for every row is not live and its column is hidden.
 - The Cohort column shows the delegate's cohort; the sortable "DAO Delegated
-  Power" column shows the allocated power the run assigns to the address (its
-  share of its identity's cohort seat). The Delegation page's address table
+  Power" column shows what the DAO delegates to the address now (the pool pin's
+  outgoing edge, `fetchPoolDelegations()`). When the run's allocated power (the
+  address's share of its identity's cohort seat) differs by more than 1 SSV (smaller gaps are rounding noise),
+  `NextRoundPower` adds the delta beside it, e.g. "(↑ 312)" (accent for an
+  increase, warning for a decrease; a dropped delegate shows the full drop). The delta is
+  `powerChangeOf()` in `lib/delegation/logic/power-change.ts`. The Delegation
+  page's "The DAO delegates x SSV to this address" heading shows the same delta after the amount. The Delegation page's address table
   uses the same label. "Delegation Status" compares the cohort with the pool's
   live delegation (the Split Delegation API's `delegateTree` for the pool, via `fetchPoolRecipients()`): Active (delegated, keeps a cohort), Nominated (gains a
   cohort; the DAO delegates at the next update), Ending (delegated, loses its

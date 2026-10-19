@@ -1,12 +1,15 @@
 import OptOutStatusBadge from '@/components/delegation/OptOutStatusBadge';
 import { Delegate, PillarKey } from '@/lib/dao-delegates/types';
 import { optOutBadgeOf } from '@/lib/delegation/logic/address-overview';
+import { formatPower } from '@/lib/delegation/logic/auto-delegation';
+import { powerChangeOf } from '@/lib/delegation/logic/power-change';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 
 import AddressCell from './AddressCell';
 import CohortBadge from './CohortBadge';
 import DelegationStatusBadge from './DelegationStatusBadge';
 import NameCell from './NameCell';
+import NextRoundPower from './NextRoundPower';
 import ScoreCell from './ScoreCell';
 import VoteParticipationCell from './VoteParticipationCell';
 import VotingPowerBadge from './VotingPowerBadge';
@@ -19,6 +22,7 @@ interface DelegateRowProps {
 export default function DelegateRow({ delegate, livePillars }: DelegateRowProps) {
   const hasCohort = delegate.cohort !== null;
   const optOutBadge = optOutBadgeOf(delegate.optOut);
+  const powerChange = powerChangeOf(delegate.currentPower, delegate.allocatedPower);
 
   return (
     <tr className="group border-b border-border transition-colors hover:bg-card-hover">
@@ -60,11 +64,12 @@ export default function DelegateRow({ delegate, livePillars }: DelegateRowProps)
         )}
       </td>
       <td className="px-3 py-3 text-foreground tabular-nums">
-        {delegate.allocatedPower ? (
-          `${Math.round(delegate.allocatedPower).toLocaleString()} SSV`
+        {delegate.currentPower ? (
+          formatPower(delegate.currentPower)
         ) : (
           <span className="text-xs text-muted">-</span>
         )}
+        {powerChange && <NextRoundPower change={powerChange} />}
       </td>
       <td className="px-3 py-3">
         <VoteParticipationCell

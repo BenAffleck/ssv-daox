@@ -54,6 +54,7 @@ const PROPS = {
   poolAddress: POOL,
   optOut: null,
   optOutStepAvailable: true,
+  nextPower: null,
 };
 
 function renderPath() {
@@ -128,6 +129,7 @@ describe('AutoDelegationPath on another address', () => {
 describe('AutoDelegationPath on an address the DAO delegates to', () => {
   const RECEIVING = {
     ...PROPS,
+    nextPower: 500,
     pin: {
       ...PIN,
       incomingPower: 500,
@@ -147,6 +149,24 @@ describe('AutoDelegationPath on an address the DAO delegates to', () => {
       `The DAO delegates ${(500).toLocaleString()} SSV to this address`,
     );
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('shows what the next run changes about the delegation', () => {
+    render(<AutoDelegationPath {...RECEIVING} nextPower={800} />);
+
+    expect(screen.getByText('(↑ 300)')).toBeInTheDocument();
+  });
+
+  it('shows the full drop when the next run allocates nothing', () => {
+    render(<AutoDelegationPath {...RECEIVING} nextPower={null} />);
+
+    expect(screen.getByText('(↓ 500)')).toBeInTheDocument();
+  });
+
+  it('shows no change when the next run allocates the same power', () => {
+    render(<AutoDelegationPath {...RECEIVING} nextPower={500} />);
+
+    expect(screen.queryByText(/[↑↓]/)).not.toBeInTheDocument();
   });
 
   it('tells the owner how much the DAO delegates and offers to opt out', () => {

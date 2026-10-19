@@ -40,6 +40,8 @@ export interface Delegate {
 
   // Computed
   isAlreadyDelegated: boolean;
+  /** What the DAO delegates now; 0 when it doesn't, `null` when the API omitted the amount. */
+  currentPower: number | null;
 
   // Vote participation
   voteParticipationRate: number;

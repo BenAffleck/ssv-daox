@@ -40,10 +40,14 @@ function row(cohort: Cohort | null): ScoreRow {
   };
 }
 
-function renderRow(statuses: OptOutStatuses, cohort: Cohort | null = 'professional') {
+function renderRow(
+  statuses: OptOutStatuses,
+  cohort: Cohort | null = 'professional',
+  currentPower: number | null = 100,
+) {
   const [delegate] = transformDelegates(
     [row(cohort)],
-    [ADDRESS],
+    [{ address: ADDRESS.toLowerCase(), power: currentPower }],
     undefined,
     undefined,
     undefined,
@@ -106,5 +110,37 @@ describe('DelegateRow name', () => {
       'href',
       `/delegation?address=${ADDRESS}`,
     );
+  });
+});
+
+describe('DelegateRow DAO delegated power', () => {
+  it('shows the current delegation without a change when the next run keeps it', () => {
+    renderRow({});
+
+    expect(screen.getByText(`${(100).toLocaleString()} SSV`)).toBeInTheDocument();
+    expect(screen.queryByText(/[↑↓]/)).not.toBeInTheDocument();
+  });
+
+  it("shows the next run's change beside the current delegation", () => {
+    renderRow({}, 'professional', 40);
+
+    expect(screen.getByText(`${(40).toLocaleString()} SSV`)).toBeInTheDocument();
+    expect(screen.getByText('(↑ 60)')).toBeInTheDocument();
+  });
+
+  it('shows the full drop when the next run drops the delegate', () => {
+    const [delegate] = transformDelegates(
+      [{ ...row(null), power: null }],
+      [{ address: ADDRESS.toLowerCase(), power: 100 }],
+    );
+    render(
+      <table>
+        <tbody>
+          <DelegateRow delegate={delegate} livePillars={[]} />
+        </tbody>
+      </table>,
+    );
+
+    expect(screen.getByText('(↓ 100)')).toBeInTheDocument();
   });
 });

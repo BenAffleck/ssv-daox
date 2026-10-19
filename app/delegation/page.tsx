@@ -294,6 +294,7 @@ export default async function DelegationPage({
           poolAddress={AUTO_DELEGATION_POOL_ADDRESS}
           optOut={statuses[selected] ?? null}
           optOutStepAvailable={overview !== null}
+          nextPower={leaderboard.rows.find((r) => sameAddress(r.address, address))?.power ?? null}
         />
       ) : (
         <DelegateToDaoPanel />

@@ -1,5 +1,5 @@
 import type { OptOutStatuses } from '@/lib/delegation/opt-out/score-api';
-import type { VotingPowerMap } from '@/lib/gnosis/types';
+import type { DelegationEntry, VotingPowerMap } from '@/lib/gnosis/types';
 import type { ActiveVoteData } from '@/lib/snapshot/api/fetch-active-vote-status';
 import type { VoteParticipationMap } from '@/lib/snapshot/types';
 
@@ -15,13 +15,15 @@ function toPillar(score: number | null, missing: boolean): PillarScore | null {
  */
 export function transformDelegates(
   rows: ScoreRow[],
-  delegationRecipients: string[],
+  poolDelegations: DelegationEntry[],
   voteParticipation?: VoteParticipationMap,
   votingPower?: VotingPowerMap,
   activeVoteData?: ActiveVoteData,
   optOutStatuses?: OptOutStatuses,
 ): Delegate[] {
-  const delegated = new Set(delegationRecipients.map((addr) => addr.toLowerCase()));
+  const delegated = new Map(
+    poolDelegations.map((entry) => [entry.address.toLowerCase(), entry.power]),
+  );
 
   return rows.map((row) => {
     const address = row.address;
@@ -55,6 +57,7 @@ export function transformDelegates(
       allocatedPower: row.power,
 
       isAlreadyDelegated: delegated.has(address.toLowerCase()),
+      currentPower: delegated.get(address.toLowerCase()) ?? 0,
 
       voteParticipationRate: voteParticipation?.[address] ?? 0,
       activeVoteStatus,

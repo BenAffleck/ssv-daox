@@ -33,7 +33,7 @@ function sortValue(delegate: Delegate, field: SortField): number | null {
     case 'votingPower':
       return delegate.votingPowerData?.votingPower ?? 0;
     case 'allocatedPower':
-      return delegate.allocatedPower;
+      return delegate.currentPower;
   }
 }
 
