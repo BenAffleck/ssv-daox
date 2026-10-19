@@ -369,6 +369,12 @@ each request, not the table: 40 hanging requests take 4 × 10s. The pin URL
 uses the lowercase address, so the page, `/delegation` and the route share
 cache entries.
 
+The table renders 50 rows per page (`DELEGATES_PAGE_SIZE`, `paginate()` in
+`lib/dao-delegates/logic/paginate.ts`). Filtering and sorting still run over
+all delegates on the client; only the rendered rows are sliced. The page lives
+in the `page` URL param and resets to 1 on any search, filter or sort change.
+"Copy handles" still covers every filtered delegate, not just the current page.
+
 Rank, score and cohort come from the API; the app no longer ranks, assigns
 programs or keeps fixed delegation lists itself. Every delegate is eligible, so
 the app has no eligibility rules.

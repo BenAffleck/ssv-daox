@@ -4,12 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { PILLAR_LABELS } from '@/lib/dao-delegates/config';
 import { collectHandles } from '@/lib/dao-delegates/logic/collect-handles';
+import { DELEGATES_PAGE_SIZE, paginate } from '@/lib/dao-delegates/logic/paginate';
 import { Delegate, PillarKey } from '@/lib/dao-delegates/types';
 import { useDelegateFilters } from '@/lib/hooks/useDelegateFilters';
 
 import DelegateRow from './DelegateRow';
 import FilterControls from './FilterControls';
 import TableHeader, { SortDirection, SortField } from './TableHeader';
+import TablePagination from './TablePagination';
 
 interface DelegatesTableProps {
   delegates: Delegate[];
@@ -54,7 +56,7 @@ function compareDelegates(
 
 export default function DelegatesTable({ delegates }: DelegatesTableProps) {
   const [filters, setFilter, setMultiple] = useDelegateFilters();
-  const { searchQuery, showChangesOnly, showCurrentOnly, sortField, sortDirection } = filters;
+  const { searchQuery, showChangesOnly, showCurrentOnly, sortField, sortDirection, page } = filters;
 
   // Debounced search: local state for input, synced to URL after delay
   const [searchInput, setSearchInput] = useState(searchQuery);
@@ -70,10 +72,10 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
       setSearchInput(value);
       clearTimeout(searchTimerRef.current);
       searchTimerRef.current = setTimeout(() => {
-        setFilter.searchQuery(value);
+        setMultiple({ searchQuery: value, page: 1 });
       }, 300);
     },
-    [setFilter],
+    [setMultiple],
   );
 
   // Cleanup debounce timer
@@ -85,10 +87,14 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       // Toggle direction if same field
-      setFilter.sortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setMultiple({ sortDirection: sortDirection === 'asc' ? 'desc' : 'asc', page: 1 });
     } else {
       // Set new field with default direction
-      setMultiple({ sortField: field, sortDirection: field === 'rank' ? 'asc' : 'desc' });
+      setMultiple({
+        sortField: field,
+        sortDirection: field === 'rank' ? 'asc' : 'desc',
+        page: 1,
+      });
     }
   };
 
@@ -121,6 +127,11 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
     return filtered;
   }, [delegates, searchQuery, showChangesOnly, showCurrentOnly, sortField, sortDirection]);
 
+  const visible = useMemo(
+    () => paginate(filteredDelegates, page, DELEGATES_PAGE_SIZE),
+    [filteredDelegates, page],
+  );
+
   // A pillar that is null for everyone is not live in this run
   const livePillars = useMemo(
     () =>
@@ -145,9 +156,9 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
         searchQuery={searchInput}
         onSearchChange={handleSearchChange}
         showChangesOnly={showChangesOnly}
-        onShowChangesOnlyChange={setFilter.showChangesOnly}
+        onShowChangesOnlyChange={(value) => setMultiple({ showChangesOnly: value, page: 1 })}
         showCurrentOnly={showCurrentOnly}
-        onShowCurrentOnlyChange={setFilter.showCurrentOnly}
+        onShowCurrentOnlyChange={(value) => setMultiple({ showCurrentOnly: value, page: 1 })}
         forumHandles={forumHandles}
         discordHandles={discordHandles}
       />
@@ -168,7 +179,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
               livePillars={livePillars}
             />
             <tbody>
-              {filteredDelegates.map((delegate) => (
+              {visible.items.map((delegate) => (
                 <DelegateRow
                   key={delegate.publicAddress}
                   delegate={delegate}
@@ -180,8 +191,15 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
         </div>
       )}
 
+      <TablePagination
+        page={visible.page}
+        totalPages={visible.totalPages}
+        onPageChange={(next) => setFilter.page(next)}
+      />
+
       <div className="mt-5 text-center text-[13px] text-muted">
-        Showing {filteredDelegates.length} of {delegates.length} delegates
+        Showing {visible.items.length} of {filteredDelegates.length} matching · {delegates.length}{' '}
+        delegates
       </div>
     </div>
   );

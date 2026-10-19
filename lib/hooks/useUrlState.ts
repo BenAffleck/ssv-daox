@@ -117,3 +117,15 @@ export function enumParam<T extends string>(
     },
   };
 }
+
+export function pageParam(key: string): ParamConfig<number> {
+  return {
+    key,
+    defaultValue: 1,
+    serialize: (value) => (value <= 1 ? null : String(value)),
+    deserialize: (raw) => {
+      const parsed = Number.parseInt(raw ?? '', 10);
+      return Number.isFinite(parsed) && parsed > 1 ? parsed : 1;
+    },
+  };
+}
