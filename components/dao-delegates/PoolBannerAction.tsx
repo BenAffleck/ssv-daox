@@ -12,6 +12,8 @@ type Offer =
   | { kind: 'delegate'; power: number }
   /** The DAO delegates to the wallet, so it can't delegate back until it opts out. */
   | { kind: 'received'; power: number | null }
+  /** The wallet already delegates everything to the DAO. */
+  | { kind: 'delegated'; power: number }
   | { kind: 'none' };
 
 function offerFor(address: string, pin: VotingPowerData, poolAddress: string): Offer {
@@ -24,6 +26,9 @@ function offerFor(address: string, pin: VotingPowerData, poolAddress: string): O
   });
   if (state.kind === 'opt-out-required' || state.kind === 'awaiting-run') {
     return { kind: 'received', power: breakdown?.fromPool?.power ?? null };
+  }
+  if (state.kind === 'already-delegating') {
+    return { kind: 'delegated', power: state.power };
   }
   if (state.kind !== 'ready' || !breakdown) {
     return { kind: 'none' };
@@ -43,8 +48,8 @@ const ACTION_CLASS =
 
 /**
  * The pool banner's action. A visitor without a wallet is asked to connect;
- * a connected wallet sees the power it can delegate, the power the DAO delegates to it, or a
- * disabled "nothing to delegate".
+ * a connected wallet sees the power it can delegate, the power it already delegates to the DAO,
+ * the power the DAO delegates to it, or a disabled "nothing to delegate".
  */
 export default function PoolBannerAction({ poolAddress }: { poolAddress: string }) {
   const session = useWalletSession();
@@ -86,6 +91,15 @@ export default function PoolBannerAction({ poolAddress }: { poolAddress: string 
           {offer.power === null ? 'Voting power' : formatPower(offer.power)}
         </span>{' '}
         received from the DAO
+      </Link>
+    );
+  }
+  if (offer.kind === 'delegated') {
+    return (
+      <Link href={`/delegation?address=${address}`} className={ACTION_CLASS}>
+        {YOU_BADGE}
+        <span className="text-accent tabular-nums">{formatPower(offer.power)}</span> delegated to
+        the DAO
       </Link>
     );
   }

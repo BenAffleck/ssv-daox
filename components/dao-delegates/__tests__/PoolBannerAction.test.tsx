@@ -71,7 +71,7 @@ describe('PoolBannerAction', () => {
     expect(link).toHaveAttribute('href', `/delegation?address=${WALLET}`);
   });
 
-  it('disables the action when the wallet has nothing to delegate to the pool', async () => {
+  it('shows the power the wallet already delegates to the DAO and links to its profile', async () => {
     session = { phase: 'connected', address: WALLET };
     respondWith(
       pin({
@@ -82,9 +82,19 @@ describe('PoolBannerAction', () => {
     );
     render(<PoolBannerAction poolAddress={POOL} />);
 
+    const link = await screen.findByRole('link', { name: /You.*delegated to the DAO/ });
+    expect(link).toHaveTextContent(`${(1234).toLocaleString()} SSV`);
+    expect(link).toHaveAttribute('href', `/delegation?address=${WALLET}`);
+    expect(screen.queryByText(/voting power to delegate/)).not.toBeInTheDocument();
+  });
+
+  it('disables the action when the wallet has no power at all', async () => {
+    session = { phase: 'connected', address: WALLET };
+    respondWith(pin({ votingPower: 0 }));
+    render(<PoolBannerAction poolAddress={POOL} />);
+
     const button = await screen.findByRole('button', { name: /0 SSV voting power to delegate/ });
     expect(button).toBeDisabled();
-    expect(button).toHaveTextContent('You');
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 

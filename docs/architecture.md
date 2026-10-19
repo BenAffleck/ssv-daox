@@ -432,8 +432,9 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   reads "Delegate your {power} voting power to the DAO" (power in accent green:
   tokens held + third-party power that moves along) and links to
   `/delegation?address={wallet}`. A wallet the DAO delegates to reads "You {power} received from the DAO" and links to its
-  profile. A wallet with nothing to delegate gets
-  a disabled "0 SSV voting power to delegate" button; a failed
+  profile. A wallet that already delegates everything to the pool reads
+  "You {power} delegated to the DAO" and links to its profile. A wallet with
+  no power gets a disabled "0 SSV voting power to delegate" button; a failed
   lookup and a restoring session render nothing.
 - When `DELEGATE_SCORE_API_URL` is unset the page renders a notice instead of
   the table. The page revalidates every 5 minutes so a later-configured URL is
