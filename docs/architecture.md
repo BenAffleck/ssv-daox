@@ -19,7 +19,9 @@ Next.js 16 App Router application with TypeScript strict mode. Modular design wh
 ssv-daox/
 ├── app/                      # Next.js App Router
 │   ├── page.tsx              # Landing page (module grid)
-│   ├── layout.tsx            # Root layout + ThemeProvider
+│   ├── layout.tsx            # Root layout + ThemeProvider + Footer
+│   ├── terms/page.tsx        # Terms of Service (defers to the SSV Network terms)
+│   ├── privacy/page.tsx      # Privacy Policy (DAOx data flows)
 │   ├── globals.css           # Tailwind v4 + theme tokens
 │   ├── [slug]/               # Dynamic module routes (fallback)
 │   ├── api/                  # API Routes
@@ -51,6 +53,8 @@ ssv-daox/
 │
 ├── components/               # Shared components
 │   ├── Header.tsx            # App header (full nav bar + global search trigger)
+│   ├── Footer.tsx            # Terms / Privacy links, rendered by the root layout
+│   ├── LegalPage.tsx         # Shared prose shell for /terms and /privacy
 │   ├── SearchPalette.tsx     # Global Ctrl+K command palette + trigger button
 │   ├── ModuleCard.tsx        # Landing page cards
 │   ├── wallet/               # App-wide wallet stack
@@ -1654,3 +1658,15 @@ npm run type-check # TypeScript check
 ---
 
 _Last Updated: 2026-06-29_
+
+---
+
+## Legal pages
+
+`/terms` and `/privacy` are static server pages in `LegalPage`. The terms do not
+copy the text: they incorporate the SSV Network Terms of Service
+(`ssv.network/legal/terms-of-service`) by link and add a short DAOx addendum, so
+they follow that document. The privacy policy lists DAOx's actual data flows
+(Vercel hosting, wallet addresses, opt-out records, Anthropic for AI features,
+theme in local storage, no analytics). **Update it whenever a feature adds a
+third-party call, stored data or a tracker.** `Footer` links both from every page.

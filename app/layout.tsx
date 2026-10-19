@@ -3,6 +3,7 @@ import { Inter, Poppins } from 'next/font/google';
 
 import './globals.css';
 
+import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import WalletProvider from '@/components/wallet/WalletProvider';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
@@ -54,6 +55,7 @@ export default function RootLayout({
           <WalletProvider>
             <Header />
             <main>{children}</main>
+            <Footer />
           </WalletProvider>
         </ThemeProvider>
       </body>
