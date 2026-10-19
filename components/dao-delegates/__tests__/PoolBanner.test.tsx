@@ -21,10 +21,9 @@ const POOL = {
 };
 
 describe('PoolBanner', () => {
-  it('shows the total, community-delegated power and delegator count', () => {
+  it('shows the community-delegated power and delegator count', () => {
     render(<PoolBanner pool={POOL} poolAddress={POOL_ADDRESS} />);
 
-    expect(screen.getByText(`${(1300000).toLocaleString()} SSV`)).toBeInTheDocument();
     expect(screen.getByText(`${(40000).toLocaleString()} SSV`)).toBeInTheDocument();
     expect(screen.getByText('2 delegators')).toBeInTheDocument();
   });
@@ -38,14 +37,15 @@ describe('PoolBanner', () => {
     );
 
     expect(screen.getByRole('region', { name: 'DAO auto-delegation pool' })).toHaveTextContent(
-      `${(320000).toLocaleString()} of ${(750000).toLocaleString()} SSV cap reached`,
+      `${(320000).toLocaleString()} of ${(750000).toLocaleString()} SSV program cap reached`,
     );
   });
 
-  it('leaves out the cap when the run is uncapped', () => {
+  it('shows the total instead of a cap when the run is uncapped', () => {
     render(<PoolBanner pool={{ ...POOL, cap: null }} poolAddress={POOL_ADDRESS} />);
 
     expect(screen.queryByText(/cap reached/)).not.toBeInTheDocument();
+    expect(screen.getByText(`${(1300000).toLocaleString()} SSV`)).toBeInTheDocument();
   });
 
   it('renders nothing when the pool lookup failed', () => {

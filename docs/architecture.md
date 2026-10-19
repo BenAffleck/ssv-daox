@@ -419,11 +419,11 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   per row; the live Score API client splits it into requests of 100 addresses.
   A failed lookup yields no statuses, so the table renders without badges. See
   [Opt-out](#opt-out).
-- A `PoolBanner` above the table shows the DAO auto-delegation pool's total
-  and community-delegated power with its delegator count. It uses
-  `fetchPoolSummary()` (see [Auto-delegation](#auto-delegation)). Beside the
-  total it shows the allocated power against the latest score run's cap
-  ("x of 500,000 SSV cap reached"), or no cap part when the run is uncapped. A
+- A `PoolBanner` above the table shows the DAO auto-delegation pool's
+  allocated power against the latest score run's cap ("x of 500,000 SSV
+  program cap reached", replacing the total when the run is capped; an uncapped
+  run shows "x SSV total"), with its community-delegated power and delegator
+  count. It uses `fetchPoolSummary()` (see [Auto-delegation](#auto-delegation)). A
   failed pool lookup hides the banner; a failed cap lookup fails the page.
 - `PoolBannerAction` (client) is the banner's action. Without a wallet it is a
   button, "SSV holder? Delegate to the DAO →", that opens the connect

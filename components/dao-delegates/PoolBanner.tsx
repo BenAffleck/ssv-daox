@@ -28,18 +28,19 @@ export default function PoolBanner({ pool, poolAddress }: PoolBannerProps) {
           DAO auto-delegation pool
         </p>
         <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted">
-          <span>
-            <span className="font-medium text-foreground tabular-nums">
-              {formatPower(pool.totalPower)}
-            </span>{' '}
-            total
-          </span>
-          {pool.cap !== null && (
+          {pool.cap === null ? (
+            <span>
+              <span className="font-medium text-foreground tabular-nums">
+                {formatPower(pool.totalPower)}
+              </span>{' '}
+              total
+            </span>
+          ) : (
             <span>
               <span className="font-medium text-foreground tabular-nums">
                 {formatAmount(pool.allocatedPower)}
               </span>{' '}
-              of <span className="tabular-nums">{formatPower(pool.cap)}</span> cap reached
+              of <span className="tabular-nums">{formatPower(pool.cap)}</span> program cap reached
             </span>
           )}
           <span>
