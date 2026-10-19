@@ -66,7 +66,8 @@ export function toVotingPowerData(data: GnosisDelegationResponse): VotingPowerDa
     votingPower: toNumber(data.votingPower),
     incomingPower: toNumber(data.incomingPower),
     outgoingPower: toNumber(data.outgoingPower),
-    delegatorCount: data.delegators?.length || 0,
+    // The flat `delegators` list also holds indirect delegators; the tree's top level is who delegates directly.
+    delegatorCount: incomingDelegations.length,
     delegators: data.delegators || [],
     incomingDelegations,
     outgoingDelegations,

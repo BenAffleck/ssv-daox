@@ -7,6 +7,8 @@ vi.mock('@/components/wallet/useWalletSession', () => ({
   useWalletSession: () => ({ phase: 'disconnected', address: undefined }),
 }));
 
+vi.mock('@rainbow-me/rainbowkit', () => ({ useConnectModal: () => ({}) }));
+
 const POOL_ADDRESS = '0x9a62c932F5a8Eb807F655E3D948EdaE174D39D3B';
 
 const POOL = {
@@ -44,12 +46,6 @@ describe('PoolBanner', () => {
     render(<PoolBanner pool={{ ...POOL, cap: null }} poolAddress={POOL_ADDRESS} />);
 
     expect(screen.queryByText(/cap reached/)).not.toBeInTheDocument();
-  });
-
-  it('links to the Delegation page', () => {
-    render(<PoolBanner pool={POOL} poolAddress={POOL_ADDRESS} />);
-
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/delegation');
   });
 
   it('renders nothing when the pool lookup failed', () => {

@@ -22,7 +22,7 @@ export const SNAPSHOT_CONFIG = {
     spaceFilter: process.env.SNAPSHOT_DELEGATION_SPACE_FILTER || '',
   },
   voteParticipation: {
-    proposalCount: 5,
+    proposalCount: 10,
   },
 } as const;
 

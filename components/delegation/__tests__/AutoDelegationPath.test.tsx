@@ -110,7 +110,7 @@ describe('AutoDelegationPath on another address', () => {
     renderPath();
 
     expect(screen.queryByText(/Switch your wallet/)).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Go to your address' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /^Open your address/ })).toHaveAttribute(
       'href',
       `/delegation?address=${STRANGER}#delegate-to-dao`,
     );
@@ -121,6 +121,50 @@ describe('AutoDelegationPath on another address', () => {
     renderPath();
 
     expect(screen.getByText(/Switch your wallet to/)).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Go to your address' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^Open your address/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('AutoDelegationPath on an address the DAO delegates to', () => {
+  const RECEIVING = {
+    ...PROPS,
+    pin: {
+      ...PIN,
+      incomingPower: 500,
+      incomingDelegations: [{ address: POOL, power: 500 }],
+    },
+  };
+
+  beforeEach(() => {
+    session = { phase: 'disconnected', address: undefined };
+    vi.clearAllMocks();
+  });
+
+  it('tells a visitor without a wallet how much the DAO delegates, without an action', () => {
+    render(<AutoDelegationPath {...RECEIVING} />);
+
+    expect(screen.getByRole('heading')).toHaveTextContent(
+      `The DAO delegates ${(500).toLocaleString()} SSV to this address`,
+    );
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('tells the owner how much the DAO delegates and offers to opt out', () => {
+    session = { phase: 'connected', address: VIEWED };
+    render(<AutoDelegationPath {...RECEIVING} />);
+
+    expect(screen.getByRole('heading')).toHaveTextContent(
+      `The DAO delegates ${(500).toLocaleString()} SSV to you`,
+    );
+    expect(screen.getByRole('button', { name: 'Opt out first' })).toBeInTheDocument();
+  });
+
+  it('tells a connected visitor the address cannot delegate back, without an action', () => {
+    session = { phase: 'connected', address: STRANGER };
+    render(<AutoDelegationPath {...RECEIVING} />);
+
+    expect(screen.getByRole('heading')).toHaveTextContent('to this address');
+    expect(screen.getByText("It can't delegate to the DAO in return.")).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });

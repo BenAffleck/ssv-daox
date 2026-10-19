@@ -2,13 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 
 import { useWalletSession } from '@/components/wallet/useWalletSession';
 import { autoDelegationView, formatPower } from '@/lib/delegation/logic/auto-delegation';
 import type { VotingPowerData } from '@/lib/gnosis/types';
 
-/** Power the pool would receive from `address`; `null` when it can't delegate to the pool now. */
-function delegatablePower(address: string, pin: VotingPowerData, poolAddress: string) {
+type Offer =
+  | { kind: 'delegate'; power: number }
+  /** The DAO delegates to the wallet, so it can't delegate back until it opts out. */
+  | { kind: 'received'; power: number | null }
+  | { kind: 'none' };
+
+function offerFor(address: string, pin: VotingPowerData, poolAddress: string): Offer {
   const { breakdown, state } = autoDelegationView({
     address,
     connected: address,
@@ -16,15 +22,27 @@ function delegatablePower(address: string, pin: VotingPowerData, poolAddress: st
     poolAddress,
     optOut: null,
   });
-  if (state.kind !== 'ready' || !breakdown) {
-    return null;
+  if (state.kind === 'opt-out-required' || state.kind === 'awaiting-run') {
+    return { kind: 'received', power: breakdown?.fromPool?.power ?? null };
   }
-  return breakdown.ownPower + (state.movesAlong?.power ?? 0);
+  if (state.kind !== 'ready' || !breakdown) {
+    return { kind: 'none' };
+  }
+  const power = breakdown.ownPower + (state.movesAlong?.power ?? 0);
+  return Math.round(power) > 0 ? { kind: 'delegate', power } : { kind: 'none' };
 }
 
-/** The pool banner's link; names the connected wallet's power when it can delegate. */
+const ACTION_CLASS =
+  'inline-block shrink-0 self-start rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-hover sm:self-auto';
+
+/**
+ * The pool banner's action. A visitor without a wallet is asked to connect;
+ * a connected wallet sees the power it can delegate, the power the DAO delegates to it, or a
+ * disabled "nothing to delegate".
+ */
 export default function PoolBannerAction({ poolAddress }: { poolAddress: string }) {
   const session = useWalletSession();
+  const { openConnectModal } = useConnectModal();
   const [pin, setPin] = useState<{ address: string; data: VotingPowerData } | null>(null);
 
   useEffect(() => {
@@ -41,25 +59,41 @@ export default function PoolBannerAction({ poolAddress }: { poolAddress: string 
   }, [session.phase, session.address]);
 
   const address = session.phase === 'connected' ? session.address : undefined;
-  const power =
-    address && pin && pin.address === address
-      ? delegatablePower(address, pin.data, poolAddress)
-      : null;
-  const shown = power !== null && Math.round(power) > 0;
+  const offer =
+    address && pin && pin.address === address ? offerFor(address, pin.data, poolAddress) : null;
 
+  if (session.phase === 'disconnected') {
+    return (
+      <button type="button" onClick={openConnectModal} className={ACTION_CLASS}>
+        SSV holder? Delegate to the DAO →
+      </button>
+    );
+  }
+  if (!address || !offer) {
+    return null;
+  }
+  if (offer.kind === 'received') {
+    return (
+      <Link href={`/delegation?address=${address}`} className={ACTION_CLASS}>
+        <span className="badge-sm-accent mr-2">You</span>
+        <span className="text-accent tabular-nums">
+          {offer.power === null ? 'Voting power' : formatPower(offer.power)}
+        </span>{' '}
+        received from the DAO
+      </Link>
+    );
+  }
+  if (offer.kind === 'none') {
+    return (
+      <button type="button" disabled className={`${ACTION_CLASS} cursor-not-allowed opacity-60`}>
+        <span className="tabular-nums">{formatPower(0)}</span> voting power to delegate
+      </button>
+    );
+  }
   return (
-    <Link
-      href={shown ? `/delegation?address=${address}` : '/delegation'}
-      className="inline-block shrink-0 self-start rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-hover sm:self-auto"
-    >
-      {shown ? (
-        <>
-          Delegate your <span className="text-accent tabular-nums">{formatPower(power)}</span>{' '}
-          voting power to the DAO →
-        </>
-      ) : (
-        'Delegate your voting power to the DAO →'
-      )}
+    <Link href={`/delegation?address=${address}`} className={ACTION_CLASS}>
+      Delegate your <span className="text-accent tabular-nums">{formatPower(offer.power)}</span>{' '}
+      voting power to the DAO →
     </Link>
   );
 }

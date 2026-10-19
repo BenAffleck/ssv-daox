@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fetchProposals } from '../api/fetch-proposals';
+import { SNAPSHOT_CONFIG } from '../config';
 import type { ProposalsQueryResponse, SnapshotGraphQLResponse } from '../types';
 import { MOCK_PROPOSALS } from './__mocks__/proposal-data';
 
@@ -125,6 +126,6 @@ describe('fetchProposals', () => {
 
     const callArgs = mockFetch.mock.calls[0][1];
     const body = JSON.parse(callArgs.body);
-    expect(body.variables.limit).toBe(5);
+    expect(body.variables.limit).toBe(SNAPSHOT_CONFIG.voteParticipation.proposalCount);
   });
 });

@@ -9,7 +9,7 @@ import { AUTO_DELEGATION_POOL_NAME, isAutoDelegationPool } from './pool';
 
 export const FULL_BPS = 10000;
 export const MAX_SPLIT_TARGETS = 10;
-const POOL_NOTE = `${AUTO_DELEGATION_POOL_NAME}: the power you delegate goes to the DAO pool, redistributed to cohort seats at the next run.`;
+const POOL_NOTE = `${AUTO_DELEGATION_POOL_NAME}: the power you delegate goes to the DAO, redistributed to cohort seats at the next run.`;
 
 export interface SplitTarget {
   target: string;

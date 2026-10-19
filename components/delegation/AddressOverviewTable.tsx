@@ -22,18 +22,19 @@ export default function AddressOverviewTable({
   delegatedAddresses,
   selectedPin,
 }: AddressOverviewTableProps) {
+  // The profile header names a lone address; sibling rows still need theirs.
+  const showAddress = addresses.length > 1;
   return (
     <div className="card overflow-x-auto">
       <table className="w-full">
         <thead className="border-b border-border bg-muted/10">
           <tr>
-            <th className="table-col-header px-4 py-3 text-left">Address</th>
+            {showAddress && <th className="table-col-header px-4 py-3 text-left">Address</th>}
             <th className="table-col-header px-4 py-3 text-center">Rank</th>
             <th className="table-col-header px-4 py-3 text-center">Score</th>
             <th className="table-col-header px-4 py-3 text-left">Voting Power</th>
             <th className="table-col-header px-4 py-3 text-left">Cohort</th>
             <th className="table-col-header px-4 py-3 text-left">Delegation Status</th>
-            <th className="table-col-header px-4 py-3 text-left">DAO Delegated Power</th>
             <th className="table-col-header px-4 py-3 text-left">HighSignal Status</th>
             <th className="table-col-header px-4 py-3 text-left">Opt-out</th>
           </tr>
@@ -41,10 +42,14 @@ export default function AddressOverviewTable({
         <tbody>
           {addresses.map((entry) => (
             <tr key={entry.address} className="transition-colors hover:bg-card-hover">
-              <td className="px-4 py-3">
-                <code className="font-mono text-xs text-foreground">{entry.address}</code>
-                {entry.ensName && <div className="mt-0.5 text-xs text-muted">{entry.ensName}</div>}
-              </td>
+              {showAddress && (
+                <td className="px-4 py-3">
+                  <code className="font-mono text-xs text-foreground">{entry.address}</code>
+                  {entry.ensName && (
+                    <div className="mt-0.5 text-xs text-muted">{entry.ensName}</div>
+                  )}
+                </td>
+              )}
               <td className="px-4 py-3 text-center font-medium text-foreground tabular-nums">
                 {entry.rank ?? '-'}
               </td>
@@ -68,13 +73,6 @@ export default function AddressOverviewTable({
                   isAlreadyDelegated={delegatedAddresses.has(entry.address.toLowerCase())}
                   hasCohort={entry.cohort !== null}
                 />
-              </td>
-              <td className="px-4 py-3 text-foreground tabular-nums">
-                {entry.allocatedPower !== null ? (
-                  `${Math.round(entry.allocatedPower).toLocaleString()} SSV`
-                ) : (
-                  <span className="text-xs text-muted">-</span>
-                )}
               </td>
               <td className="px-4 py-3">
                 <ClaimStatusBadge status={entry.claimStatus} />

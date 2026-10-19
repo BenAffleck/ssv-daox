@@ -45,16 +45,28 @@ export function formatDelegatorCount(count: number): string {
   return `${count.toLocaleString()} ${count === 1 ? 'delegator' : 'delegators'}`;
 }
 
-export function summarizePool(pool: VotingPowerData, cap: number | null): PoolSummary {
+/**
+ * `daoAddresses` are delegators that belong to the DAO: their power counts
+ * toward the total and as DAO-held, never as community-delegated or a delegator.
+ */
+export function summarizePool(
+  pool: VotingPowerData,
+  cap: number | null,
+  daoAddresses: string[] = [],
+): PoolSummary {
   // `votingPower` is what the pool keeps after delegating; the pool passes nearly everything on.
   const totalPower = pool.votingPower + pool.outgoingPower;
+  const isDao = (entry: DelegationEntry) => daoAddresses.some((a) => sameAddress(a, entry.address));
+  const daoDelegatedPower = pool.incomingDelegations
+    .filter(isDao)
+    .reduce((sum, entry) => sum + (entry.power ?? 0), 0);
   return {
     totalPower,
     cap,
     allocatedPower: cap === null ? totalPower : Math.min(totalPower, cap),
-    daoHeldPower: ownPower(pool),
-    communityPower: pool.incomingPower,
-    delegatorCount: pool.delegatorCount,
+    daoHeldPower: ownPower(pool) + daoDelegatedPower,
+    communityPower: pool.incomingPower - daoDelegatedPower,
+    delegatorCount: pool.incomingDelegations.filter((entry) => !isDao(entry)).length,
   };
 }
 

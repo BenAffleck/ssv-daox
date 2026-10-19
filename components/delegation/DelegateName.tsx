@@ -1,6 +1,6 @@
 import { AUTO_DELEGATION_POOL_NAME, isAutoDelegationPool } from '@/lib/delegation/logic/pool';
 
-/** The pool by name, any other delegate by address. `className` sets size and wrapping. */
+/** A delegate's address; the DAO auto-delegation pool's carries its name. `className` sets size and wrapping. */
 export default function DelegateName({
   address,
   className,
@@ -12,8 +12,9 @@ export default function DelegateName({
 }) {
   if (isPool) {
     return (
-      <span title={address} className={`text-foreground ${className}`}>
-        {AUTO_DELEGATION_POOL_NAME}
+      <span className={className}>
+        <code className="font-mono text-foreground">{address}</code>{' '}
+        <span className="text-muted">({AUTO_DELEGATION_POOL_NAME})</span>
       </span>
     );
   }

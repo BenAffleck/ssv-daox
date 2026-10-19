@@ -31,7 +31,9 @@ interface StepPanelProps {
   icon?: React.ReactNode;
   /** A completed step: checked and locked shut. */
   done?: boolean;
-  children: React.ReactNode;
+  /** Shown but not usable, e.g. before a wallet is connected. */
+  disabled?: boolean;
+  children?: React.ReactNode;
 }
 
 /**
@@ -46,10 +48,11 @@ export default function StepPanel({
   anchor,
   icon,
   done = false,
+  disabled = false,
   children,
 }: StepPanelProps) {
   const [requestedOpen, setOpen] = useState(false);
-  const open = requestedOpen && !done;
+  const open = requestedOpen && !done && !disabled;
   // Bumped per request, so an already open panel still scrolls into view.
   const [revealRequest, setRevealRequest] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
@@ -102,7 +105,7 @@ export default function StepPanel({
     <section
       ref={sectionRef}
       id={anchor}
-      className={`card mt-6 scroll-mt-20 p-5 ${done ? 'border-accent/40' : ''}`}
+      className={`card mt-6 scroll-mt-20 p-5 ${done ? 'border-accent/40' : ''} ${disabled ? 'opacity-60' : ''}`}
       aria-labelledby={`${id}-title`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -128,10 +131,10 @@ export default function StepPanel({
           <button
             type="button"
             onClick={toggle}
-            disabled={done}
+            disabled={done || disabled}
             aria-expanded={open}
             aria-controls={`${id}-body`}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-foreground transition-colors hover:bg-card-hover disabled:cursor-not-allowed disabled:border-accent/40 disabled:text-accent disabled:hover:bg-card"
+            className={`inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-foreground transition-colors hover:bg-card-hover disabled:cursor-not-allowed disabled:hover:bg-card ${done ? 'disabled:border-accent/40 disabled:text-accent' : ''}`}
           >
             {done ? (
               <>

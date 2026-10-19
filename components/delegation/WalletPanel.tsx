@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useWalletSession } from '@/components/wallet/useWalletSession';
@@ -11,6 +10,8 @@ import {
   delegationUrlOnWalletChange,
   type SettledWallet,
 } from '@/lib/delegation/logic/wallet-navigation';
+
+import OpenOwnAddressLink from './OpenOwnAddressLink';
 
 interface WalletPanelProps {
   /** The `?address=` value; may be empty or invalid. */
@@ -56,37 +57,22 @@ export default function WalletPanel({ selectedAddress, identityAddresses }: Wall
   }
   const connected = session.address;
 
-  if (!isAddress(selectedAddress)) {
+  const prompt = isAddress(selectedAddress)
+    ? accountSwitchPrompt(selectedAddress, connected, identityAddresses)
+    : 'other';
+  if (prompt === 'other') {
     return (
-      <div className="mt-6">
-        <Link
-          href={`/delegation?address=${connected}`}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-glow transition-colors hover:bg-primary/90"
-        >
-          Open your address <span className="font-mono text-xs">{formatAddress(connected)}</span>
-        </Link>
+      <div className="mt-4">
+        <OpenOwnAddressLink address={connected} />
       </div>
     );
   }
-
-  const prompt = accountSwitchPrompt(selectedAddress, connected, identityAddresses);
-  if (!prompt) {
-    return null;
+  if (prompt === 'sibling') {
+    return (
+      <p role="status" className="mt-4 text-[13px] text-muted">
+        Switch your wallet to <Address value={selectedAddress} /> to manage it.
+      </p>
+    );
   }
-  return (
-    <p role="status" className="mt-4 text-[13px] text-muted">
-      {prompt === 'sibling' ? (
-        <>
-          Switch your wallet to <Address value={selectedAddress} /> to manage it.
-        </>
-      ) : (
-        <>
-          You&apos;re connected as <Address value={connected} />.{' '}
-          <Link href={`/delegation?address=${connected}`} className="text-primary hover:underline">
-            Open your address
-          </Link>
-        </>
-      )}
-    </p>
-  );
+  return null;
 }

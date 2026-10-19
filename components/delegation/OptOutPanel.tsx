@@ -10,6 +10,7 @@ import {
   safeRequestState,
   type OverviewAddress,
 } from '@/lib/delegation/logic/address-overview';
+import { sameAddress } from '@/lib/delegation/logic/pool';
 import type { OptOutMode } from '@/lib/delegation/opt-out/score-api';
 import type { IssuedNonce, SafeRequest } from '@/lib/delegation/opt-out/service';
 import {
@@ -24,6 +25,8 @@ import StepPanel from './StepPanel';
 interface OptOutPanelProps {
   /** The overview's addresses, requested one first. Only an address's owner can sign for it. */
   addresses: OverviewAddress[];
+  /** Addresses the DAO currently delegates to. Nothing to opt out of for the rest. */
+  targetAddresses: string[];
   mode: OptOutMode;
   /** `false` when MAINNET_RPC_URL is unset and signatures can't be checked. */
   signingAvailable: boolean;
@@ -86,11 +89,27 @@ function isUserRejection(error: unknown): boolean {
   return error instanceof Error && error.name === 'UserRejectedRequestError';
 }
 
+/** The opt-out step for an address the DAO doesn't delegate to. */
+export function OptOutNotATarget() {
+  return (
+    <StepPanel
+      disabled
+      title="Opt out of delegation"
+      summary="This address isn't a DAO delegation target, so there's nothing to opt out of."
+    />
+  );
+}
+
 /**
  * Signs an EIP-712 opt-out or opt-in request with the wallet that owns the
  * address. An opt-out, pending or applied, is reversed by an opt-in.
  */
-export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOutPanelProps) {
+export default function OptOutPanel({
+  addresses,
+  targetAddresses,
+  mode,
+  signingAvailable,
+}: OptOutPanelProps) {
   const router = useRouter();
   const { address: connected } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
@@ -104,6 +123,15 @@ export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOu
   const entry = addresses.find((a) => a.address === selectedAddress) ?? addresses[0];
   if (!entry) {
     return null;
+  }
+  // An opt-in stays possible after the next run removes the DAO's delegation.
+  const relevant = addresses.some(
+    (a) =>
+      targetAddresses.some((t) => sameAddress(t, a.address)) ||
+      optOutActionFor(a.optOut) === 'opt-in',
+  );
+  if (!relevant) {
+    return <OptOutNotATarget />;
   }
 
   const action = optOutActionFor(entry.optOut);
@@ -199,8 +227,8 @@ export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOu
       title={action === 'opt-out' ? 'Opt out of delegation' : 'Opt back in to delegation'}
       summary={
         action === 'opt-out'
-          ? 'The DAO stops delegating voting power to this address. It stays scored and ranked.'
-          : 'The DAO can delegate voting power to this address again.'
+          ? 'The DAO stops delegating to this address from the next score run. Reversible any time.'
+          : 'The DAO can delegate to this address again from the next score run.'
       }
       status={
         <>
@@ -222,10 +250,6 @@ export default function OptOutPanel({ addresses, mode, signingAvailable }: OptOu
           </p>
         </div>
       )}
-
-      <p className="text-[13px] text-muted">
-        Takes effect at the next score run. You can reverse it at any time.
-      </p>
 
       {awaitingCoSigners && (
         <div role="status" className="mt-4 rounded-lg border border-warning/40 bg-warning/10 p-4">

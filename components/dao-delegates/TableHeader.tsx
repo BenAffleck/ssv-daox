@@ -2,6 +2,7 @@
 
 import { PILLAR_LABELS } from '@/lib/dao-delegates/config';
 import type { PillarKey } from '@/lib/dao-delegates/types';
+import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 
 export type SortField = 'rank' | 'score' | PillarKey | 'votingPower' | 'allocatedPower';
 export type SortDirection = 'asc' | 'desc';
@@ -66,7 +67,7 @@ export default function TableHeader({
         <th className="table-col-header px-3 py-3 text-left">
           <div>Vote Activity</div>
           <div className="text-[10px] font-normal tracking-normal text-muted/70 normal-case">
-            Last 5 closed
+            Last {SNAPSHOT_CONFIG.voteParticipation.proposalCount} closed
           </div>
         </th>
       </tr>

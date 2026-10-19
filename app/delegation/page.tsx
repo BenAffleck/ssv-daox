@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { Trophy } from 'lucide-react';
 
 import AddressLookupForm from '@/components/delegation/AddressLookupForm';
 import AddressOverviewTable from '@/components/delegation/AddressOverviewTable';
@@ -9,12 +10,15 @@ import ClaimWizard from '@/components/delegation/ClaimWizard';
 import DelegateProfile from '@/components/delegation/DelegateProfile';
 import DelegateToDaoPanel from '@/components/delegation/DelegateToDaoPanel';
 import DelegationPanel from '@/components/delegation/DelegationPanel';
-import OptOutPanel from '@/components/delegation/OptOutPanel';
+import ManageDelegationPreview from '@/components/delegation/ManageDelegationPreview';
+import OptOutPanel, { OptOutNotATarget } from '@/components/delegation/OptOutPanel';
 import OwnerOnly from '@/components/delegation/OwnerOnly';
+import ScoreBreakdownPanel from '@/components/delegation/ScoreBreakdownPanel';
 import VotingPowerPanel from '@/components/delegation/VotingPowerPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
 import { fetchLeaderboard } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
+import { scoreBreakdownOf } from '@/lib/dao-delegates/logic/score-breakdown';
 import type { ScoreRow } from '@/lib/dao-delegates/types';
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
 import { fetchPin, fetchPoolRecipients } from '@/lib/delegation/api/fetch-pin';
@@ -28,7 +32,7 @@ import {
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
 import { autoDelegationView } from '@/lib/delegation/logic/auto-delegation';
-import { delegateOptionsOf } from '@/lib/delegation/logic/delegate-search';
+import { delegateOptionsOf, type DelegateOption } from '@/lib/delegation/logic/delegate-search';
 import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
 import { normalizedEnsName } from '@/lib/delegation/logic/ens';
 import { sameAddress } from '@/lib/delegation/logic/pool';
@@ -52,15 +56,10 @@ export const metadata = {
   description: 'Delegate scores, voting power and delegation for SSV governance',
 };
 
-function PageHeader({ tagline, children }: { tagline?: boolean; children?: React.ReactNode }) {
+function PageHeader({ children }: { children?: React.ReactNode }) {
   return (
     <div className="mb-8">
       <h1 className="mb-2">Delegation</h1>
-      {tagline && (
-        <p className="text-[15px] text-muted">
-          Become a delegate, or let the DAO delegate for you.
-        </p>
-      )}
       {children}
     </div>
   );
@@ -133,9 +132,11 @@ function lookupProblem(resolution: EnsResolution | null): string {
 function LookupCard({
   address,
   resolution,
+  delegates,
 }: {
   address: string;
   resolution: EnsResolution | null;
+  delegates: DelegateOption[];
 }) {
   return (
     <div className="card-empty">
@@ -148,7 +149,7 @@ function LookupCard({
           'Look up an address'
         )}
       </p>
-      <AddressLookupForm defaultValue={address} />
+      <AddressLookupForm defaultValue={address} delegates={delegates} />
       <p className="mt-4 text-[13px] text-muted">
         Or pick one from the{' '}
         <Link href="/delegates" className="text-primary hover:underline">
@@ -162,11 +163,16 @@ function LookupCard({
 
 function NotScored() {
   return (
-    <div role="status" className="card p-5">
-      <p className="text-[13px] text-muted">
-        This address isn&apos;t in the latest score run. It has no rank, cohort or HighSignal
-        identity yet.
-      </p>
+    <div role="status" className="flex items-start gap-3 rounded-lg border border-border p-4">
+      <Trophy size={18} className="mt-0.5 shrink-0 text-muted" aria-hidden />
+      <div>
+        <p className="text-[13px] font-medium text-foreground">Not on the leaderboard yet</p>
+        <p className="mt-0.5 text-[13px] text-muted">
+          This address isn&apos;t in the latest score run. Link it on HighSignal and share it with
+          the SSV project to get a rank and a shot at a cohort seat. It shows up after the next
+          score run.
+        </p>
+      </div>
     </div>
   );
 }
@@ -179,7 +185,7 @@ export default async function DelegationPage({
   if (!DELEGATE_SCORE_CONFIG.apiBaseUrl) {
     return (
       <div className="mx-auto max-w-7xl px-6 py-10">
-        <PageHeader tagline />
+        <PageHeader />
         <div className="card-empty">
           <p className="font-body text-[15px] text-muted">
             Delegate data is unavailable: DELEGATE_SCORE_API_URL is not configured.
@@ -198,12 +204,17 @@ export default async function DelegationPage({
     if (resolution?.status === 'resolved') {
       redirect(`/delegation?address=${resolution.address}`);
     }
+    const { rows } = await fetchLeaderboard();
     return (
       <div className="mx-auto max-w-7xl px-6 py-10">
-        <PageHeader tagline>
+        <PageHeader>
           <WalletSection address={address} overview={null} />
         </PageHeader>
-        <LookupCard address={address} resolution={resolution} />
+        <LookupCard
+          address={address}
+          resolution={resolution}
+          delegates={delegateOptionsOf(rows, targetScoringOf(rows, {}))}
+        />
       </div>
     );
   }
@@ -241,6 +252,10 @@ export default async function DelegationPage({
   const overview =
     baseOverview && withSafeRequests(withOptOutStatuses(baseOverview, statuses), safeRequests);
   const scoring = targetScoringOf(leaderboard.rows, statuses);
+  const scoreBreakdown = scoreBreakdownOf(
+    leaderboard.rows.find((r) => sameAddress(r.address, address)),
+    leaderboard.rows,
+  );
   const ownAddresses = overview?.addresses.map((a) => a.address) ?? [];
   const requested = overview?.addresses[0] ?? null;
   const name =
@@ -283,6 +298,7 @@ export default async function DelegationPage({
       ) : (
         <DelegateToDaoPanel />
       )}
+      {scoreBreakdown && <ScoreBreakdownPanel breakdown={scoreBreakdown} />}
       <VotingPowerPanel
         breakdown={
           autoDelegationView({
@@ -294,7 +310,7 @@ export default async function DelegationPage({
           }).breakdown
         }
       />
-      <OwnerOnly address={address}>
+      <OwnerOnly address={address} fallback={<ManageDelegationPreview />}>
         <section aria-labelledby="manage-title" className="mt-10">
           <h2 id="manage-title">Manage Delegation</h2>
           {overview ? (
@@ -302,12 +318,15 @@ export default async function DelegationPage({
           ) : (
             <ClaimIntroPanel projectUrl={getHighSignalConfig().projectUrl} />
           )}
-          {overview && (
+          {overview ? (
             <OptOutPanel
               addresses={overview.addresses}
+              targetAddresses={delegationRecipients}
               mode={getOptOutService().mode}
               signingAvailable={Boolean(getMainnetRpcUrl())}
             />
+          ) : (
+            <OptOutNotATarget />
           )}
           <DelegationSection
             address={address}

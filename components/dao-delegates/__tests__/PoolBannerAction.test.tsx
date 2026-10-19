@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { WalletSession } from '@/components/wallet/useWalletSession';
@@ -10,6 +10,8 @@ const POOL = '0x9a62c932F5a8Eb807F655E3D948EdaE174D39D3B';
 const WALLET = '0x1111111111111111111111111111111111111111';
 
 let session: WalletSession = { phase: 'disconnected', address: undefined };
+const openConnectModal = vi.fn();
+vi.mock('@rainbow-me/rainbowkit', () => ({ useConnectModal: () => ({ openConnectModal }) }));
 vi.mock('@/components/wallet/useWalletSession', () => ({ useWalletSession: () => session }));
 
 function pin(overrides: Partial<VotingPowerData> = {}): VotingPowerData {
@@ -37,17 +39,25 @@ function respondWith(data: VotingPowerData) {
 describe('PoolBannerAction', () => {
   beforeEach(() => {
     session = { phase: 'disconnected', address: undefined };
+    openConnectModal.mockClear();
   });
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it('shows the generic call to action without a wallet', () => {
+  it('offers a visitor without a wallet a button that opens the connect modal', () => {
     render(<PoolBannerAction poolAddress={POOL} />);
 
-    expect(
-      screen.getByRole('link', { name: 'Delegate your voting power to the DAO →' }),
-    ).toHaveAttribute('href', '/delegation');
+    fireEvent.click(screen.getByRole('button', { name: 'SSV holder? Delegate to the DAO →' }));
+
+    expect(openConnectModal).toHaveBeenCalledOnce();
+  });
+
+  it('shows nothing while the wallet session is restoring', () => {
+    session = { phase: 'loading', address: undefined };
+    const { container } = render(<PoolBannerAction poolAddress={POOL} />);
+
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("names the connected wallet's power and links to its address", async () => {
@@ -61,7 +71,7 @@ describe('PoolBannerAction', () => {
     expect(link).toHaveAttribute('href', `/delegation?address=${WALLET}`);
   });
 
-  it('keeps the generic call to action when the wallet already delegates to the pool', async () => {
+  it('disables the action when the wallet has nothing to delegate to the pool', async () => {
     session = { phase: 'connected', address: WALLET };
     respondWith(
       pin({
@@ -72,10 +82,28 @@ describe('PoolBannerAction', () => {
     );
     render(<PoolBannerAction poolAddress={POOL} />);
 
-    await act(async () => {});
-    expect(fetch).toHaveBeenCalled();
     expect(
-      screen.getByRole('link', { name: 'Delegate your voting power to the DAO →' }),
-    ).toBeInTheDocument();
+      await screen.findByRole('button', { name: /0 SSV voting power to delegate/ }),
+    ).toBeDisabled();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('shows the power the DAO delegates to the wallet instead of zero', async () => {
+    session = { phase: 'connected', address: WALLET };
+    respondWith(
+      pin({
+        votingPower: 500,
+        incomingPower: 500,
+        incomingDelegations: [{ address: POOL, power: 500 }],
+      }),
+    );
+    render(<PoolBannerAction poolAddress={POOL} />);
+
+    const link = await screen.findByRole('link', {
+      name: /You.*received from the DAO/,
+    });
+    expect(link).toHaveTextContent(`${(500).toLocaleString()} SSV`);
+    expect(link).toHaveAttribute('href', `/delegation?address=${WALLET}`);
+    expect(screen.queryByText(/voting power to delegate/)).not.toBeInTheDocument();
   });
 });

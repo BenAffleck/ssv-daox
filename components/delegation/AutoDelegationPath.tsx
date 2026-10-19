@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 
 import { useWalletSession } from '@/components/wallet/useWalletSession';
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
@@ -24,6 +23,7 @@ import {
   useDelegationWrite,
   useSubmissionPhase,
 } from './DelegationTransaction';
+import OpenOwnAddressLink from './OpenOwnAddressLink';
 import OpenStepButton from './OpenStepButton';
 import { ownDelegateToDaoUrl, useConnectToDelegate } from './useConnectToDelegate';
 
@@ -46,34 +46,13 @@ function powerOrFallback(power: number | null): string {
   return power === null ? 'voting power' : formatPower(power);
 }
 
-/** Why the address can't delegate to the pool, worded for its owner or a visitor. */
-function blockedReason(state: AutoDelegationState, isOwner: boolean, optOutLink: boolean) {
-  switch (state.kind) {
-    case 'opt-out-required':
-      return isOwner ? (
-        <>
-          You receive {powerOrFallback(state.poolPower)} from the DAO pool, so delegating to it
-          would loop.{' '}
-          {optOutLink ? (
-            <OpenStepButton anchor="opt-out" variant="link">
-              Opt out first
-            </OpenStepButton>
-          ) : (
-            'Opt out first.'
-          )}
-        </>
-      ) : (
-        `Receives ${powerOrFallback(state.poolPower)} from the DAO pool, so it can't delegate to it.`
-      );
-    case 'awaiting-run':
-      return "Opted out. Delegating to the pool opens once the next run removes the pool's delegation.";
-    case 'nothing-to-delegate':
-      return state.reason === 'pool'
-        ? 'This is the DAO pool.'
-        : 'This address has no voting power to delegate.';
-    default:
-      return null;
+function blockedReason(state: AutoDelegationState) {
+  if (state.kind !== 'nothing-to-delegate') {
+    return null;
   }
+  return state.reason === 'pool'
+    ? 'This is the DAO auto-delegation pool.'
+    : 'This address has no voting power to delegate.';
 }
 
 /** The "Delegate to the DAO" panel with its one-click action for the selected address. */
@@ -140,9 +119,10 @@ export default function AutoDelegationPath({
         }
         return {
           action: (
-            <Link href={ownDelegateToDaoUrl(session.address)} className={PRIMARY_BUTTON}>
-              Go to your address
-            </Link>
+            <OpenOwnAddressLink
+              address={session.address}
+              href={ownDelegateToDaoUrl(session.address)}
+            />
           ),
           children: (
             <p className="text-muted">
@@ -186,20 +166,38 @@ export default function AutoDelegationPath({
               <SubmissionStatus
                 submission={submission}
                 phase={phase}
-                confirmedMessage="You're delegating to the DAO pool."
+                confirmedMessage="You're delegating to the DAO."
                 note={LAG_NOTE}
               />
             </>
           ),
         };
       }
+      case 'opt-out-required':
+      case 'awaiting-run': {
+        const received = breakdown?.fromPool?.power ?? null;
+        const optedOut = state.kind === 'awaiting-run';
+        const who = isOwner ? 'you' : 'this address';
+        return {
+          title: (
+            <>
+              The DAO delegates {received === null ? 'voting power' : powerLabel(received)} to {who}
+            </>
+          ),
+          subtitle: optedOut
+            ? `Opted out. ${isOwner ? 'You can' : 'It can'} delegate to the DAO once the next run removes the DAO's delegation.`
+            : isOwner
+              ? 'To delegate to the DAO yourself, opt out of its delegation first.'
+              : "It can't delegate to the DAO in return.",
+          action:
+            isOwner && !optedOut && optOutStepAvailable ? (
+              <OpenStepButton anchor="opt-out">Opt out first</OpenStepButton>
+            ) : undefined,
+        };
+      }
       default:
         return {
-          children: (
-            <p className="text-muted">
-              {blockedReason(state, isOwner, isOwner && optOutStepAvailable)}
-            </p>
-          ),
+          children: <p className="text-muted">{blockedReason(state)}</p>,
         };
     }
   }

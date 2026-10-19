@@ -28,3 +28,9 @@ export function getHighSignalConfig(): HighSignalConfig {
  * cohort seats. A governance fact, so not an environment variable.
  */
 export const AUTO_DELEGATION_POOL_ADDRESS = '0x9a62c932F5a8Eb807F655E3D948EdaE174D39D3B';
+
+/**
+ * The DAO's own funding address; it delegates the pool's seed power. The pool
+ * summary counts that power as DAO-held, not as a community delegator.
+ */
+export const DAO_FUNDING_ADDRESS = '0x2Be7549f1B58Fc3E81427a09E61e6D0B050A4C1D';

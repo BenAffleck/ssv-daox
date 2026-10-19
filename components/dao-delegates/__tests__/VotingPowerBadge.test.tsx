@@ -46,13 +46,14 @@ describe('VotingPowerBadge breakdown', () => {
     expect(within(outgoingItem!).getByText('-75')).toBeInTheDocument();
   });
 
-  it('names the auto-delegation pool in the outgoing list', () => {
+  it('shows the auto-delegation pool address with its name in the outgoing list', () => {
     openPopover({
       ...DATA,
       outgoingDelegations: [{ address: AUTO_DELEGATION_POOL_ADDRESS.toLowerCase(), power: 75 }],
     });
 
-    const item = screen.getByText('DAO auto-delegation pool').closest('li');
+    const item = screen.getByText('(DAO auto-delegation pool)').closest('li');
+    expect(within(item!).getByText(AUTO_DELEGATION_POOL_ADDRESS.toLowerCase())).toBeInTheDocument();
     expect(within(item!).getByText('-75')).toBeInTheDocument();
   });
 

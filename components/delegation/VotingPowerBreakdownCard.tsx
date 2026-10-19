@@ -11,7 +11,7 @@ function formatAmount(power: number | null): string {
   return power === null ? '\u2014' : formatPower(power);
 }
 
-function Row({
+export function Row({
   label,
   note,
   value,
@@ -102,7 +102,7 @@ export default function VotingPowerBreakdownCard({
         />
         {breakdown.fromPool && (
           <Row
-            label="of which from the DAO pool"
+            label="of which from the DAO"
             value={formatAmount(breakdown.fromPool.power)}
             valueClassName="text-accent"
             sub

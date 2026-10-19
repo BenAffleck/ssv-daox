@@ -71,6 +71,8 @@ ssv-daox/
 │   │   ├── AddressOverviewTable.tsx # Address + identity siblings
 │   │   ├── AddressLookupForm.tsx    # GET form for the empty state
 │   │   ├── WalletPanel.tsx          # Client: page follows the wallet, read-only notice
+│   │   ├── ScoreBreakdownPanel.tsx  # Score by pillar (ScoreBreakdownCard)
+│   │   ├── ManageDelegationPreview.tsx # Client: non-owner empty state for Manage Delegation
 │   │   ├── OwnerOnly.tsx            # Client: renders children for the owner wallet; useIsOwner
 │   │   ├── DelegateProfile.tsx      # Client: avatar, name, Snapshot statement
 │   │   ├── DelegateToDaoPanel.tsx   # "Delegate to the DAO" step panel
@@ -408,12 +410,16 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   total it shows the allocated power against the latest score run's cap
   ("x of 500,000 SSV cap reached"), or no cap part when the run is uncapped. A
   failed pool lookup hides the banner; a failed cap lookup fails the page.
-- `PoolBannerAction` (client) is the banner's link. With a connected wallet it
-  fetches `/api/voting-power/[address]` and, when `autoDelegationView()` is
-  `ready`, reads "Delegate your {power} voting power to the DAO" (power in accent green:
+- `PoolBannerAction` (client) is the banner's action. Without a wallet it is a
+  button, "SSV holder? Delegate to the DAO →", that opens the connect
+  modal and stays on the page. With a connected wallet it fetches
+  `/api/voting-power/[address]` and, when `autoDelegationView()` is `ready`,
+  reads "Delegate your {power} voting power to the DAO" (power in accent green:
   tokens held + third-party power that moves along) and links to
-  `/delegation?address={wallet}`. Otherwise it reads "Delegate your voting
-  power to the DAO" and links to `/delegation`.
+  `/delegation?address={wallet}`. A wallet the DAO delegates to reads "You {power} received from the DAO" and links to its
+  profile. A wallet with nothing to delegate gets
+  a disabled "0 SSV voting power to delegate" button; a failed
+  lookup and a restoring session render nothing.
 - When `DELEGATE_SCORE_API_URL` is unset the page renders a notice instead of
   the table. The page revalidates every 5 minutes so a later-configured URL is
   picked up.
@@ -445,7 +451,7 @@ The profile rule must stay first. Incoming query strings pass through.
 
 Shows each delegate's voting activity in two sections:
 
-**Historical Participation** — Color-coded badge showing voting rate across the N most recent closed proposals (configurable via `SNAPSHOT_CONFIG.voteParticipation.proposalCount`, default: 5), with a "Last N closed" label clarifying scope.
+**Historical Participation** — Color-coded badge showing voting rate across the N most recent closed proposals (configurable via `SNAPSHOT_CONFIG.voteParticipation.proposalCount`, default: 10), with a "Last N closed" label clarifying scope.
 
 **Data flow (historical):**
 
@@ -835,10 +841,9 @@ HighSignal identity. Connecting a wallet opens its own address (see
 
 Everyone sees the status view; only the owner sees the actions.
 
-1. Header: the `WalletPanel` notice. The tagline "Become a delegate, or let
-   the DAO delegate for you." shows only on the lookup page.
+1. Header: the `WalletPanel` notice.
 2. `DelegateProfile`: Snapshot avatar, name, address and delegate statement.
-3. `AddressOverviewTable`, or a "not in the latest score run" notice.
+3. `AddressOverviewTable`, or a "Not on the leaderboard yet" compact, subtle empty state (small trophy icon, outlined, no fill) that says how to get listed (link and share the address on HighSignal).
 4. "Delegate to the DAO": `AutoDelegationPath` inside `DelegateToDaoPanel`,
    the page's primary action. Never collapsed; brand border and `shadow-glow`.
    Title and subtitle carry the message, the one-click button sits right.
@@ -847,10 +852,20 @@ Everyone sees the status view; only the owner sees the actions.
    third-party power moving along, in accent green). While delegating
    everything to the pool it reads "You're delegating {power} to the DAO"
    with "Change". The drop confirmation and transaction status sit below; power moving along is shown only in the breakdown.
-5. `VotingPowerPanel` ("Voting power breakdown").
-6. "Manage Delegation", wrapped in `OwnerOnly`: rendered only while the
-   connected wallet is the selected address. Not connected, or connected as
-   another address, the page is read-only.
+5. `ScoreBreakdownPanel` ("Score breakdown", only for an address with a
+   score row), then `VotingPowerPanel` ("Voting power breakdown"). Both use
+   the breakdown card's `Row` layout. `scoreBreakdownOf()`
+   (`lib/dao-delegates/logic/score-breakdown.ts`) lists the run's live
+   pillars (any row has a value, as on the leaderboard) with "n/a" for a
+   pillar without data, the votes pillar's "x of y proposals" note and a
+   Delegate Score total with the rank. Each pillar has a thin
+   `bg-primary/70` bar on a `bg-border` track (0–100); the total is accent green.
+6. "Manage Delegation", wrapped in `OwnerOnly`: everyone else sees
+   `ManageDelegationPreview`, the three steps as `StepPanel`s in their
+   `disabled` state (dimmed, toggle disabled) under a text line asking to
+   connect a wallet; it has no button of its own, the header's wallet
+   button connects. Rendered in full only while the
+   connected wallet is the selected address; otherwise the page is read-only.
 7. Footer, right-aligned in small muted text: "Live mainnet data. Scores as
    of `as_of` UTC." (no run number).
 
@@ -863,7 +878,10 @@ address. A name without an address record, an unset RPC URL or a failed RPC
 call keeps the lookup page with a matching message.
 
 Without a valid address (landing or invalid input) the page is a pure lookup
-page: the header, the `WalletPanel` notice and the lookup card. Without
+page: the header, the `WalletPanel` notice and the lookup card. The card's
+field is `DelegateSearchInput`, the same combobox as the delegate pickers
+in `DelegationPanel`: it suggests scored delegates by name, ENS name or
+address, and a typed ENS name resolves on submit (above). Without
 `DELEGATE_SCORE_API_URL` it shows a notice only.
 
 **Delegate profile.** `fetchSnapshotProfile(address)`
@@ -885,18 +903,23 @@ clamps to 3 lines with "Show more". A "You" badge marks the owner's address.
    the address (case-insensitive), puts the requested address first and its
    siblings after in identity order. A sibling without a leaderboard row is
    kept as unscored. Returns `null` for an address in no identity.
-3. `AddressOverviewTable` - Rank, score, voting power (the leaderboard's
+3. `AddressOverviewTable` - an Address column only when identity siblings
+   add rows (the profile header names a lone address), then rank, score, voting power (the leaderboard's
    `VotingPowerBadge`; the requested address uses its pin data, siblings load
    on demand), cohort, delegation status (the
    leaderboard's `DelegationStatusBadge`, from `fetchPoolRecipients()`),
-   allocated power, HighSignal status (column "HighSignal Status"), opt-out
+   HighSignal status (column "HighSignal Status"), opt-out
 4. Up to three unnumbered `StepPanel`s for the owner, collapsed by default.
    They are independent actions, not a sequence:
    1. `ClaimWizard` - HighSignal claim steps for the requested address (no
       address picker; the collapsed header carries the only status badge). Once the requested address is claimed it
       stays visible as a done step (`StepPanel done`): green check, a
       disabled "Done" toggle, body locked shut. Claim status is per identity.
-   2. `OptOutPanel` - see [Opt-out](#opt-out)
+   2. `OptOutPanel` - see [Opt-out](#opt-out). It shows for every owner. When
+      the DAO doesn't delegate to any of the identity's addresses
+      (`fetchPoolRecipients()`) and none has an opt-in to send, or the address
+      has no score row, it is a `disabled` step whose summary says the address
+      isn't a DAO delegation target (`OptOutNotATarget`).
    3. `DelegationPanel` - see the Split Delegation section
 
 Each collapsed header shows a one-line summary and a status badge (claim
@@ -931,8 +954,12 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
   (`lib/delegation/logic/auto-delegation.ts`) turns it into:
   - total voting power
   - the cap, and allocated = total, up to the cap
-  - DAO-held = the pool's own tokens (total − incoming + outgoing)
-  - community-delegated = incoming power, with the delegator count
+  - DAO-held = the pool's own tokens (total − incoming + outgoing) plus the
+    power of the DAO funding address (`DAO_FUNDING_ADDRESS`,
+    `lib/delegation/config.ts`)
+  - community-delegated = incoming power without the funding address's, with
+    the count of direct delegators without it. The funding address's power
+    still counts in the total.
 - **Panels.** The pool total lives only on the leaderboard's `PoolBanner`.
   - `DelegateToDaoPanel` ("Delegate to the DAO") says in one line what
     happens and holds the action. It needs a selected address.
@@ -957,7 +984,7 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
 - **Breakdown card.** `VotingPowerBreakdownCard` renders those rows with
   neutral labels ("Tokens held", "Delegated in"), since visitors see it too. The
   incoming and outgoing lists sit in a native `<details>` ("Details"),
-  collapsed by default; entries flagged `isPool` show by name (`DelegateName`). The
+  collapsed by default; entries flagged `isPool` show the address followed by "(DAO auto-delegation pool)" (`DelegateName`). The
   leaderboard tooltip's "Net Delegated" is not shown. A failed pin lookup shows
   a status line. The page fetches the pin once (`fetchPin`) and also feeds its
   outgoing delegations to the Delegation step.
@@ -966,27 +993,27 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
      never overwrites delegations the user can't see; the card says
      delegating is paused.
   2. `nothing-to-delegate` with `reason: 'pool'`: the selected address is the
-     pool itself ("This is the DAO pool"), whoever views it.
+     pool itself ("This is the DAO auto-delegation pool"), whoever views it.
   3. Loop guard: the pool is among the address's incoming delegators (a
      cohort seat holder). A split delegation passes on all incoming power, so
      delegating to the pool would loop (pool → address → pool). The live pin
      data decides; the opt-out status only picks the state:
-     - `opt-out-required`: not opted out (no request, or an opt-in). The owner
-       reads "You receive X from the DAO pool, so delegating to it would
-       loop" and an "Opt out first" link that runs `openStep('opt-out')`; a
-       visitor reads "Receives X from the DAO pool, so it can't delegate to
-       it". `poolPower` is `null` when the API omits the amount.
+     - `opt-out-required`: not opted out (no request, or an opt-in). The box
+       reads "The DAO delegates X to you" with "To delegate to the DAO
+       yourself, opt out of its delegation first." and an "Opt out first"
+       button that runs `openStep('opt-out')`. A visitor reads "The
+       DAO delegates X to this address" and "It can't delegate to the DAO in
+       return." `X` falls back to "voting power" when the API omits the amount.
      - `awaiting-run`: an opt-out is pending or applied, but the pool still
-       delegates in. It says delegating opens once the next run removes the
-       pool's delegation.
+       delegates in. The title is the same; the subtitle says delegating opens
+       once the next run removes the DAO's delegation.
 
-     Once the pool's delegation is gone, the states below apply. The guard
+     Every viewer sees the box, connected or not. Once the DAO's delegation is gone, the states below apply. The guard
      precedes `switch-account`, `nothing-to-delegate`, `already-delegating`
      and `ready`, so any viewer sees why the address can't delegate to the
      pool. The page adds the selected address to its opt-out status batch; a
      failed status lookup reads as not opted out. Without an address overview,
-     or for a visitor, the page has no Opt-out step, so "Opt out first" is
-     plain text.
+     or for a visitor, the page has no Opt-out step, so the button is left out.
 
   4. `switch-account`: no wallet, or the connected wallet isn't the selected
      address. Disconnected: a "Connect wallet to delegate" button opens the
@@ -1230,11 +1257,11 @@ close the page and resume with **Check again** ([Safe resume](#safe-resume)).
 ### States
 
 - No `address` or an invalid one: the hero and an address lookup card; a
-  connected wallet adds "Open your address".
+  connected wallet adds the "Open your address" button.
 - An ENS name: redirects to its address; unresolved or unavailable, the
   lookup card says so.
-- A valid address outside the score run: the profile, a "not in the latest
-  score run" notice, the hero and, for the owner, the Delegation step.
+- A valid address outside the score run: the profile, a "Not on the leaderboard yet"
+  notice, the hero and, for the owner, the Delegation step.
 - `DELEGATE_SCORE_API_URL` unset: the same notice as DAO Delegates.
 - `MAINNET_RPC_URL` unset: a configuration notice replaces the wallet controls;
   the read-only overview still renders.
@@ -1298,9 +1325,9 @@ diff: { added, changed, removed }, droppedDelegates, warnings, notes, errors }`.
    one or a Split row) carries one note instead: its power goes to the DAO
    pool and is redistributed to cohort seats at the next run.
 4. **Preview.** Before (current) and After (planned) lists. The pool shows
-   by name ("DAO auto-delegation pool", `AUTO_DELEGATION_POOL_NAME`) there, in
-   the drop confirmation and in the leaderboard's voting-power delegation
-   lists, with the address as a tooltip. If
+   its address followed by "(DAO auto-delegation pool)"
+   (`AUTO_DELEGATION_POOL_NAME`) there, in the drop confirmation and in the
+   leaderboard's voting-power delegation lists. If
    `droppedDelegates` is non-empty, a checkbox must confirm dropping them.
 5. **Transaction.** `useDelegationWrite()` (`DelegationTransaction.tsx`,
    shared with "Delegate to the DAO") calls `setDelegation(context,
@@ -1387,7 +1414,9 @@ config lives in `lib/wallet/wagmi-config.ts`.
     `/delegation`; on another address the page stays.
 - **Account switch notice:** `accountSwitchPrompt(selected, connected, identityAddresses)`
   returns `sibling`, `other` or `null`. A sibling asks to switch the wallet
-  to the viewed address; another address links to the connected one.
+  to the viewed address; another address shows the connected one's "Open
+  your address" button. `OpenOwnAddressLink` renders that button on the
+  lookup page, on another address's profile and in the auto-delegation panel.
 
 ### RPC Proxy
 

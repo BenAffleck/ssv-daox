@@ -367,7 +367,7 @@ describe('planDelegation warnings', () => {
 
 describe('planDelegation to the auto-delegation pool', () => {
   const POOL_NOTE =
-    'DAO auto-delegation pool: the power you delegate goes to the DAO pool, redistributed to cohort seats at the next run.';
+    'DAO auto-delegation pool: the power you delegate goes to the DAO, redistributed to cohort seats at the next run.';
 
   it('notes an all-to-one pool target instead of warning', () => {
     const plan = planDelegation({

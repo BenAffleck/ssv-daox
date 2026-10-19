@@ -105,9 +105,6 @@ export default async function DaoDelegatesPage() {
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
       <PageHeader>
-        <p className="mt-2 text-[13px] text-muted">
-          Scores as of {leaderboard.asOf} UTC, rounded for display.
-        </p>
         {isStale && (
           <p className="mt-2 text-[13px] text-warning">
             Score data is {health.status}
@@ -126,6 +123,10 @@ export default async function DaoDelegatesPage() {
       <Suspense fallback={<DelegatesTableSkeleton />}>
         <DelegatesTableSection rows={leaderboard.rows} />
       </Suspense>
+
+      <p className="mt-10 text-right text-[12px] text-muted">
+        Scores as of {leaderboard.asOf} UTC.
+      </p>
     </div>
   );
 }

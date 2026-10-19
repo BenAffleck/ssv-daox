@@ -56,6 +56,30 @@ describe('summarizePool', () => {
     });
   });
 
+  it("keeps the DAO's own delegator in the total but out of community power and the count", () => {
+    const summary = summarizePool(
+      pinData({
+        votingPower: '0',
+        incomingPower: '147832',
+        outgoingPower: '297832',
+        delegators: ['0xdao', '0xaaa'],
+        delegatorTree: [
+          { delegator: '0xdao', delegatedPower: 147832 - 2000 },
+          { delegator: '0xaaa', delegatedPower: 2000 },
+        ],
+      }),
+      CAP,
+      ['0xDAO'],
+    );
+
+    expect(summary).toMatchObject({
+      totalPower: 297832,
+      daoHeldPower: 295832,
+      communityPower: 2000,
+      delegatorCount: 1,
+    });
+  });
+
   it('counts power the pool delegates out as DAO-held', () => {
     const summary = summarizePool(
       pinData({ votingPower: '1000000', incomingPower: '40000', outgoingPower: '300000' }),

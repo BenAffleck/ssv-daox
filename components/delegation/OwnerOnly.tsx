@@ -9,13 +9,15 @@ export function useIsOwner(address: string): boolean {
   return session.phase === 'connected' && sameAddress(session.address, address);
 }
 
-/** Renders its children only for the wallet that owns `address`. */
+/** Renders its children only for the wallet that owns `address`; others see `fallback`. */
 export default function OwnerOnly({
   address,
   children,
+  fallback = null,
 }: {
   address: string;
   children: React.ReactNode;
+  fallback?: React.ReactNode;
 }) {
-  return useIsOwner(address) ? children : null;
+  return useIsOwner(address) ? children : fallback;
 }
