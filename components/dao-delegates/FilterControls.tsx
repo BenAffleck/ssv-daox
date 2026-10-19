@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from 'react';
 
+import { ClearButton } from '@/components/ClearButton';
+
 interface FilterControlsProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -35,15 +37,16 @@ export default function FilterControls({
   return (
     <div className="mb-8 flex flex-wrap items-center gap-3">
       {/* Search input */}
-      <div className="min-w-[240px] flex-1">
+      <div className="relative min-w-[240px] flex-1">
         <input
           type="text"
           placeholder="Search by name, ENS, handle or address..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="filter-input"
+          className="filter-input pr-9"
           aria-label="Search delegates"
         />
+        {searchQuery.length > 0 && <ClearButton onClear={() => onSearchChange('')} />}
       </div>
 
       {/* Show changes only filter */}

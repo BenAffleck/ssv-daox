@@ -15,6 +15,7 @@ import {
   SearchX,
   Telescope,
   Vote,
+  X,
 } from 'lucide-react';
 
 import { buildVoteSearchIndex, type VoteIndexEntry } from '@/lib/dao-governance/vote-search';
@@ -284,6 +285,19 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
             aria-label="Search query"
             className="flex-1 border-none bg-transparent font-body text-[15px] text-foreground placeholder:text-muted/70 focus:outline-none"
           />
+          {q.length > 0 && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => {
+                setQ('');
+                inputRef.current?.focus();
+              }}
+              className="text-muted transition-colors hover:text-foreground"
+            >
+              <X size={14} />
+            </button>
+          )}
           <span className="rounded border border-border bg-background px-1.5 py-0.5 font-heading text-[11px] font-semibold text-muted">
             Esc
           </span>

@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
+
+import { ClearButton } from '@/components/ClearButton';
 
 interface VoteSearchInputProps {
   /** Current committed query (from the URL). */
@@ -58,16 +60,7 @@ export default function VoteSearchInput({ value, onChange }: VoteSearchInputProp
         aria-label="Search votes"
         className="filter-input pr-9 pl-9"
       />
-      {input.length > 0 && (
-        <button
-          type="button"
-          onClick={clear}
-          aria-label="Clear search"
-          className="absolute top-1/2 right-3 -translate-y-1/2 text-muted transition-colors hover:text-foreground"
-        >
-          <X size={14} />
-        </button>
-      )}
+      {input.length > 0 && <ClearButton onClear={clear} />}
     </div>
   );
 }

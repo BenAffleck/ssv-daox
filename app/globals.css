@@ -186,6 +186,11 @@ select,
     font-size: 13px;
   }
 
+  /* Custom ClearButton replaces the browser's own search "x". */
+  input[type='search']::-webkit-search-cancel-button {
+    appearance: none;
+  }
+
   /* Navigation items */
   .nav-item {
     @apply flex cursor-pointer items-center gap-2 rounded-lg border border-transparent px-3 py-1.5 font-body text-foreground transition-colors hover:bg-card-hover hover:text-primary;

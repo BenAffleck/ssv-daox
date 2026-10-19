@@ -2,6 +2,7 @@
 
 import { useId, useState, type KeyboardEvent } from 'react';
 
+import { ClearButton } from '@/components/ClearButton';
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
 import { searchDelegates, type DelegateOption } from '@/lib/delegation/logic/delegate-search';
 import { sameAddress } from '@/lib/delegation/logic/pool';
@@ -95,10 +96,19 @@ export default function DelegateSearchInput({
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
         placeholder="Search delegates, or 0x… / name.eth"
-        className="filter-input w-full font-mono"
+        className="filter-input w-full pr-9 font-mono"
         autoComplete="off"
         spellCheck={false}
       />
+      {value.length > 0 && (
+        <ClearButton
+          onClear={() => {
+            onChange('');
+            setOpen(true);
+            setActive(0);
+          }}
+        />
+      )}
       {expanded && (
         <ul
           id={listId}
