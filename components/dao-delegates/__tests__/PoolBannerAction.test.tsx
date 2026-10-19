@@ -66,7 +66,7 @@ describe('PoolBannerAction', () => {
     render(<PoolBannerAction poolAddress={POOL} />);
 
     const link = await screen.findByRole('link', {
-      name: `Delegate your ${(1234).toLocaleString()} SSV voting power to the DAO →`,
+      name: `You Delegate your ${(1234).toLocaleString()} SSV voting power to the DAO →`,
     });
     expect(link).toHaveAttribute('href', `/delegation?address=${WALLET}`);
   });
@@ -82,9 +82,9 @@ describe('PoolBannerAction', () => {
     );
     render(<PoolBannerAction poolAddress={POOL} />);
 
-    expect(
-      await screen.findByRole('button', { name: /0 SSV voting power to delegate/ }),
-    ).toBeDisabled();
+    const button = await screen.findByRole('button', { name: /0 SSV voting power to delegate/ });
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent('You');
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 

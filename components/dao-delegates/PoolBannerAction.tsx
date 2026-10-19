@@ -32,6 +32,12 @@ function offerFor(address: string, pin: VotingPowerData, poolAddress: string): O
   return Math.round(power) > 0 ? { kind: 'delegate', power } : { kind: 'none' };
 }
 
+const YOU_BADGE = (
+  <>
+    <span className="badge-sm-accent mr-1">You</span>{' '}
+  </>
+);
+
 const ACTION_CLASS =
   'inline-block shrink-0 self-start rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-hover sm:self-auto';
 
@@ -75,7 +81,7 @@ export default function PoolBannerAction({ poolAddress }: { poolAddress: string 
   if (offer.kind === 'received') {
     return (
       <Link href={`/delegation?address=${address}`} className={ACTION_CLASS}>
-        <span className="badge-sm-accent mr-2">You</span>
+        {YOU_BADGE}
         <span className="text-accent tabular-nums">
           {offer.power === null ? 'Voting power' : formatPower(offer.power)}
         </span>{' '}
@@ -86,13 +92,17 @@ export default function PoolBannerAction({ poolAddress }: { poolAddress: string 
   if (offer.kind === 'none') {
     return (
       <button type="button" disabled className={`${ACTION_CLASS} cursor-not-allowed opacity-60`}>
+        {YOU_BADGE}
         <span className="tabular-nums">{formatPower(0)}</span> voting power to delegate
       </button>
     );
   }
   return (
     <Link href={`/delegation?address=${address}`} className={ACTION_CLASS}>
-      Delegate your <span className="text-accent tabular-nums">{formatPower(offer.power)}</span>{' '}
+      {YOU_BADGE}
+      Delegate your <span className="text-accent tabular-nums">
+        {formatPower(offer.power)}
+      </span>{' '}
       voting power to the DAO →
     </Link>
   );
