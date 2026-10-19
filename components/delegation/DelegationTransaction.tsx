@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BaseError, type Address, type Hash } from 'viem';
 import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { mainnet } from 'wagmi/chains';
@@ -24,6 +24,46 @@ export type DelegationWrite = PlannedDelegation[] | 'clear';
 
 const EXPLORER_URL = mainnet.blockExplorers.default.url;
 
+/** How long a sent write is remembered; covers the indexing lag and a Safe's co-signing. */
+const REMEMBER_MS = 60 * 60 * 1000;
+
+interface StoredSubmission {
+  hash: Hash;
+  safe: Address | null;
+  sentAt: number;
+}
+
+function readStored(key: string): Submission | null {
+  try {
+    const raw = localStorage.getItem(key);
+    const stored: StoredSubmission | null = raw && JSON.parse(raw);
+    if (!stored || Date.now() - stored.sentAt > REMEMBER_MS) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return { kind: 'sent', hash: stored.hash, safe: stored.safe };
+  } catch {
+    return null;
+  }
+}
+
+function writeStored(key: string, submission: Submission | null) {
+  try {
+    if (submission?.kind === 'sent') {
+      const stored: StoredSubmission = {
+        hash: submission.hash,
+        safe: submission.safe,
+        sentAt: Date.now(),
+      };
+      localStorage.setItem(key, JSON.stringify(stored));
+    } else {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    // Storage is unavailable; the status then only lasts until a reload.
+  }
+}
+
 // wagmi wraps the wallet's rejection in a contract-call error.
 function isUserRejection(error: unknown): boolean {
   if (error instanceof BaseError) {
@@ -35,12 +75,28 @@ function isUserRejection(error: unknown): boolean {
 /**
  * Writes the connected account's delegation in the SSV Snapshot space of the
  * Split Delegation registry. The registry overwrites the whole delegation.
+ * With a `storageKey`, a sent write is remembered across reloads until it expires or is reset.
  */
-export function useDelegationWrite() {
+export function useDelegationWrite(storageKey?: string) {
   const { address: connected } = useAccount();
   const publicClient = usePublicClient({ chainId: mainnet.id });
   const { writeContractAsync, isPending: awaitingWallet } = useWriteContract();
-  const [submission, setSubmission] = useState<Submission | null>(null);
+  const [submission, setSubmissionState] = useState<Submission | null>(null);
+
+  // Read after mount so the server and first client render agree.
+  useEffect(() => {
+    if (storageKey) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- storage only exists on the client
+      setSubmissionState(readStored(storageKey));
+    }
+  }, [storageKey]);
+
+  function setSubmission(next: Submission | null) {
+    setSubmissionState(next);
+    if (storageKey) {
+      writeStored(storageKey, next);
+    }
+  }
 
   async function send(write: DelegationWrite) {
     setSubmission(null);

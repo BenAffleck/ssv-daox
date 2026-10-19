@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import NextRoundPower from '@/components/dao-delegates/NextRoundPower';
 import { useWalletSession } from '@/components/wallet/useWalletSession';
@@ -79,8 +79,19 @@ export default function AutoDelegationPath({
     poolAddress,
     optOut,
   });
-  const { send, submission, awaitingWallet } = useDelegationWrite();
+  const { send, submission, resetSubmission, awaitingWallet } = useDelegationWrite(
+    `ssv-daox:auto-delegation:${address.toLowerCase()}`,
+  );
   const phase = useSubmissionPhase(submission);
+  const indexed = state.kind === 'already-delegating';
+
+  // Once the indexed delegation shows the write, the remembered status has done its job.
+  useEffect(() => {
+    if (indexed) {
+      resetSubmission();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resetSubmission is recreated each render
+  }, [indexed]);
   const [confirmedDrop, setConfirmedDrop] = useState(false);
 
   const powerLabel = (power: number) => (
