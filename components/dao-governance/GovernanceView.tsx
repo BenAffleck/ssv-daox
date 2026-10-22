@@ -198,7 +198,7 @@ export default function GovernanceView({
                 </span>
                 Active Votes
               </h2>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3">
                 {active.map((proposal) => (
                   <ActiveVoteCard
                     key={proposal.id}
@@ -218,7 +218,7 @@ export default function GovernanceView({
                 <span className="inline-flex h-2.5 w-2.5 rounded-full bg-muted" />
                 Upcoming Votes
               </h2>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3">
                 {pending.map((proposal) => (
                   <PendingVoteCard
                     key={proposal.id}
@@ -238,7 +238,7 @@ export default function GovernanceView({
                 <span className="inline-flex h-2.5 w-2.5 rounded-full bg-border" />
                 Past Votes
               </h2>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3">
                 {closed.map((proposal) => (
                   <ClosedVoteCard
                     key={proposal.id}

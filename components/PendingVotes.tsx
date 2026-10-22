@@ -19,7 +19,7 @@ export default function PendingVotes({
         <span className="inline-flex h-2.5 w-2.5 rounded-full bg-muted" />
         Upcoming Votes
       </h2>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         {proposals.map((proposal) => (
           <PendingVoteCard
             key={proposal.id}

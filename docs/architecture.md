@@ -1511,17 +1511,26 @@ Two **single-select**, URL-synced filters:
 Both default to "all" and omit their param at that default for clean links.
 Closed proposals render via `ClosedVoteCard` with an outcome badge derived by
 `getProposalOutcome()` (`lib/dao-governance/outcome.ts`): Passed / Failed /
-Quorum not met, or the winning option for non-binary ballots. The **"Vote Now"**
+Quorum not met, or the winning option for non-binary ballots. A vote short of
+quorum is never Passed or Failed: the quorum check comes first. The **"Vote Now"**
 CTA shows only for the token-weighted DAO space; member-vote committee spaces
 show **"View Proposal"** (whitelist-only voters).
 
 ### Per-Space Visual Language
 
 `getSpaceStyle()` (`lib/dao-governance/space-style.ts`) maps each space key to one
-semantic color, applied consistently as the card **badge**, the card **left
-accent stripe** (`border-l-4`), and the filter **chip dot** — so a space is
-recognizable at a glance. Uses existing tokens only (DAO=primary, Leads=secondary,
-Operators=accent, Grants=warning, Multisig=muted). The Main space is labelled **"DAO"**.
+semantic dot colour, shared by the card's space label (`SpaceBadge`: dot + muted
+label in the card footer) and the filter chip dot. Uses existing tokens only
+(DAO=primary, Leads=secondary, Operators=accent, Grants=warning, Multisig=muted).
+Cards carry no coloured stripe or coloured space pill: colour is reserved for
+status (time left, outcome, a missed quorum). The Main space is labelled **"DAO"**.
+
+### Vote Card Layout
+
+Title and status badge share the top row; then the result bar (`VoteResults`,
+zero-vote choices omitted from the legend); then a footer with space, voters,
+time and quorum on the left and actions on the right (wraps on narrow screens).
+A reached quorum is muted with a green check; only a miss is coloured.
 
 ### Cross-Space Fetch & Error Granularity
 
@@ -1536,9 +1545,14 @@ behavior and tests unchanged.
 
 ### Vote-Type Distinction
 
-`GovernanceSpace.voteType` (`token` | `member`) drives display: the Main space
-shows quorum progress (token-weighted); committee spaces show **"No quorum"**.
-`SpaceBadge` maps each space to a distinct semantic badge color (no new colors).
+Quorum is read from each proposal's `quorum` field (Snapshot copies the space's
+configured quorum onto it), not from the space type: `getQuorumStatus()`
+(`lib/dao-governance/quorum.ts`) returns null when none is configured, and
+`QuorumMeter` then shows **"No quorum"**. Short of quorum, the result bar spans the
+quorum and tints the unfilled remainder `bg-warning/20` as the shortfall; once
+met it is a plain 100% split. `QuorumMeter` states the status and cast/required
+power in the card footer. `GovernanceSpace.voteType` (`token` | `member`) still
+gates the **Vote Now** CTA. `SpaceBadge` maps each space to a distinct semantic badge color (no new colors).
 
 ### Files
 
@@ -1548,8 +1562,11 @@ shows quorum progress (token-weighted); committee spaces show **"No quorum"**.
 - `lib/snapshot/api/fetch-closed-proposals.ts` — full-field closed proposals fetcher
 - `lib/snapshot/api/fetch-governance-proposals.ts` — cross-space orchestrator (`includeClosed` option)
 - `lib/snapshot/utils/time-remaining.ts` — `formatTimeAgo()` for closed cards
+- `lib/dao-governance/quorum.ts` — `getQuorumStatus()`, `formatVotingPower()`
+- `lib/dao-governance/vote-choices.ts` — `buildDisplayChoices()` (shared by vote cards)
+- `components/dao-governance/QuorumMeter.tsx` / `VoteResults.tsx` — shared quorum progress and result bar
 - `lib/dao-governance/outcome.ts` — `getProposalOutcome()` (Passed/Failed/Quorum-not-met)
-- `lib/dao-governance/space-style.ts` — `getSpaceStyle()` (per-space badge/stripe/dot color)
+- `lib/dao-governance/space-style.ts` — `getSpaceStyle()` (per-space dot color)
 - `app/governance/page.tsx` + `loading.tsx` — route + skeleton
 - `components/dao-governance/GovernanceView.tsx` — client view (space + status filters, grouping, states)
 - `components/dao-governance/StatusFilter.tsx` — status segmented control

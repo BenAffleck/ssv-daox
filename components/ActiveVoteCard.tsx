@@ -1,14 +1,16 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { Sparkles } from 'lucide-react';
 
 import type { ProposalSummary } from '@/lib/ai-summary/types';
-import { getSpaceStyle } from '@/lib/dao-governance/space-style';
 import type { GovernanceSpace, SnapshotActiveProposal } from '@/lib/snapshot/types';
 import { formatTimeRemaining } from '@/lib/snapshot/utils/time-remaining';
 
 import AskButton from './dao-governance/AskButton';
+import QuorumMeter from './dao-governance/QuorumMeter';
 import SpaceBadge from './dao-governance/SpaceBadge';
+import VoteResults from './dao-governance/VoteResults';
 
 interface ActiveVoteCardProps {
   proposal: SnapshotActiveProposal;
@@ -16,20 +18,6 @@ interface ActiveVoteCardProps {
   isQnaAvailable?: boolean;
   /** When set, renders a space badge and switches quorum display by vote type. */
   space?: GovernanceSpace;
-}
-
-/**
- * Maps standard vote choices to semantic colors
- */
-function getChoiceColor(choice: string, index: number): string {
-  const normalized = choice.toLowerCase();
-  if (normalized === 'for' || normalized === 'yes') return 'bg-accent';
-  if (normalized === 'against' || normalized === 'no') return 'bg-danger';
-  if (normalized === 'abstain') return 'bg-muted';
-
-  // Cycle through colors for non-standard choices
-  const colors = ['bg-primary', 'bg-warning', 'bg-accent', 'bg-danger'];
-  return colors[index % colors.length];
 }
 
 export default function ActiveVoteCard({
@@ -40,8 +28,6 @@ export default function ActiveVoteCard({
 }: ActiveVoteCardProps) {
   const timeRemaining = formatTimeRemaining(proposal.end);
   const isMemberVote = space?.voteType === 'member';
-  const accentClass = space ? `border-l-4 ${getSpaceStyle(space.key).accentClass}` : '';
-  const quorumReached = proposal.quorum > 0 && proposal.scores_total >= proposal.quorum;
 
   const [showSummary, setShowSummary] = useState(false);
   const [summary, setSummary] = useState<ProposalSummary | null>(null);
@@ -86,85 +72,27 @@ export default function ActiveVoteCard({
     }
   }, [summary, proposal.id, proposal.title, proposal.body, proposal.choices]);
 
-  // Build choice entries, collapsing into "Other" if > 3
-  const maxChoices = 3;
-  let displayChoices: { label: string; score: number; color: string }[];
-
-  if (proposal.choices.length <= maxChoices) {
-    displayChoices = proposal.choices.map((choice, i) => ({
-      label: choice,
-      score: proposal.scores[i] ?? 0,
-      color: getChoiceColor(choice, i),
-    }));
-  } else {
-    const top = proposal.choices.slice(0, maxChoices).map((choice, i) => ({
-      label: choice,
-      score: proposal.scores[i] ?? 0,
-      color: getChoiceColor(choice, i),
-    }));
-    const otherScore = proposal.scores.slice(maxChoices).reduce((sum, s) => sum + s, 0);
-    top.push({ label: 'Other', score: otherScore, color: 'bg-muted' });
-    displayChoices = top;
-  }
-
   return (
-    <div className={`card p-5 ${accentClass}`}>
+    <article className="card p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-4">
         <a
           href={proposal.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-heading text-[14px] leading-snug font-semibold tracking-tight text-foreground hover:text-primary"
+          className="font-heading text-[15px] leading-snug font-semibold tracking-tight text-foreground hover:text-primary"
         >
           {proposal.title}
         </a>
-        <div className="flex shrink-0 items-center gap-2">
-          {space && <SpaceBadge space={space} />}
+        <div className="shrink-0">
           <span className="badge-sm-primary">{timeRemaining}</span>
         </div>
       </div>
 
-      {/* Progress bar */}
-      {proposal.scores_total > 0 && (
-        <div className="mb-2">
-          <div className="flex h-2 overflow-hidden rounded-full bg-muted/20">
-            {displayChoices.map((choice) => {
-              const pct = (choice.score / proposal.scores_total) * 100;
-              if (pct === 0) return null;
-              return (
-                <div
-                  key={choice.label}
-                  className={`${choice.color} transition-all`}
-                  style={{ width: `${pct}%` }}
-                  title={`${choice.label}: ${pct.toFixed(1)}%`}
-                />
-              );
-            })}
-          </div>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-            {displayChoices.map((choice) => {
-              const pct =
-                proposal.scores_total > 0
-                  ? ((choice.score / proposal.scores_total) * 100).toFixed(1)
-                  : '0.0';
-              const absolute =
-                choice.score >= 1000
-                  ? `${(choice.score / 1000).toFixed(1)}k`
-                  : choice.score.toLocaleString(undefined, { maximumFractionDigits: 1 });
-              return (
-                <span key={choice.label} className="flex items-center gap-1 text-[11px] text-muted">
-                  <span className={`inline-block h-1.5 w-1.5 rounded-full ${choice.color}`} />
-                  {choice.label} {pct}% ({absolute})
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      <VoteResults proposal={proposal} />
 
       {/* AI TL;DR Summary */}
       {showSummary && (
-        <div className="mb-2 rounded-md border border-secondary/20 bg-secondary/5 p-3">
+        <div className="mb-4 rounded-lg bg-secondary/5 p-3">
           {isLoading && (
             <div className="flex items-center gap-2 text-xs text-secondary">
               <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-secondary border-t-transparent" />
@@ -191,18 +119,13 @@ export default function ActiveVoteCard({
       )}
 
       {/* Stats + Actions */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 text-[12px] text-muted">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
+          {space && <SpaceBadge space={space} />}
           <span>
             {proposal.votes} voter{proposal.votes !== 1 ? 's' : ''}
           </span>
-          {isMemberVote ? (
-            <span>No quorum</span>
-          ) : proposal.quorum > 0 ? (
-            <span className={quorumReached ? 'text-accent' : 'text-warning'}>
-              Quorum {quorumReached ? 'reached' : 'not reached'}
-            </span>
-          ) : null}
+          <QuorumMeter proposal={proposal} />
         </div>
         <div className="flex items-center gap-2">
           {isAISummaryAvailable && (
@@ -210,17 +133,13 @@ export default function ActiveVoteCard({
               onClick={fetchSummary}
               disabled={isLoading}
               title={showSummary && summary ? 'Hide AI summary' : 'Summarize with AI'}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-glow transition-colors disabled:opacity-50 ${
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
                 showSummary && summary
                   ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
                   : 'border-border bg-card text-foreground hover:bg-card-hover'
               }`}
             >
-              <span
-                className={`text-sm leading-none ${showSummary && summary ? '' : 'inline-block animate-pulse'}`}
-              >
-                ✨
-              </span>
+              <Sparkles size={13} aria-hidden />
               {showSummary && summary ? 'Hide' : 'TL;DR'}
             </button>
           )}
@@ -248,6 +167,6 @@ export default function ActiveVoteCard({
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }

@@ -41,7 +41,7 @@ export default function ActiveVotes({
           </span>
         )}
       </h2>
-      <div id={listId} className="flex flex-col gap-4">
+      <div id={listId} className="flex flex-col gap-3">
         {visible.map((proposal) => (
           <ActiveVoteCard
             key={proposal.id}

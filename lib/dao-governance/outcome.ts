@@ -1,5 +1,7 @@
 import type { SnapshotActiveProposal } from '@/lib/snapshot/types';
 
+import { getQuorumStatus } from './quorum';
+
 export type OutcomeVariant = 'passed' | 'failed' | 'quorum-not-met' | 'neutral';
 
 export interface ProposalOutcome {
@@ -14,8 +16,8 @@ const REJECT_CHOICES = new Set(['against', 'no', 'reject', 'deny']);
  * Derives a closed proposal's outcome for display as a badge.
  *
  * Rules:
- * - Quorum applies only to token-weighted spaces with a configured quorum. If
- *   it applies and total votes fall short → "Quorum not met".
+ * - Quorum applies whenever the proposal's space configures one. If it applies
+ *   and total votes fall short → "Quorum not met", whatever the choices say.
  * - Otherwise the winning choice (highest score) decides: an approval-style
  *   choice → "Passed", a rejection-style choice → "Failed". For non-binary
  *   ballots the winning option's label is shown as a neutral outcome.
@@ -24,11 +26,8 @@ const REJECT_CHOICES = new Set(['against', 'no', 'reject', 'deny']);
  */
 export function getProposalOutcome(
   proposal: Pick<SnapshotActiveProposal, 'choices' | 'scores' | 'scores_total' | 'quorum'>,
-  isMemberVote: boolean,
 ): ProposalOutcome {
-  const quorumApplies = !isMemberVote && proposal.quorum > 0;
-
-  if (quorumApplies && proposal.scores_total < proposal.quorum) {
+  if (getQuorumStatus(proposal)?.reached === false) {
     return { label: 'Quorum not met', variant: 'quorum-not-met' };
   }
 

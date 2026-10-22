@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { Sparkles } from 'lucide-react';
 
 import type { ProposalSummary } from '@/lib/ai-summary/types';
-import { getSpaceStyle } from '@/lib/dao-governance/space-style';
 import type { GovernanceSpace, SnapshotActiveProposal } from '@/lib/snapshot/types';
 import { formatTimeUntilStart } from '@/lib/snapshot/utils/time-remaining';
 
@@ -25,7 +25,6 @@ export default function PendingVoteCard({
   space,
 }: PendingVoteCardProps) {
   const timeUntilStart = formatTimeUntilStart(proposal.start);
-  const accentClass = space ? `border-l-4 ${getSpaceStyle(space.key).accentClass}` : '';
 
   const [showSummary, setShowSummary] = useState(false);
   const [summary, setSummary] = useState<ProposalSummary | null>(null);
@@ -71,24 +70,23 @@ export default function PendingVoteCard({
   }, [summary, proposal.id, proposal.title, proposal.body, proposal.choices]);
 
   return (
-    <div className={`card p-5 opacity-90 ${accentClass}`}>
+    <article className="card p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-4">
         <a
           href={proposal.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-heading text-[14px] leading-snug font-semibold tracking-tight text-foreground hover:text-primary"
+          className="font-heading text-[15px] leading-snug font-semibold tracking-tight text-foreground hover:text-primary"
         >
           {proposal.title}
         </a>
-        <div className="flex shrink-0 items-center gap-2">
-          {space && <SpaceBadge space={space} />}
+        <div className="shrink-0">
           <span className="badge-sm-muted">{timeUntilStart}</span>
         </div>
       </div>
 
       {/* Voting choices preview */}
-      <div className="mb-2 flex flex-wrap gap-1.5">
+      <div className="mb-4 flex flex-wrap gap-1.5">
         {proposal.choices.map((choice) => (
           <span
             key={choice}
@@ -101,7 +99,7 @@ export default function PendingVoteCard({
 
       {/* AI TL;DR Summary */}
       {showSummary && (
-        <div className="mb-2 rounded-md border border-secondary/20 bg-secondary/5 p-3">
+        <div className="mb-4 rounded-lg bg-secondary/5 p-3">
           {isLoading && (
             <div className="flex items-center gap-2 text-xs text-secondary">
               <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-secondary border-t-transparent" />
@@ -127,37 +125,36 @@ export default function PendingVoteCard({
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-2">
-        {isAISummaryAvailable && (
-          <button
-            onClick={fetchSummary}
-            disabled={isLoading}
-            title={showSummary && summary ? 'Hide AI summary' : 'Summarize with AI'}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-glow transition-colors disabled:opacity-50 ${
-              showSummary && summary
-                ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
-                : 'border-border bg-card text-foreground hover:bg-card-hover'
-            }`}
-          >
-            <span
-              className={`text-sm leading-none ${showSummary && summary ? '' : 'inline-block animate-pulse'}`}
+      {/* Space + Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <div className="text-[12px] text-muted">{space && <SpaceBadge space={space} />}</div>
+        <div className="flex items-center gap-2">
+          {isAISummaryAvailable && (
+            <button
+              onClick={fetchSummary}
+              disabled={isLoading}
+              title={showSummary && summary ? 'Hide AI summary' : 'Summarize with AI'}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
+                showSummary && summary
+                  ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
+                  : 'border-border bg-card text-foreground hover:bg-card-hover'
+              }`}
             >
-              ✨
-            </span>
-            {showSummary && summary ? 'Hide' : 'TL;DR'}
-          </button>
-        )}
-        {isQnaAvailable && <AskButton proposal={proposal} />}
-        <a
-          href={proposal.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-card-hover"
-        >
-          View Proposal
-        </a>
+              <Sparkles size={13} aria-hidden />
+              {showSummary && summary ? 'Hide' : 'TL;DR'}
+            </button>
+          )}
+          {isQnaAvailable && <AskButton proposal={proposal} />}
+          <a
+            href={proposal.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-card-hover"
+          >
+            View Proposal
+          </a>
+        </div>
       </div>
-    </div>
+    </article>
   );
 }

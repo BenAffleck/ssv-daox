@@ -1,45 +1,24 @@
 /**
  * Per-space visual language for the Governance Votes view.
  *
- * Each governance space gets one semantic color used consistently across three
- * places so a space is instantly recognizable: the card badge, the card's
- * left-accent stripe, and the filter chip's color dot. Uses existing semantic
- * tokens only — no new colors (per the design system).
+ * Each governance space gets one semantic dot colour, shared by the card's
+ * space label and the filter chip, so a space is recognizable at a glance.
+ * Uses existing semantic tokens only — no new colors (per the design system).
  */
 export interface SpaceStyle {
-  /** Small badge class for the card header. */
-  badgeClass: string;
-  /** Left-border accent class for the card stripe (pair with `border-l-4`). */
-  accentClass: string;
-  /** Dot background class for filter chips / legends. */
+  /** Dot background class for space labels and filter chips. */
   dotClass: string;
 }
 
 const STYLES: Record<string, SpaceStyle> = {
-  main: { badgeClass: 'badge-sm-primary', accentClass: 'border-l-primary', dotClass: 'bg-primary' },
-  leads: {
-    badgeClass: 'badge-sm-secondary',
-    accentClass: 'border-l-secondary',
-    dotClass: 'bg-secondary',
-  },
-  operator: {
-    badgeClass: 'badge-sm-accent',
-    accentClass: 'border-l-accent',
-    dotClass: 'bg-accent',
-  },
-  grants: {
-    badgeClass: 'badge-sm-warning',
-    accentClass: 'border-l-warning',
-    dotClass: 'bg-warning',
-  },
-  multisig: { badgeClass: 'badge-sm-muted', accentClass: 'border-l-muted', dotClass: 'bg-muted' },
+  main: { dotClass: 'bg-primary' },
+  leads: { dotClass: 'bg-secondary' },
+  operator: { dotClass: 'bg-accent' },
+  grants: { dotClass: 'bg-warning' },
+  multisig: { dotClass: 'bg-muted' },
 };
 
-const FALLBACK: SpaceStyle = {
-  badgeClass: 'badge-sm-muted',
-  accentClass: 'border-l-muted',
-  dotClass: 'bg-muted',
-};
+const FALLBACK: SpaceStyle = { dotClass: 'bg-muted' };
 
 export function getSpaceStyle(key: string): SpaceStyle {
   return STYLES[key] ?? FALLBACK;
