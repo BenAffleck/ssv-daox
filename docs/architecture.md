@@ -429,7 +429,8 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
 - `PoolBannerAction` (client) is the banner's action. Without a wallet it is a
   button, "SSV holder? Delegate to the DAO →", that opens the connect
   modal and stays on the page. With a connected wallet it fetches
-  `/api/voting-power/[address]` and, when `autoDelegationView()` is `ready`,
+  `/api/voting-power/[address]?fresh=1` (uncached, so a delegation just made on
+  the profile shows here too) and, when `autoDelegationView()` is `ready`,
   reads "Delegate your {power} voting power to the DAO" (power in accent green:
   tokens held + third-party power that moves along) and links to
   `/delegation?address={wallet}`. A wallet the DAO delegates to reads "You {power} received from the DAO" and links to its

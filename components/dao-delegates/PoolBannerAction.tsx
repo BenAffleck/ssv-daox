@@ -62,7 +62,7 @@ export default function PoolBannerAction({ poolAddress }: { poolAddress: string 
     }
     const address = session.address;
     const controller = new AbortController();
-    fetch(`/api/voting-power/${address}`, { signal: controller.signal })
+    fetch(`/api/voting-power/${address}?fresh=1`, { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data: VotingPowerData | null) => data && setPin({ address, data }))
       .catch(() => {});
