@@ -6,12 +6,20 @@ import { GNOSIS_CONFIG } from '../config';
 import { toVotingPowerData } from '../logic/transform-voting-power';
 import type { GnosisDelegationResponse, VotingPowerData, VotingPowerMap } from '../types';
 
+export interface FetchVotingPowerOptions {
+  /** Skip the data cache, so a just-indexed delegation shows on the first request. */
+  fresh?: boolean;
+}
+
 /**
  * Fetches voting power for a single address
  * @param address - The delegate address to fetch voting power for
  * @returns VotingPowerData or null if fetch fails
  */
-async function fetchSingleVotingPower(address: string): Promise<VotingPowerData | null> {
+async function fetchSingleVotingPower(
+  address: string,
+  { fresh = false }: FetchVotingPowerOptions,
+): Promise<VotingPowerData | null> {
   const url = `${GNOSIS_CONFIG.apiBaseUrl}/${GNOSIS_CONFIG.spaceId}/pin/${address.toLowerCase()}`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), GNOSIS_CONFIG.timeoutMs);
@@ -24,7 +32,7 @@ async function fetchSingleVotingPower(address: string): Promise<VotingPowerData 
       },
       body: JSON.stringify(GNOSIS_CONFIG.strategyPayload),
       signal: controller.signal,
-      next: { revalidate: GNOSIS_CONFIG.cacheSeconds },
+      ...(fresh ? { cache: 'no-store' } : { next: { revalidate: GNOSIS_CONFIG.cacheSeconds } }),
     });
 
     if (!response.ok) {
@@ -48,7 +56,10 @@ async function fetchSingleVotingPower(address: string): Promise<VotingPowerData 
  * @param addresses - Array of delegate addresses
  * @returns Map of lowercase addresses to their voting power data
  */
-export async function fetchVotingPower(addresses: string[]): Promise<VotingPowerMap> {
+export async function fetchVotingPower(
+  addresses: string[],
+  options: FetchVotingPowerOptions = {},
+): Promise<VotingPowerMap> {
   const result: VotingPowerMap = {};
   let next = 0;
 
@@ -56,7 +67,7 @@ export async function fetchVotingPower(addresses: string[]): Promise<VotingPower
   async function worker() {
     while (next < addresses.length) {
       const address = addresses[next++];
-      const data = await fetchSingleVotingPower(address);
+      const data = await fetchSingleVotingPower(address, options);
       if (data) {
         result[address.toLowerCase()] = data;
       }

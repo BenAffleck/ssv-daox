@@ -245,7 +245,8 @@ export default async function DelegationPage({
     delegationRecipients,
   ] = await Promise.all([
     scoreContext,
-    fetchPin(address),
+    // Uncached, so a delegation the API just indexed shows on the next refresh.
+    fetchPin(address, { fresh: true }),
     fetchSnapshotProfile(address),
     fetchPoolRecipients(),
   ]);

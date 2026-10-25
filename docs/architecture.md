@@ -84,6 +84,7 @@ ssv-daox/
 │   │   ├── ClaimIntroPanel.tsx      # "Claim on HighSignal" without an overview
 │   │   ├── ConnectToDelegateButton.tsx # Client: connect prompt for disconnected wallets
 │   │   ├── useConnectToDelegate.ts  # Client: connect, then open the wallet's own address
+│   │   ├── useRefreshWhile.ts       # Client: router.refresh() polling until a write is indexed
 │   │   ├── AutoDelegationPath.tsx   # Client: breakdown card + "Delegate to the DAO" action
 │   │   ├── VotingPowerBreakdownCard.tsx  # Selected address's voting power + Details
 │   │   ├── DelegationTransaction.tsx     # Client: registry write hook, EOA/Safe status, drop confirmation
@@ -999,11 +1000,18 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
   - total voting power
 - **Breakdown card.** `VotingPowerBreakdownCard` renders those rows with
   neutral labels ("Tokens held", "Delegated in"), since visitors see it too. The
+  total row reads "Votes directly with": the Snapshot voting power the address
+  votes with itself, 0 once it delegates everything. While it delegates out, a
+  note says that power still counts, because the delegates vote with it. The
   incoming and outgoing lists sit in a native `<details>` ("Details"),
   collapsed by default; entries flagged `isPool` show the address followed by "(DAO auto-delegation pool)" (`DelegateName`). The
   leaderboard tooltip's "Net Delegated" is not shown. A failed pin lookup shows
-  a status line. The page fetches the pin once (`fetchPin`) and also feeds its
-  outgoing delegations to the Delegation step.
+  a status line. The page fetches the pin once (`fetchPin(address, { fresh: true })`,
+  bypassing the 5-minute data cache) and also feeds its outgoing delegations to
+  the Delegation step.
+- **Scope copy.** A split delegation is a share in basis points, so it covers
+  SSV the address receives later. The panel's default subtitle and the
+  `already-delegating` subtitle say so, with "until you change it".
 - **Action states.** `state.kind` is the first that applies:
   1. `unavailable`: the pin lookup failed. No action renders, so a write
      never overwrites delegations the user can't see; the card says
@@ -1389,8 +1397,14 @@ adapt their button:
 `isSubmissionLocked(phase)` is `true` for `pending`, `confirmed` and
 `proposed`, so a write can't be sent twice. Any edit in the Delegation step
 resets the submission.
-The pin API is cached for 5 minutes and lags indexing, so a confirmed change
-can take a few minutes to show up in Before.
+The delegation API lags indexing by a few minutes. The page reads the selected
+address's pin uncached, and `useRefreshWhile(active)` calls `router.refresh()`
+every 15 s while a write is `confirmed` or `proposed` but not indexed yet: in
+"Delegate to the DAO" until the state turns `already-delegating`, in the
+Delegation step until Before differs from what it showed at send. It gives up
+after 10 minutes and swaps the lag note for a reload hint. While a submission
+is locked, the Delegation step hides plan errors, so the indexed write doesn't
+read as "already matches".
 
 ### Wallet
 

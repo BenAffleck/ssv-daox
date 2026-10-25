@@ -113,8 +113,13 @@ export default function VotingPowerBreakdownCard({
           value={`${breakdown.outgoingPower > 0 ? '−' : ''}${formatPower(breakdown.outgoingPower)}`}
           valueClassName="text-danger"
         />
-        <Row label="Total voting power" value={formatPower(breakdown.totalPower)} total />
+        <Row label="Votes directly with" value={formatPower(breakdown.totalPower)} total />
       </dl>
+      {breakdown.outgoingPower > 0 && (
+        <p className="mt-1.5 text-xs text-muted">
+          Delegated-out power still counts: the delegates vote with it.
+        </p>
+      )}
       <details className="mt-3">
         <summary className="cursor-pointer text-primary">Details</summary>
         <div className="mt-2 space-y-3">

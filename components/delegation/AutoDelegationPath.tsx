@@ -28,6 +28,7 @@ import {
 import OpenOwnAddressLink from './OpenOwnAddressLink';
 import OpenStepButton from './OpenStepButton';
 import { ownDelegateToDaoUrl, useConnectToDelegate } from './useConnectToDelegate';
+import { STILL_INDEXING_NOTE, useRefreshWhile } from './useRefreshWhile';
 
 interface AutoDelegationPathProps {
   address: string;
@@ -44,7 +45,8 @@ interface AutoDelegationPathProps {
   nextPower: number | null;
 }
 
-const LAG_NOTE = 'Voting power updates within about 5 minutes.';
+const LAG_NOTE =
+  'Your voting power updates once the delegation API picks up the transaction, usually a few minutes after it executes. This page refreshes on its own.';
 
 function powerOrFallback(power: number | null): string {
   return power === null ? 'voting power' : formatPower(power);
@@ -84,6 +86,7 @@ export default function AutoDelegationPath({
   );
   const phase = useSubmissionPhase(submission);
   const indexed = state.kind === 'already-delegating';
+  const gaveUp = useRefreshWhile((phase === 'confirmed' || phase === 'proposed') && !indexed);
 
   // Once the indexed delegation shows the write, the remembered status has done its job.
   useEffect(() => {
@@ -110,7 +113,7 @@ export default function AutoDelegationPath({
         return {
           title: <>You&apos;re delegating {powerLabel(state.power)} to the DAO</>,
           subtitle:
-            "The DAO spreads your voting power across cohorts of delegates. We don't touch your tokens.",
+            "All of this address's voting power goes to the DAO, including SSV it receives later. The DAO spreads it across cohorts of delegates. We don't touch your tokens.",
           action: <OpenStepButton anchor="delegation">Change</OpenStepButton>,
         };
       case 'switch-account':
@@ -183,7 +186,7 @@ export default function AutoDelegationPath({
                 submission={submission}
                 phase={phase}
                 confirmedMessage="You're delegating to the DAO."
-                note={LAG_NOTE}
+                note={gaveUp ? STILL_INDEXING_NOTE : LAG_NOTE}
               />
             </>
           ),

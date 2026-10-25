@@ -1,7 +1,7 @@
 export const DELEGATE_TO_DAO_ANCHOR = 'delegate-to-dao';
 
 const DEFAULT_SUBTITLE =
-  "One transaction hands your voting power to the DAO. The DAO spreads your voting power across cohorts of delegates. We don't touch your tokens.";
+  "One transaction hands all of this address's voting power to the DAO, including SSV it receives later, until you change it. The DAO spreads it across cohorts of delegates. We don't touch your tokens.";
 
 interface DelegateToDaoPanelProps {
   title?: React.ReactNode;

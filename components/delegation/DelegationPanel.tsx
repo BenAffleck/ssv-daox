@@ -30,6 +30,7 @@ import {
   type SubmissionPhase,
 } from './DelegationTransaction';
 import StepPanel from './StepPanel';
+import { STILL_INDEXING_NOTE, useRefreshWhile } from './useRefreshWhile';
 
 interface DelegationPanelProps {
   /** The selected address; only its owner can send the transaction. */
@@ -175,6 +176,12 @@ export default function DelegationPanel({
 
   const currentEntries = useMemo(() => current ?? [], [current]);
   const before = useMemo(() => toPlannedDelegations(currentEntries), [currentEntries]);
+  const beforeKey = JSON.stringify(before);
+  const [sentFrom, setSentFrom] = useState<string | null>(null);
+  // Before still shows what it showed when sending, so the API hasn't indexed the write yet.
+  const gaveUp = useRefreshWhile(
+    (phase === 'confirmed' || phase === 'proposed') && sentFrom === beforeKey,
+  );
   const [mode, setMode] = useState<Mode>(before.length > 1 ? 'split' : 'all-to-one');
   const [target, setTarget] = useState(currentEntries[0]?.address ?? '');
   const [splitTargets, setSplitTargets] = useState(() => toSplitTargets(before));
@@ -413,13 +420,18 @@ export default function DelegationPanel({
         </div>
       )}
 
-      {edited && hasInput && !ensPending && !ensMissing && plan.errors.length > 0 && (
-        <ul role="alert" className="mt-3 space-y-1 text-[13px] text-danger">
-          {plan.errors.map((e) => (
-            <li key={e}>{e}</li>
-          ))}
-        </ul>
-      )}
+      {edited &&
+        hasInput &&
+        !ensPending &&
+        !ensMissing &&
+        !isSubmissionLocked(phase) &&
+        plan.errors.length > 0 && (
+          <ul role="alert" className="mt-3 space-y-1 text-[13px] text-danger">
+            {plan.errors.map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+          </ul>
+        )}
 
       {plan.warnings.length > 0 && !ensPending && (
         <ul className="mt-3 space-y-1 rounded-lg border border-warning/40 bg-warning/10 p-4 text-[13px] text-foreground">
@@ -458,7 +470,10 @@ export default function DelegationPanel({
       <div className="mt-4 space-y-3">
         <button
           type="button"
-          onClick={() => send(mode === 'clear' ? 'clear' : plan.delegations)}
+          onClick={() => {
+            setSentFrom(beforeKey);
+            send(mode === 'clear' ? 'clear' : plan.delegations);
+          }}
           disabled={!canSend}
           className="rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -468,7 +483,11 @@ export default function DelegationPanel({
           submission={submission}
           phase={phase}
           confirmedMessage={mode === 'clear' ? 'Delegation cleared.' : 'Delegation updated.'}
-          note="Before shows the change within about 5 minutes, after a reload."
+          note={
+            gaveUp
+              ? STILL_INDEXING_NOTE
+              : 'Before updates once the delegation API picks up the transaction, usually a few minutes after it executes. This page refreshes on its own.'
+          }
         />
       </div>
     </StepPanel>

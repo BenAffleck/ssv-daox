@@ -1,12 +1,20 @@
 import { fetchAllocationCap } from '@/lib/dao-delegates/api/fetch-leaderboard';
-import { fetchVotingPower, type DelegationEntry, type VotingPowerData } from '@/lib/gnosis';
+import {
+  fetchVotingPower,
+  type DelegationEntry,
+  type FetchVotingPowerOptions,
+  type VotingPowerData,
+} from '@/lib/gnosis';
 
 import { AUTO_DELEGATION_POOL_ADDRESS, DAO_FUNDING_ADDRESS } from '../config';
 import { summarizePool, type PoolSummary } from '../logic/auto-delegation';
 
 /** Returns `null` when the Gnosis API lookup fails. */
-export async function fetchPin(address: string): Promise<VotingPowerData | null> {
-  const votingPower = await fetchVotingPower([address]);
+export async function fetchPin(
+  address: string,
+  options?: FetchVotingPowerOptions,
+): Promise<VotingPowerData | null> {
+  const votingPower = await fetchVotingPower([address], options);
   return votingPower[address.toLowerCase()] ?? null;
 }
 

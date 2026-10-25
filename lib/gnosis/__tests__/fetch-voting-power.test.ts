@@ -90,6 +90,26 @@ describe('fetchVotingPower', () => {
     });
   });
 
+  it('caches lookups for GNOSIS_CONFIG.cacheSeconds by default', async () => {
+    mockFetch.mockResolvedValue(ok(SAMPLE_RESPONSE));
+
+    await fetchVotingPower(addresses(1));
+
+    const [, init] = mockFetch.mock.calls[0];
+    expect(init.next).toEqual({ revalidate: GNOSIS_CONFIG.cacheSeconds });
+    expect(init.cache).toBeUndefined();
+  });
+
+  it('skips the data cache for a fresh lookup', async () => {
+    mockFetch.mockResolvedValue(ok(SAMPLE_RESPONSE));
+
+    await fetchVotingPower(addresses(1), { fresh: true });
+
+    const [, init] = mockFetch.mock.calls[0];
+    expect(init.cache).toBe('no-store');
+    expect(init.next).toBeUndefined();
+  });
+
   it('keys the result map by lowercased address', async () => {
     mockFetch.mockResolvedValueOnce(ok(SAMPLE_RESPONSE));
     const mixedCase = '0xAbCdEf1234567890aBcDeF1234567890AbCdEf12';
