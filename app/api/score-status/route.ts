@@ -5,7 +5,7 @@ import {
   fetchCachedRunId,
   fetchScoreStatus,
   SCORE_DATA_TAG,
-} from '@/lib/dao-delegates/api/fetch-leaderboard';
+} from '@/lib/leaderboard/api/fetch-leaderboard';
 
 export async function GET() {
   try {

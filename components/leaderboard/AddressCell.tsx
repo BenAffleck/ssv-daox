@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { formatAddress } from '@/lib/dao-delegates/utils/address';
+import { formatAddress } from '@/lib/leaderboard/utils/address';
 
 interface AddressCellProps {
   address: string;

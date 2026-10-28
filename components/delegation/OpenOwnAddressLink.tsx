@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { formatAddress } from '@/lib/dao-delegates/utils/address';
+import { formatAddress } from '@/lib/leaderboard/utils/address';
 
 /** The one way the Delegation page offers the connected wallet's own address. */
 export default function OpenOwnAddressLink({ address, href }: { address: string; href?: string }) {

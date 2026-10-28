@@ -1,4 +1,4 @@
-import type { ScoreRow } from '@/lib/dao-delegates/types';
+import type { ScoreRow } from '@/lib/leaderboard/types';
 
 import type { TargetScoring } from './delegation-plan';
 import { sameAddress } from './pool';

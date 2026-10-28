@@ -40,11 +40,11 @@ ssv-daox/
 │   │   │   └── route.ts      # POST /api/proposal-qna
 │   │   └── vote-index/       # Searchable vote index for the command palette
 │   │       └── route.ts      # GET /api/vote-index
-│   ├── dao-delegates/        # DAO Delegates module
+│   ├── leaderboard/          # Leaderboard module (/delegates redirects here)
 │   │   └── page.tsx          # Server component (data orchestration)
 │   ├── dao-timeline/         # DAO Timeline module
 │   │   └── page.tsx          # Server component (event aggregation)
-│   ├── delegation/           # Delegation module (/delegation?address=0x… or name.eth)
+│   ├── delegation/           # Delegation module (/delegation?address=0x… or name.eth; no nav item)
 │   │   ├── page.tsx          # Server component (address overview)
 │   │   └── error.tsx         # Error boundary
 │   └── governance/           # Governance Votes module
@@ -62,8 +62,9 @@ ssv-daox/
 │   │   ├── WalletButton.tsx      # Client: header connect / account / wrong-network button
 │   │   ├── AccountMenu.tsx       # Client: connected account dropdown (profile, copy, Etherscan, disconnect)
 │   │   └── useWalletSession.ts   # loading | disconnected | connected
-│   ├── dao-delegates/        # DAO Delegates components
+│   ├── leaderboard/          # Leaderboard components
 │   │   ├── DelegatesTable.tsx    # Client: filter/sort state
+│   │   ├── AddressLookupLink.tsx # Opens the Delegation page of an unranked address or ENS name
 │   │   ├── FilterControls.tsx    # Client: filter UI
 │   │   ├── PoolBanner.tsx        # Server: auto-delegation pool total
 │   │   ├── PoolBannerAction.tsx  # Client: wallet-aware "Delegate to the DAO" link
@@ -73,7 +74,6 @@ ssv-daox/
 │   │   └── *Badge.tsx            # Server: badge components
 │   ├── delegation/           # Delegation components
 │   │   ├── AddressOverviewTable.tsx # Address + identity siblings
-│   │   ├── AddressLookupForm.tsx    # GET form for the empty state
 │   │   ├── WalletPanel.tsx          # Client: page follows the wallet, read-only notice
 │   │   ├── ScoreBreakdownPanel.tsx  # Score by pillar (ScoreBreakdownCard)
 │   │   ├── ManageDelegationPreview.tsx # Client: non-owner empty state for Manage Delegation
@@ -112,7 +112,7 @@ ssv-daox/
 │   │   ├── types.ts          # Theme type definitions
 │   │   ├── ThemeProvider.tsx # React Context
 │   │   └── ThemeToggle.tsx   # Theme selector
-│   ├── dao-delegates/        # DAO Delegates logic
+│   ├── leaderboard/          # Leaderboard logic
 │   │   ├── types.ts          # Delegate types
 │   │   ├── config.ts         # Delegate Score API config, cohort labels
 │   │   ├── api/              # Delegate Score API fetcher
@@ -230,13 +230,13 @@ The header (`components/Header.tsx`) is a `'use client'` component providing a t
 
 **CSS classes:** `.nav-item` / `.nav-item-active` in `@layer components` (follows `.filter-btn` pattern)
 
-**Icon mapping:** Slug-to-icon map in Header component (`delegates` → `Users`, `timeline` → `Calendar`, `governance` → `Vote`, `delegation` → `Split`)
+**Icon mapping:** Slug-to-icon map in Header component (`leaderboard` → `Trophy`, `timeline` → `Calendar`, `governance` → `Vote`)
 
 **Dependencies:** `lucide-react` (tree-shakeable icon library, ~1KB per icon)
 
 ### 4. External Data Integration
 
-API clients call `fetch` directly. Tests stub `global.fetch` (see `lib/dao-delegates/__tests__/fetch-leaderboard.test.ts`).
+API clients call `fetch` directly. Tests stub `global.fetch` (see `lib/leaderboard/__tests__/fetch-leaderboard.test.ts`).
 
 **Data sources:**
 
@@ -341,9 +341,12 @@ A global search palette indexes all modules and external tools and is reachable 
 
 ---
 
-## DAO Delegates Module
+## Leaderboard Module
 
-The primary implemented module. Shows a ranked delegate leaderboard with Delegate Score and cohort allocation.
+The primary implemented module, at `/leaderboard` (`/delegates` 308-redirects
+there, query included). Shows the ranked delegates with Delegate Score and
+cohort allocation, and doubles as the address lookup: it is the only way into
+the Delegation page from the nav, which has no item of its own.
 
 ### Data Pipeline
 
@@ -371,10 +374,17 @@ uses the lowercase address, so the page, `/delegation` and the route share
 cache entries.
 
 The table renders 50 rows per page (`DELEGATES_PAGE_SIZE`, `paginate()` in
-`lib/dao-delegates/logic/paginate.ts`). Filtering and sorting still run over
+`lib/leaderboard/logic/paginate.ts`). Filtering and sorting still run over
 all delegates on the client; only the rendered rows are sliced. The page lives
 in the `page` URL param and resets to 1 on any search, filter or sort change.
 "Copy handles" still covers every filtered delegate, not just the current page.
+
+The search box filters rows by name, ENS name, handle or address. When the
+query is a full `0x` address or an ENS name that no ranked delegate holds,
+`lookupTargetOf()` (`lib/leaderboard/logic/address-lookup.ts`) returns it and
+`AddressLookupLink` shows "{query} isn't on the leaderboard. Open delegation"
+above the rows (in place of the "No delegates match" notice), linking to
+`/delegation?address={query}`. The Delegation page resolves an ENS name there.
 
 Rank, score and cohort come from the API; the app no longer ranks, assigns
 programs or keeps fixed delegation lists itself. Every delegate is eligible, so
@@ -388,18 +398,18 @@ every candidate for one UTC **as-of** day and allocates the DAO's voting power
 across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
 `grantRecipients`, `ethCommunities`).
 
-- `lib/dao-delegates/api/fetch-leaderboard.ts` pages `GET /v1/leaderboard` at
+- `lib/leaderboard/api/fetch-leaderboard.ts` pages `GET /v1/leaderboard` at
   the maximum page size. Later pages are pinned to the first page's `as_of`; a
   `run_id` change while paging fails the request.
 - `fetchAllocationCap()` in the same file reads the latest run's `cap` from
   `GET /v1/allocation` for the pool banner. It throws on failure.
 - Run reads (`/v1/leaderboard`, `/v1/allocation`) are cached 5 minutes under
   the `SCORE_DATA_TAG` tag. Each carries `run_id`, `as_of` and `published_at`.
-- `ScoreFreshness` (client) shows how fresh the data is: in the `/delegates`
+- `ScoreFreshness` (client) shows how fresh the data is: in the `/leaderboard`
   header and the `/delegation` footer. It renders "Data for {as_of}, updated
   {age}" from the page's `published_at`, then polls `/api/score-status`
   (a proxy of `GET /v1/status`, cached 30 s). `describeFreshness()` in
-  `lib/dao-delegates/logic/freshness.ts` words it, in priority order: updating
+  `lib/leaderboard/logic/freshness.ts` words it, in priority order: updating
   now, latest update failed, data + next update, no data yet. ETAs are local
   time and read as estimates; a passed ETA reads "Update is taking longer than
   usual". `statusPollDelay()` polls every minute while a run is in progress or
@@ -474,7 +484,7 @@ and delegator count sorting.
 redirect. Host-matched rules in `next.config.ts` answer with a 308:
 
 - `/profile/{address}[/...]` → `https://daox.ssv.network/delegation?address={address}`
-- every other path → `https://daox.ssv.network/delegates`
+- every other path → `https://daox.ssv.network/leaderboard`
 
 The profile rule must stay first. Incoming query strings pass through.
 
@@ -510,7 +520,7 @@ Uses the same space ID as delegation (`SNAPSHOT_DELEGATION_SPACE_FILTER`).
 
 ### Voting Power Breakdown
 
-The Voting Power column shows a compact total plus an info icon that opens a portal-rendered breakdown popover (`components/dao-delegates/VotingPowerBadge.tsx`). Rows without pre-fetched data render a fetch icon that loads on demand from `/api/voting-power/[address]`. The route uses `fetchPin`, so it shares the page's 5-minute cached pin requests and their timeout.
+The Voting Power column shows a compact total plus an info icon that opens a portal-rendered breakdown popover (`components/leaderboard/VotingPowerBadge.tsx`). Rows without pre-fetched data render a fetch icon that loads on demand from `/api/voting-power/[address]`. The route uses `fetchPin`, so it shares the page's 5-minute cached pin requests and their timeout.
 
 **Data source:** Gnosis Guild Delegation API `pin` endpoint (`lib/gnosis/`), posted with the SSV split-delegation strategy payload. Values are SSV + cSSV.
 
@@ -886,7 +896,7 @@ Everyone sees the status view; only the owner sees the actions.
 5. `ScoreBreakdownPanel` ("Score breakdown", only for an address with a
    score row), then `VotingPowerPanel` ("Voting power breakdown"). Both use
    the breakdown card's `Row` layout. `scoreBreakdownOf()`
-   (`lib/dao-delegates/logic/score-breakdown.ts`) lists the run's live
+   (`lib/leaderboard/logic/score-breakdown.ts`) lists the run's live
    pillars (any row has a value, as on the leaderboard) with "n/a" for a
    pillar without data, the votes pillar's "x of y proposals" note and a
    Delegate Score total with the rank. Each pillar has a thin
@@ -906,13 +916,11 @@ via viem) is resolved on mainnet through `MAINNET_RPC_URL`
 (`resolveEnsName()`, `lib/delegation/api/resolve-ens.ts`). A resolved name
 redirects to `/delegation?address=<0x…>`, so everything below works on the
 address. A name without an address record, an unset RPC URL or a failed RPC
-call keeps the lookup page with a matching message.
+call shows a matching message.
 
-Without a valid address (landing or invalid input) the page is a pure lookup
-page: the header, the `WalletPanel` notice and the lookup card. The card's
-field is `DelegateSearchInput`, the same combobox as the delegate pickers
-in `DelegationPanel`: it suggests scored delegates by name, ENS name or
-address, and a typed ENS name resolves on submit (above). Without
+The Leaderboard is the lookup: `/delegation` without `?address=` redirects to
+`/leaderboard`. Invalid input renders the header, the `WalletPanel` notice and
+a card naming the problem, with a link back to the Leaderboard. Without
 `DELEGATE_SCORE_API_URL` it shows a notice only.
 
 **Delegate profile.** `fetchSnapshotProfile(address)`
@@ -928,7 +936,7 @@ clamps to 3 lines with "Show more". A "You" badge marks the owner's address.
 
 ### Data Pipeline
 
-1. `fetchLeaderboard()` - Reuses the DAO Delegates fetcher (5-minute cache)
+1. `fetchLeaderboard()` - Reuses the Leaderboard fetcher (5-minute cache)
 2. `buildAddressOverview(address, rows)` - Pure function in
    `lib/delegation/logic/address-overview.ts`. It finds the identity that lists
    the address (case-insensitive), puts the requested address first and its
@@ -980,7 +988,7 @@ The DAO's **auto-delegation pool** is `AUTO_DELEGATION_POOL_ADDRESS` in
 because it is a governance fact. Score runs redistribute the pool's power to
 cohort delegates. Each run allocates at most its cap, even when the pool's
 voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
-(`lib/dao-delegates/api/fetch-leaderboard.ts`) reads the latest run's from
+(`lib/leaderboard/api/fetch-leaderboard.ts`) reads the latest run's from
 `GET /v1/allocation` (`null` = uncapped). A run's pool is the same Gnosis
 `votingPower` this app reads, but at the close of the run's as-of, not live.
 
@@ -1281,7 +1289,7 @@ requests", "Opt-out status") and its OpenAPI spec at
 
 `/delegation` fetches statuses for the overview addresses with
 `fetchOptOutStatuses` and merges them with `withOptOutStatuses(overview,
-statuses)`; a failed lookup leaves them empty. The DAO Delegates leaderboard
+statuses)`; a failed lookup leaves them empty. The Leaderboard
 shows only the "Opt-out pending" and "Opted out" states. `optOutBadgeOf` and
 `optOutActionFor` (`logic/address-overview.ts`) derive the UI states:
 
@@ -1301,17 +1309,18 @@ close the page and resume with **Check again** ([Safe resume](#safe-resume)).
 
 ### States
 
-- No `address` or an invalid one: the hero and an address lookup card; a
+- No `address`: redirects to `/leaderboard`.
+- An invalid one: a card naming the problem and linking to the Leaderboard; a
   connected wallet adds the "Open your address" button.
 - An ENS name: redirects to its address; unresolved or unavailable, the
-  lookup card says so.
+  problem card says so.
 - A valid address outside the score run: the profile, a "Not on the leaderboard yet"
   notice, the hero and, for the owner, the Delegation step.
-- `DELEGATE_SCORE_API_URL` unset: the same notice as DAO Delegates.
+- `DELEGATE_SCORE_API_URL` unset: the same notice as the Leaderboard.
 - `MAINNET_RPC_URL` unset: a configuration notice replaces the wallet controls;
   the read-only overview still renders.
 
-Each DAO Delegates row's name links to `/delegation?address=<address>`.
+Each Leaderboard row's name links to `/delegation?address=<address>`.
 
 ### Split Delegation
 
@@ -1443,8 +1452,8 @@ config lives in `lib/wallet/wagmi-config.ts`.
 
 - **Account menu:** the connected account button opens `AccountMenu`, a
   WAI-ARIA menu button (arrow keys, Home/End, Escape, outside click) instead
-  of RainbowKit's account modal. Items: "Delegation profile"
-  (`/delegation?address={wallet}`), "Copy address", "View on Etherscan" and
+  of RainbowKit's account modal. Items: "Delegation"
+  (`/delegation?address={wallet}`, the wallet's profile and delegation controls), "Copy address", "View on Etherscan" and
   "Disconnect" (wagmi `useDisconnect`), last and in danger color. The
   profile stays one click from the menu so disconnect remains discoverable.
 - **Connectors:** with `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, injected,
@@ -1455,19 +1464,19 @@ config lives in `lib/wallet/wagmi-config.ts`.
 - **Page follows the wallet** (`WalletPanel`): `delegationUrlOnWalletChange`
   (`lib/delegation/logic/wallet-navigation.ts`) compares settled wallet
   states:
-  - restoring a session on page load never navigates; the lookup page shows
-    "Open your address" instead;
+  - restoring a session on page load never navigates; an invalid-address page
+    shows "Open your address" instead;
   - connecting opens the account unless `?address=` already selects one
     (e.g. from a leaderboard link). "Connect wallet to delegate" is the
     exception: it opens the wallet's own address;
   - an account switch opens the new account;
   - disconnecting while viewing the wallet's own address returns to
-    `/delegation`; on another address the page stays.
+    `/leaderboard`; on another address the page stays.
 - **Account switch notice:** `accountSwitchPrompt(selected, connected, identityAddresses)`
   returns `sibling`, `other` or `null`. A sibling asks to switch the wallet
   to the viewed address; another address shows the connected one's "Open
   your address" button. `OpenOwnAddressLink` renders that button on the
-  lookup page, on another address's profile and in the auto-delegation panel.
+  invalid-address page, on another address's profile and in the auto-delegation panel.
 
 ### RPC Proxy
 

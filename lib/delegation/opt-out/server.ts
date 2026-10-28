@@ -2,7 +2,7 @@ import { unstable_rethrow } from 'next/navigation';
 import { createPublicClient, http } from 'viem';
 import { mainnet } from 'viem/chains';
 
-import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
+import { DELEGATE_SCORE_CONFIG } from '@/lib/leaderboard/config';
 import { getMainnetRpcUrl } from '@/lib/wallet/config';
 
 import { OPT_OUT_CONFIG } from './config';

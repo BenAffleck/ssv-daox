@@ -1,8 +1,8 @@
 import { getAddress } from 'viem';
 import { describe, expect, it } from 'vitest';
 
-import type { Identity, ScoreRow } from '@/lib/dao-delegates/types';
 import type { DelegationEntry } from '@/lib/gnosis/types';
+import type { Identity, ScoreRow } from '@/lib/leaderboard/types';
 
 import { AUTO_DELEGATION_POOL_ADDRESS } from '../config';
 import { planDelegation, targetScoringOf } from '../logic/delegation-plan';

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, ChevronDown, FileText, Home, Menu, Split, Users, Vote, X } from 'lucide-react';
+import { Calendar, ChevronDown, FileText, Home, Menu, Trophy, Vote, X } from 'lucide-react';
 
 import SearchPalette, { SearchTrigger } from '@/components/SearchPalette';
 import WalletButton from '@/components/wallet/WalletButton';
@@ -13,10 +13,9 @@ import ThemeToggle from '@/lib/theme/ThemeToggle';
 import type { Module } from '@/lib/types';
 
 const slugIconMap: Record<string, React.ComponentType<{ size?: number }>> = {
-  delegates: Users,
+  leaderboard: Trophy,
   timeline: Calendar,
   governance: Vote,
-  delegation: Split,
 };
 
 function getIconForSlug(slug: string) {

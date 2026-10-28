@@ -40,7 +40,7 @@ export default function FilterControls({
       <div className="relative min-w-[240px] flex-1">
         <input
           type="text"
-          placeholder="Search by name, ENS, handle or address..."
+          placeholder="Search by name, ENS, handle or any address..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="filter-input pr-9"

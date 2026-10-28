@@ -2,11 +2,11 @@ import { Module, ModuleStatus } from '@/lib/types';
 
 export const modules: Module[] = [
   {
-    id: 'dao-delegates',
-    slug: 'delegates',
-    name: 'DAO Delegates',
+    id: 'leaderboard',
+    slug: 'leaderboard',
+    name: 'Leaderboard',
     description:
-      'Ranked leaderboard of active delegates with Delegate Score, voting power and cohort allocation.',
+      'Ranked delegates with Delegate Score, voting power and cohort allocation. Look up any address to open its delegation.',
     status: ModuleStatus.ACTIVE,
     sortOrder: 1,
   },
@@ -26,15 +26,6 @@ export const modules: Module[] = [
       'All active and upcoming SSV votes across every Snapshot space in one place, with participation, quorum, and AI summaries.',
     status: ModuleStatus.ACTIVE,
     sortOrder: 3,
-  },
-  {
-    id: 'dao-delegation',
-    slug: 'delegation',
-    name: 'Delegation',
-    description:
-      'Your scored addresses and their HighSignal identity siblings, with rank, score, cohort and HighSignal status.',
-    status: ModuleStatus.ACTIVE,
-    sortOrder: 4,
   },
 ];
 

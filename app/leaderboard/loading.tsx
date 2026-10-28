@@ -1,4 +1,4 @@
-import DelegatesTableSkeleton from '@/components/dao-delegates/DelegatesTableSkeleton';
+import DelegatesTableSkeleton from '@/components/leaderboard/DelegatesTableSkeleton';
 
 export default function Loading() {
   return (

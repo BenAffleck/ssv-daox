@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
-import type { Cohort, ScoreRow } from '@/lib/dao-delegates/types';
 import type { OptOutStatuses } from '@/lib/delegation/opt-out/score-api';
+import { transformDelegates } from '@/lib/leaderboard/logic/data-transformer';
+import type { Cohort, ScoreRow } from '@/lib/leaderboard/types';
 
 import DelegateRow from '../DelegateRow';
 

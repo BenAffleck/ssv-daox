@@ -2,12 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-import NextRoundPower from '@/components/dao-delegates/NextRoundPower';
+import NextRoundPower from '@/components/leaderboard/NextRoundPower';
 import { useWalletSession } from '@/components/wallet/useWalletSession';
-import { loadScoreStatus } from '@/lib/dao-delegates/api/load-status';
-import { nextUpdateEstimate } from '@/lib/dao-delegates/logic/freshness';
-import type { ScoreStatus } from '@/lib/dao-delegates/types';
-import { formatAddress } from '@/lib/dao-delegates/utils/address';
 import { SSV_GOVERNANCE_URL } from '@/lib/delegation/config';
 import { accountSwitchPrompt } from '@/lib/delegation/logic/address-overview';
 import {
@@ -19,6 +15,10 @@ import { sameAddress } from '@/lib/delegation/logic/pool';
 import { powerChangeOf } from '@/lib/delegation/logic/power-change';
 import type { OptOutStatus } from '@/lib/delegation/opt-out/score-api';
 import type { VotingPowerData } from '@/lib/gnosis/types';
+import { loadScoreStatus } from '@/lib/leaderboard/api/load-status';
+import { nextUpdateEstimate } from '@/lib/leaderboard/logic/freshness';
+import type { ScoreStatus } from '@/lib/leaderboard/types';
+import { formatAddress } from '@/lib/leaderboard/utils/address';
 
 import ConnectToDelegateButton, { PRIMARY_BUTTON } from './ConnectToDelegateButton';
 import DelegateToDaoPanel from './DelegateToDaoPanel';

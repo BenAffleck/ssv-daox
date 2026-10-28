@@ -8,7 +8,7 @@ import type { VotingPowerData } from '@/lib/gnosis/types';
 import AutoDelegationPath from '../AutoDelegationPath';
 
 const loadScoreStatus = vi.fn();
-vi.mock('@/lib/dao-delegates/api/load-status', () => ({
+vi.mock('@/lib/leaderboard/api/load-status', () => ({
   loadScoreStatus: () => loadScoreStatus(),
 }));
 

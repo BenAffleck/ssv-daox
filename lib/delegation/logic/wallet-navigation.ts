@@ -27,6 +27,6 @@ export function delegationUrlOnWalletChange(
       : null;
   }
   return previous.phase === 'connected' && sameAddress(previous.address, selected)
-    ? '/delegation'
+    ? '/leaderboard'
     : null;
 }

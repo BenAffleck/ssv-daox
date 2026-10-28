@@ -3,9 +3,9 @@
 import { useId, useState, type KeyboardEvent } from 'react';
 
 import { ClearButton } from '@/components/ClearButton';
-import { formatAddress } from '@/lib/dao-delegates/utils/address';
 import { searchDelegates, type DelegateOption } from '@/lib/delegation/logic/delegate-search';
 import { sameAddress } from '@/lib/delegation/logic/pool';
+import { formatAddress } from '@/lib/leaderboard/utils/address';
 
 interface DelegateSearchInputProps {
   id?: string;

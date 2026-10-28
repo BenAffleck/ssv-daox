@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import type { SortDirection, SortField } from '@/components/dao-delegates/TableHeader';
+import type { SortDirection, SortField } from '@/components/leaderboard/TableHeader';
 
 import { booleanParam, enumParam, pageParam, stringParam, useUrlState } from './useUrlState';
 

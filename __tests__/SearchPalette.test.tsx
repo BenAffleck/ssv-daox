@@ -12,9 +12,9 @@ vi.mock('next/navigation', () => ({
 
 const modules: Module[] = [
   {
-    id: 'dao-delegates',
-    slug: 'delegates',
-    name: 'DAO Delegates',
+    id: 'leaderboard',
+    slug: 'leaderboard',
+    name: 'Leaderboard',
     description: 'Ranked delegates leaderboard.',
     status: ModuleStatus.ACTIVE,
     sortOrder: 1,
@@ -88,7 +88,7 @@ describe('SearchPalette', () => {
 
     expect(screen.getByText('cSSV Reward Calculator')).toBeInTheDocument();
     expect(screen.queryByText('Stake Easy')).not.toBeInTheDocument();
-    expect(screen.queryByText('DAO Delegates')).not.toBeInTheDocument();
+    expect(screen.queryByText('Leaderboard')).not.toBeInTheDocument();
   });
 
   it('shows an empty state for queries with no matches', async () => {
@@ -109,7 +109,7 @@ describe('SearchPalette', () => {
     });
     await user.type(screen.getByLabelText('Search query'), 'delegates');
     await user.keyboard('{Enter}');
-    expect(pushMock).toHaveBeenCalledWith('/delegates');
+    expect(pushMock).toHaveBeenCalledWith('/leaderboard');
   });
 
   it('opens external tools in a new tab on Enter', async () => {
@@ -205,7 +205,7 @@ describe('SearchPalette votes', () => {
       fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
     });
 
-    expect(screen.getByText('DAO Delegates')).toBeInTheDocument();
+    expect(screen.getByText('Leaderboard')).toBeInTheDocument();
     expect(screen.queryByText('Votes')).not.toBeInTheDocument();
   });
 });

@@ -9,7 +9,7 @@ test.describe('Landing Page', () => {
     await expect(page.getByRole('heading', { name: 'DAOx', level: 1 })).toBeVisible();
 
     // Check that modules are displayed
-    await expect(page.getByRole('heading', { name: 'DAO Delegates' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Leaderboard' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Governance Votes' })).toBeVisible();
   });
 

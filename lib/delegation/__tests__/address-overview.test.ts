@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Identity, ScoreRow } from '@/lib/dao-delegates/types';
+import type { Identity, ScoreRow } from '@/lib/leaderboard/types';
 
 import {
   accountSwitchPrompt,

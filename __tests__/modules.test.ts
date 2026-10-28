@@ -17,10 +17,10 @@ describe('Module Data', () => {
   });
 
   it('should find module by slug', () => {
-    const module = getModuleBySlug('delegates');
+    const module = getModuleBySlug('leaderboard');
 
     expect(module).toBeDefined();
-    expect(module?.slug).toBe('delegates');
+    expect(module?.slug).toBe('leaderboard');
     expect(module?.status).toBe(ModuleStatus.ACTIVE);
   });
 
@@ -30,8 +30,8 @@ describe('Module Data', () => {
     expect(module).toBeUndefined();
   });
 
-  it('should have dao-delegates as first active module', () => {
-    const daoModule = modules.find((m) => m.slug === 'delegates');
+  it('should have the leaderboard as first active module', () => {
+    const daoModule = modules.find((m) => m.slug === 'leaderboard');
 
     expect(daoModule?.status).toBe(ModuleStatus.ACTIVE);
     expect(daoModule?.sortOrder).toBe(1);

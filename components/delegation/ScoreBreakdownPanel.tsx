@@ -1,4 +1,4 @@
-import type { ScoreBreakdown } from '@/lib/dao-delegates/logic/score-breakdown';
+import type { ScoreBreakdown } from '@/lib/leaderboard/logic/score-breakdown';
 
 import ScoreBreakdownCard from './ScoreBreakdownCard';
 

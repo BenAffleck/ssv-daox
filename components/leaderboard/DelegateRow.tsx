@@ -1,8 +1,8 @@
 import OptOutStatusBadge from '@/components/delegation/OptOutStatusBadge';
-import { Delegate, PillarKey } from '@/lib/dao-delegates/types';
 import { optOutBadgeOf } from '@/lib/delegation/logic/address-overview';
 import { formatPower } from '@/lib/delegation/logic/auto-delegation';
 import { powerChangeOf } from '@/lib/delegation/logic/power-change';
+import { Delegate, PillarKey } from '@/lib/leaderboard/types';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 
 import AddressCell from './AddressCell';

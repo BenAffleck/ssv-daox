@@ -22,7 +22,7 @@ describe('AccountMenu', () => {
     fireEvent.click(trigger);
 
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('menuitem', { name: 'Delegation profile' })).toHaveAttribute(
+    expect(screen.getByRole('menuitem', { name: 'Delegation' })).toHaveAttribute(
       'href',
       `/delegation?address=${ADDRESS}`,
     );
@@ -36,7 +36,7 @@ describe('AccountMenu', () => {
     const { trigger } = renderMenu();
     fireEvent.click(trigger);
 
-    expect(screen.getByRole('menuitem', { name: 'Delegation profile' })).toHaveFocus();
+    expect(screen.getByRole('menuitem', { name: 'Delegation' })).toHaveFocus();
   });
 
   it('disconnects and closes', () => {
@@ -77,7 +77,7 @@ describe('AccountMenu', () => {
     expect(screen.getByRole('menuitem', { name: 'Disconnect' })).toHaveFocus();
 
     fireEvent.keyDown(menu, { key: 'ArrowDown' });
-    expect(screen.getByRole('menuitem', { name: 'Delegation profile' })).toHaveFocus();
+    expect(screen.getByRole('menuitem', { name: 'Delegation' })).toHaveFocus();
   });
 
   it('copies the address', async () => {

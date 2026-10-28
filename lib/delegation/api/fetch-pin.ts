@@ -1,10 +1,10 @@
-import { fetchAllocationCap } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import {
   fetchVotingPower,
   type DelegationEntry,
   type FetchVotingPowerOptions,
   type VotingPowerData,
 } from '@/lib/gnosis';
+import { fetchAllocationCap } from '@/lib/leaderboard/api/fetch-leaderboard';
 
 import { AUTO_DELEGATION_POOL_ADDRESS, DAO_FUNDING_ADDRESS } from '../config';
 import { summarizePool, type PoolSummary } from '../logic/auto-delegation';

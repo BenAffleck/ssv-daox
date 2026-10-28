@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { loadScoreStatus } from '@/lib/dao-delegates/api/load-status';
+import { loadScoreStatus } from '@/lib/leaderboard/api/load-status';
 import {
   describeFreshness,
   formatAge,
   formatAsOf,
   statusPollDelay,
-} from '@/lib/dao-delegates/logic/freshness';
-import type { RunRef, ScoreStatus } from '@/lib/dao-delegates/types';
+} from '@/lib/leaderboard/logic/freshness';
+import type { RunRef, ScoreStatus } from '@/lib/leaderboard/types';
 
 const RETRY_MS = 5 * 60 * 1000;
 

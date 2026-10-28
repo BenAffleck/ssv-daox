@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { PILLAR_LABELS } from '@/lib/dao-delegates/config';
-import { collectHandles } from '@/lib/dao-delegates/logic/collect-handles';
-import { DELEGATES_PAGE_SIZE, paginate } from '@/lib/dao-delegates/logic/paginate';
-import { Delegate, PillarKey } from '@/lib/dao-delegates/types';
 import { useDelegateFilters } from '@/lib/hooks/useDelegateFilters';
+import { PILLAR_LABELS } from '@/lib/leaderboard/config';
+import { lookupTargetOf } from '@/lib/leaderboard/logic/address-lookup';
+import { collectHandles } from '@/lib/leaderboard/logic/collect-handles';
+import { DELEGATES_PAGE_SIZE, paginate } from '@/lib/leaderboard/logic/paginate';
+import { Delegate, PillarKey } from '@/lib/leaderboard/types';
 
+import AddressLookupLink from './AddressLookupLink';
 import DelegateRow from './DelegateRow';
 import FilterControls from './FilterControls';
 import TableHeader, { SortDirection, SortField } from './TableHeader';
@@ -127,6 +129,11 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
     return filtered;
   }, [delegates, searchQuery, showChangesOnly, showCurrentOnly, sortField, sortDirection]);
 
+  const lookupTarget = useMemo(
+    () => lookupTargetOf(searchQuery, delegates),
+    [searchQuery, delegates],
+  );
+
   const visible = useMemo(
     () => paginate(filteredDelegates, page, DELEGATES_PAGE_SIZE),
     [filteredDelegates, page],
@@ -163,13 +170,19 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
         discordHandles={discordHandles}
       />
 
-      {filteredDelegates.length === 0 ? (
-        <div className="card p-14 text-center">
-          <p className="font-body text-[15px] text-muted">
-            {searchQuery ? 'No delegates match your search' : 'No delegates found'}
-          </p>
-        </div>
+      {lookupTarget ? (
+        <AddressLookupLink target={lookupTarget} />
       ) : (
+        filteredDelegates.length === 0 && (
+          <div className="card p-14 text-center">
+            <p className="font-body text-[15px] text-muted">
+              {searchQuery ? 'No delegates match your search' : 'No delegates found'}
+            </p>
+          </div>
+        )
+      )}
+
+      {filteredDelegates.length > 0 && (
         <div className="card overflow-x-auto">
           <table className="w-full">
             <TableHeader

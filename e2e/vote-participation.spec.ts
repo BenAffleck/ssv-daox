@@ -6,11 +6,11 @@ test.describe('Vote Participation', () => {
   test.describe.configure({ timeout: DELEGATES_TEST_TIMEOUT });
 
   test('displays vote participation column in delegates table', async ({ page }) => {
-    // Navigate to dao-delegates page
-    await page.goto('/delegates', { timeout: DELEGATES_LOAD_TIMEOUT });
+    // Navigate to the leaderboard
+    await page.goto('/leaderboard', { timeout: DELEGATES_LOAD_TIMEOUT });
 
     // Wait for the table to load
-    await expect(page.getByRole('heading', { name: 'DAO Delegates' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Leaderboard' })).toBeVisible();
 
     // Assert "Votes" column header is visible
     await expect(page.getByRole('columnheader', { name: /Vote Activity/ })).toBeVisible();
@@ -21,10 +21,10 @@ test.describe('Vote Participation', () => {
   });
 
   test('percentage badge has correct tooltip', async ({ page }) => {
-    await page.goto('/delegates', { timeout: DELEGATES_LOAD_TIMEOUT });
+    await page.goto('/leaderboard', { timeout: DELEGATES_LOAD_TIMEOUT });
 
     // Wait for the table to load
-    await expect(page.getByRole('heading', { name: 'DAO Delegates' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Leaderboard' })).toBeVisible();
 
     // Find a percentage badge and check its title attribute
     const percentageBadge = page.locator('td span[title*="Voted on"]').first();

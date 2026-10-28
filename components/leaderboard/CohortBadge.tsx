@@ -1,5 +1,5 @@
-import { COHORT_LABELS } from '@/lib/dao-delegates/config';
-import type { Cohort } from '@/lib/dao-delegates/types';
+import { COHORT_LABELS } from '@/lib/leaderboard/config';
+import type { Cohort } from '@/lib/leaderboard/types';
 
 interface CohortBadgeProps {
   cohort: Cohort | null;

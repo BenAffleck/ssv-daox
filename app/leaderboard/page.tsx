@@ -1,17 +1,17 @@
 import { Suspense } from 'react';
 
-import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
-import DelegatesTableSkeleton from '@/components/dao-delegates/DelegatesTableSkeleton';
-import PoolBanner from '@/components/dao-delegates/PoolBanner';
-import ScoreFreshness from '@/components/dao-delegates/ScoreFreshness';
-import { fetchLeaderboard } from '@/lib/dao-delegates/api/fetch-leaderboard';
-import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
-import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
-import type { ScoreRow } from '@/lib/dao-delegates/types';
+import DelegatesTable from '@/components/leaderboard/DelegatesTable';
+import DelegatesTableSkeleton from '@/components/leaderboard/DelegatesTableSkeleton';
+import PoolBanner from '@/components/leaderboard/PoolBanner';
+import ScoreFreshness from '@/components/leaderboard/ScoreFreshness';
 import { fetchPoolDelegations, fetchPoolSummary } from '@/lib/delegation/api/fetch-pin';
 import { AUTO_DELEGATION_POOL_ADDRESS } from '@/lib/delegation/config';
 import { fetchOptOutStatuses } from '@/lib/delegation/opt-out/server';
 import { fetchVotingPower, type DelegationEntry } from '@/lib/gnosis';
+import { fetchLeaderboard } from '@/lib/leaderboard/api/fetch-leaderboard';
+import { DELEGATE_SCORE_CONFIG } from '@/lib/leaderboard/config';
+import { transformDelegates } from '@/lib/leaderboard/logic/data-transformer';
+import type { ScoreRow } from '@/lib/leaderboard/types';
 import { fetchActiveVoteStatus } from '@/lib/snapshot/api/fetch-active-vote-status';
 import { fetchVoteParticipation } from '@/lib/snapshot/api/fetch-vote-participation';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
@@ -20,16 +20,16 @@ import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 export const revalidate = 300;
 
 export const metadata = {
-  title: 'DAO Delegates - DAOx',
-  description: 'View and explore DAO delegates leaderboard',
+  title: 'Leaderboard - DAOx',
+  description: 'Ranked SSV DAO delegates; look up any address to open its delegation',
 };
 
 function PageHeader({ children }: { children?: React.ReactNode }) {
   return (
     <div className="mb-10">
-      <h1 className="mb-2">DAO Delegates</h1>
+      <h1 className="mb-2">Leaderboard</h1>
       <p className="text-[15px] text-muted">
-        Explore DAO delegates, their Delegate Score and cohort allocation
+        Explore DAO delegates, their Delegate Score and cohort allocation, or look up any address
       </p>
       {children}
     </div>
@@ -85,7 +85,7 @@ function prefetchedAddresses(rows: ScoreRow[], poolDelegations: DelegationEntry[
   ];
 }
 
-export default async function DaoDelegatesPage() {
+export default async function LeaderboardPage() {
   if (!DELEGATE_SCORE_CONFIG.apiBaseUrl) {
     return (
       <div className="mx-auto max-w-7xl px-6 py-10">

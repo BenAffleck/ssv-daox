@@ -1,7 +1,7 @@
 'use client';
 
-import { PILLAR_LABELS } from '@/lib/dao-delegates/config';
-import type { PillarKey } from '@/lib/dao-delegates/types';
+import { PILLAR_LABELS } from '@/lib/leaderboard/config';
+import type { PillarKey } from '@/lib/leaderboard/types';
 import { SNAPSHOT_CONFIG } from '@/lib/snapshot/config';
 
 export type SortField = 'rank' | 'score' | PillarKey | 'votingPower' | 'allocatedPower';

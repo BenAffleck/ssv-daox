@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount, useSignTypedData } from 'wagmi';
 
-import { loadScoreStatus } from '@/lib/dao-delegates/api/load-status';
-import { describeNextUpdate } from '@/lib/dao-delegates/logic/freshness';
 import {
   optOutActionFor,
   optOutBadgeOf,
@@ -20,6 +18,8 @@ import {
   type OptOutAction,
   type OptOutSubmission,
 } from '@/lib/delegation/opt-out/typed-data';
+import { loadScoreStatus } from '@/lib/leaderboard/api/load-status';
+import { describeNextUpdate } from '@/lib/leaderboard/logic/freshness';
 
 import OptOutStatusBadge from './OptOutStatusBadge';
 import StepPanel from './StepPanel';

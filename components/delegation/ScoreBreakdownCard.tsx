@@ -1,4 +1,4 @@
-import type { PillarBreakdown, ScoreBreakdown } from '@/lib/dao-delegates/logic/score-breakdown';
+import type { PillarBreakdown, ScoreBreakdown } from '@/lib/leaderboard/logic/score-breakdown';
 
 import { Row } from './VotingPowerBreakdownCard';
 

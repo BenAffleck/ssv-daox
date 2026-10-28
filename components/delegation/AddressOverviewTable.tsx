@@ -1,7 +1,7 @@
-import CohortBadge from '@/components/dao-delegates/CohortBadge';
-import DelegationStatusBadge from '@/components/dao-delegates/DelegationStatusBadge';
-import ScoreCell from '@/components/dao-delegates/ScoreCell';
-import VotingPowerBadge from '@/components/dao-delegates/VotingPowerBadge';
+import CohortBadge from '@/components/leaderboard/CohortBadge';
+import DelegationStatusBadge from '@/components/leaderboard/DelegationStatusBadge';
+import ScoreCell from '@/components/leaderboard/ScoreCell';
+import VotingPowerBadge from '@/components/leaderboard/VotingPowerBadge';
 import type { OverviewAddress } from '@/lib/delegation/logic/address-overview';
 import { sameAddress } from '@/lib/delegation/logic/pool';
 import type { VotingPowerData } from '@/lib/gnosis/types';

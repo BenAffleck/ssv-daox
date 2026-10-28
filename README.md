@@ -5,7 +5,7 @@ A modular hub for SSV Network DAO members, providing governance tools and insigh
 ## Features
 
 - **Modular Architecture**: Plugin-based system for easy feature expansion
-- **DAO Delegates Module**: Leaderboard and governance insights (coming soon)
+- **Leaderboard Module**: Ranked delegates and address lookup into the Delegation page
 - **Responsive Design**: Mobile-first, accessible UI built with Tailwind CSS
 - **Type-Safe**: Full TypeScript coverage with strict mode
 - **Well-Tested**: Comprehensive unit and E2E test coverage

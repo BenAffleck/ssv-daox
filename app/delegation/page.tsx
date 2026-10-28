@@ -2,8 +2,6 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Trophy } from 'lucide-react';
 
-import ScoreFreshness from '@/components/dao-delegates/ScoreFreshness';
-import AddressLookupForm from '@/components/delegation/AddressLookupForm';
 import AddressOverviewTable from '@/components/delegation/AddressOverviewTable';
 import AutoDelegationPath from '@/components/delegation/AutoDelegationPath';
 import ClaimIntroPanel from '@/components/delegation/ClaimIntroPanel';
@@ -17,11 +15,7 @@ import OwnerOnly from '@/components/delegation/OwnerOnly';
 import ScoreBreakdownPanel from '@/components/delegation/ScoreBreakdownPanel';
 import VotingPowerPanel from '@/components/delegation/VotingPowerPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
-import { fetchLeaderboard } from '@/lib/dao-delegates/api/fetch-leaderboard';
-import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
-import { scoreBreakdownOf } from '@/lib/dao-delegates/logic/score-breakdown';
-import type { ScoreRow } from '@/lib/dao-delegates/types';
-import { formatAddress } from '@/lib/dao-delegates/utils/address';
+import ScoreFreshness from '@/components/leaderboard/ScoreFreshness';
 import { fetchPin, fetchPoolRecipients } from '@/lib/delegation/api/fetch-pin';
 import { resolveEnsName, type EnsResolution } from '@/lib/delegation/api/resolve-ens';
 import { AUTO_DELEGATION_POOL_ADDRESS, getHighSignalConfig } from '@/lib/delegation/config';
@@ -33,7 +27,7 @@ import {
   type AddressOverview,
 } from '@/lib/delegation/logic/address-overview';
 import { autoDelegationView } from '@/lib/delegation/logic/auto-delegation';
-import { delegateOptionsOf, type DelegateOption } from '@/lib/delegation/logic/delegate-search';
+import { delegateOptionsOf } from '@/lib/delegation/logic/delegate-search';
 import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
 import { normalizedEnsName } from '@/lib/delegation/logic/ens';
 import { sameAddress } from '@/lib/delegation/logic/pool';
@@ -43,6 +37,11 @@ import {
   getOptOutService,
 } from '@/lib/delegation/opt-out/server';
 import type { DelegationEntry } from '@/lib/gnosis';
+import { fetchLeaderboard } from '@/lib/leaderboard/api/fetch-leaderboard';
+import { DELEGATE_SCORE_CONFIG } from '@/lib/leaderboard/config';
+import { scoreBreakdownOf } from '@/lib/leaderboard/logic/score-breakdown';
+import type { ScoreRow } from '@/lib/leaderboard/types';
+import { formatAddress } from '@/lib/leaderboard/utils/address';
 import {
   fetchSnapshotProfile,
   snapshotAvatarUrl,
@@ -130,33 +129,24 @@ function lookupProblem(resolution: EnsResolution | null): string {
   }
 }
 
-function LookupCard({
+function LookupProblem({
   address,
   resolution,
-  delegates,
 }: {
   address: string;
   resolution: EnsResolution | null;
-  delegates: DelegateOption[];
 }) {
   return (
     <div className="card-empty">
       <p className="font-body text-[15px] text-foreground">
-        {address ? (
-          <>
-            <code className="font-mono text-[13px]">{address}</code> {lookupProblem(resolution)}
-          </>
-        ) : (
-          'Look up an address'
-        )}
+        <code className="font-mono text-[13px]">{address}</code> {lookupProblem(resolution)}
       </p>
-      <AddressLookupForm defaultValue={address} delegates={delegates} />
       <p className="mt-4 text-[13px] text-muted">
-        Or pick one from the{' '}
-        <Link href="/delegates" className="text-primary hover:underline">
-          DAO Delegates
+        Search the{' '}
+        <Link href="/leaderboard" className="text-primary hover:underline">
+          Leaderboard
         </Link>{' '}
-        leaderboard.
+        for a delegate or another address.
       </p>
     </div>
   );
@@ -198,6 +188,10 @@ export default async function DelegationPage({
 
   const { address: param } = await searchParams;
   const address = (Array.isArray(param) ? param[0] : param)?.trim() ?? '';
+  // The leaderboard is the lookup.
+  if (!address) {
+    redirect('/leaderboard');
+  }
 
   if (!isAddress(address)) {
     const ensName = normalizedEnsName(address);
@@ -205,17 +199,12 @@ export default async function DelegationPage({
     if (resolution?.status === 'resolved') {
       redirect(`/delegation?address=${resolution.address}`);
     }
-    const { rows } = await fetchLeaderboard();
     return (
       <div className="mx-auto max-w-7xl px-6 py-10">
         <PageHeader>
           <WalletSection address={address} overview={null} />
         </PageHeader>
-        <LookupCard
-          address={address}
-          resolution={resolution}
-          delegates={delegateOptionsOf(rows, targetScoringOf(rows, {}))}
-        />
+        <LookupProblem address={address} resolution={resolution} />
       </div>
     );
   }

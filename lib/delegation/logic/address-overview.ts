@@ -1,4 +1,4 @@
-import type { Cohort, Identity, ScoreRow } from '@/lib/dao-delegates/types';
+import type { Cohort, Identity, ScoreRow } from '@/lib/leaderboard/types';
 
 import type { HighSignalConfig } from '../config';
 import type { OptOutStatus, OptOutStatuses } from '../opt-out/score-api';

@@ -13,7 +13,7 @@ describe('delegationUrlOnWalletChange', () => {
     expect(delegationUrlOnWalletChange(null, connected(OWN), '')).toBeNull();
   });
 
-  it('opens the wallet address after connecting on the lookup page', () => {
+  it('opens the wallet address after connecting on a failed lookup', () => {
     expect(delegationUrlOnWalletChange(disconnected, connected(OWN), '')).toBe(
       `/delegation?address=${OWN}`,
     );
@@ -35,9 +35,9 @@ describe('delegationUrlOnWalletChange', () => {
     ).toBeNull();
   });
 
-  it('returns to the lookup page after disconnecting from the viewed address', () => {
+  it('returns to the leaderboard after disconnecting from the viewed address', () => {
     expect(delegationUrlOnWalletChange(connected(OWN), disconnected, OWN.toLowerCase())).toBe(
-      '/delegation',
+      '/leaderboard',
     );
   });
 

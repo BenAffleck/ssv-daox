@@ -4,12 +4,12 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useWalletSession } from '@/components/wallet/useWalletSession';
-import { formatAddress } from '@/lib/dao-delegates/utils/address';
 import { accountSwitchPrompt, isAddress } from '@/lib/delegation/logic/address-overview';
 import {
   delegationUrlOnWalletChange,
   type SettledWallet,
 } from '@/lib/delegation/logic/wallet-navigation';
+import { formatAddress } from '@/lib/leaderboard/utils/address';
 
 import OpenOwnAddressLink from './OpenOwnAddressLink';
 

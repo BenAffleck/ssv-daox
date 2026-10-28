@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Check, ChevronDown, Copy, ExternalLink, LogOut, UserRound } from 'lucide-react';
 import { mainnet } from 'viem/chains';
 
-import { formatAddress } from '@/lib/dao-delegates/utils/address';
+import { formatAddress } from '@/lib/leaderboard/utils/address';
 
 interface AccountMenuProps {
   address: string;
@@ -154,7 +154,7 @@ export default function AccountMenu({
             className={ITEM}
           >
             <UserRound size={14} aria-hidden />
-            Delegation profile
+            Delegation
           </Link>
           <button
             type="button"

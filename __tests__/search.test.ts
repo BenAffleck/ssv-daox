@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSearchIndex, scoreSearchItem, searchItems } from '@/lib/search';
+import { buildSearchIndex, scoreSearchItem, searchItems, SUBSEQUENCE_SCORE } from '@/lib/search';
 import { ExternalTool, ExternalToolCategory, Module, ModuleStatus } from '@/lib/types';
 
 const modules: Module[] = [
   {
-    id: 'dao-delegates',
-    slug: 'delegates',
-    name: 'DAO Delegates',
+    id: 'leaderboard',
+    slug: 'leaderboard',
+    name: 'Leaderboard',
     description: 'Ranked leaderboard of active delegates with voting power.',
     status: ModuleStatus.ACTIVE,
     sortOrder: 1,
@@ -56,13 +56,13 @@ describe('buildSearchIndex', () => {
 
   it('flags external tools with external=true and modules with external=false', () => {
     const index = buildSearchIndex(modules, tools);
-    expect(index.find((i) => i.id === 'module:dao-delegates')?.external).toBe(false);
+    expect(index.find((i) => i.id === 'module:leaderboard')?.external).toBe(false);
     expect(index.find((i) => i.id === 'tool:stakeeasy')?.external).toBe(true);
   });
 
   it('routes active modules to /<slug> and coming-soon modules to #', () => {
     const index = buildSearchIndex(modules, tools);
-    expect(index.find((i) => i.id === 'module:dao-delegates')?.url).toBe('/delegates');
+    expect(index.find((i) => i.id === 'module:leaderboard')?.url).toBe('/leaderboard');
     expect(index.find((i) => i.id === 'module:governance-proposals')?.url).toBe('#');
   });
 
@@ -107,7 +107,7 @@ describe('searchItems', () => {
 
   it('filters out non-matching items', () => {
     const results = searchItems(index, 'delegate');
-    expect(results.some((r) => r.item.name === 'DAO Delegates')).toBe(true);
+    expect(results.some((r) => r.item.name === 'Leaderboard')).toBe(true);
     expect(results.some((r) => r.item.name === 'cSSV Reward Calculator')).toBe(false);
   });
 
@@ -122,13 +122,13 @@ describe('searchItems', () => {
   });
 
   it('drops loose subsequence-only matches when at least one direct hit exists', () => {
-    // "delegate" hits "DAO Delegates" directly. "Stake Easy" can be reached via
+    // "delegate" hits the "Leaderboard" description directly. "Stake Easy" can be reached via
     // a sloppy subsequence walk (d→advisor, e→explore, l→explore, e→explore,
     // g→staking, a→stakeeasy, t→simulator, e→stakeeasy) — those should be
     // hidden once the user has a real match.
     const results = searchItems(index, 'delegate');
-    expect(results.some((r) => r.item.name === 'DAO Delegates')).toBe(true);
-    expect(results.every((r) => r.score >= 1000)).toBe(true);
+    expect(results.some((r) => r.item.name === 'Leaderboard')).toBe(true);
+    expect(results.every((r) => r.score > SUBSEQUENCE_SCORE)).toBe(true);
     expect(results.some((r) => r.item.name === 'Stake Easy')).toBe(false);
   });
 

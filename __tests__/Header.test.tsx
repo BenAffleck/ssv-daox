@@ -20,9 +20,9 @@ vi.mock('@/lib/data/modules', () => {
   const COMING_SOON = 'coming_soon';
   const all = [
     {
-      id: 'dao-delegates',
-      slug: 'delegates',
-      name: 'DAO Delegates',
+      id: 'leaderboard',
+      slug: 'leaderboard',
+      name: 'Leaderboard',
       description: '',
       status: ACTIVE,
       sortOrder: 1,
@@ -106,7 +106,7 @@ describe('Header', () => {
     );
 
     expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('DAO Delegates')).toBeInTheDocument();
+    expect(screen.getByText('Leaderboard')).toBeInTheDocument();
     expect(screen.getByText('DAO Timeline')).toBeInTheDocument();
   });
 

@@ -1,7 +1,7 @@
 import { getAddress, zeroAddress, type Address } from 'viem';
 
-import type { ScoreRow } from '@/lib/dao-delegates/types';
 import type { DelegationEntry } from '@/lib/gnosis/types';
+import type { ScoreRow } from '@/lib/leaderboard/types';
 
 import type { OptOutStatuses } from '../opt-out/score-api';
 import { isAddress, optOutBadgeOf } from './address-overview';

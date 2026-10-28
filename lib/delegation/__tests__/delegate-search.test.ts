@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ScoreRow } from '@/lib/dao-delegates/types';
+import type { ScoreRow } from '@/lib/leaderboard/types';
 
 import { delegateOptionsOf, searchDelegates } from '../logic/delegate-search';
 import type { TargetScoring } from '../logic/delegation-plan';
