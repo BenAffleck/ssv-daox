@@ -348,7 +348,7 @@ The primary implemented module. Shows a ranked delegate leaderboard with Delegat
 ### Data Pipeline
 
 ```
-1. Fetch the leaderboard + health from the Delegate Score API (parallel)
+1. Fetch the leaderboard from the Delegate Score API
 2. Fetch delegation recipients from the pool pin (Split Delegation API) (parallel)
 3. Fetch vote participation from Snapshot (parallel)
 4. Fetch voting power (Gnosis) for DAO delegation recipients and cohort holders
@@ -358,7 +358,7 @@ The primary implemented module. Shows a ranked delegate leaderboard with Delegat
 6. Pass to client for filtering/sorting
 ```
 
-The page awaits only the leaderboard and health, so the header renders
+The page awaits only the leaderboard, so the header renders
 first. The pool banner and the table stream in behind their own `Suspense`
 boundaries; the table's fallback is `DelegatesTableSkeleton`, shared with
 `loading.tsx`. Voting power is the slow part: one Gnosis `pin` request per
@@ -393,9 +393,22 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   `run_id` change while paging fails the request.
 - `fetchAllocationCap()` in the same file reads the latest run's `cap` from
   `GET /v1/allocation` for the pool banner. It throws on failure.
-- `GET /health` answers `503` with the same body when data is stale or absent.
-  The page then shows the as-of and age as a warning but still renders.
-- The page header cites the `as_of` the rows were read from, not the `run_id`.
+- Run reads (`/v1/leaderboard`, `/v1/allocation`) are cached 5 minutes under
+  the `SCORE_DATA_TAG` tag. Each carries `run_id`, `as_of` and `published_at`.
+- `ScoreFreshness` (client) shows how fresh the data is: in the `/delegates`
+  header and the `/delegation` footer. It renders "Data for {as_of}, updated
+  {age}" from the page's `published_at`, then polls `/api/score-status`
+  (a proxy of `GET /v1/status`, cached 30 s). `describeFreshness()` in
+  `lib/dao-delegates/logic/freshness.ts` words it, in priority order: updating
+  now, latest update failed, data + next update, no data yet. ETAs are local
+  time and read as estimates; a passed ETA reads "Update is taking longer than
+  usual". `statusPollDelay()` polls every minute while a run is in progress or
+  within 15 minutes of an ETA, else every 5. The schedule is never hard-coded;
+  it comes from `next.starts_at`. `/health` is not used (it is for monitoring).
+- On a new `latest.run_id`, the status route expires `SCORE_DATA_TAG` (compared
+  with the cached allocation's `run_id`) and `ScoreFreshness` calls
+  `router.refresh()`, so the views update without polling the data endpoints.
+- The opt-out success message adds the next update's ETA from the same status.
 - Scores are unrounded in the API and rounded to one decimal for display.
 - Each pillar (community, holdings, votes) has its own sortable column next to
   Score. A pillar with `missing_<pillar>: true` shows as "n/a" and sorts last;

@@ -92,16 +92,29 @@ export interface Identity {
 export interface RunRef {
   runId: number;
   asOf: string;
+  /** When the run went live. */
+  publishedAt: string;
 }
 
 export interface Leaderboard extends RunRef {
   rows: ScoreRow[];
 }
 
-export interface ScoreHealth {
-  status: 'ok' | 'stale' | 'no data';
-  run_id: number | null;
-  as_of: string | null;
-  latest_published_as_of: string | null;
-  age_hours: number | null;
+/**
+ * `GET /v1/status`. Timestamps are ISO 8601 instants; `as_of` is a UTC day.
+ * Every `eta` is an estimate and `null` until a run has published.
+ */
+export interface ScoreStatus {
+  /** The data served by default; `null` before the first published run. */
+  latest: { run_id: number; as_of: string; started_at: string; finished_at: string } | null;
+  running: { run_id: number; as_of: string; started_at: string; eta: string | null } | null;
+  /** The latest finished run failed; clears once a later run publishes. */
+  last_failure: {
+    run_id: number;
+    as_of: string;
+    started_at: string;
+    finished_at: string;
+    reason: 'abandoned' | 'error';
+  } | null;
+  next: { as_of: string; starts_at: string; eta: string | null };
 }

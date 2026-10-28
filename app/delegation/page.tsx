@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Trophy } from 'lucide-react';
 
+import ScoreFreshness from '@/components/dao-delegates/ScoreFreshness';
 import AddressLookupForm from '@/components/delegation/AddressLookupForm';
 import AddressOverviewTable from '@/components/delegation/AddressOverviewTable';
 import AutoDelegationPath from '@/components/delegation/AutoDelegationPath';
@@ -338,9 +339,16 @@ export default async function DelegationPage({
           />
         </section>
       </OwnerOnly>
-      <p className="mt-10 text-right text-[12px] text-muted">
-        Live mainnet data. Scores as of {leaderboard.asOf} UTC.
-      </p>
+      <div className="mt-10 text-right text-[12px] text-muted">
+        <p>Live mainnet data.</p>
+        <ScoreFreshness
+          run={{
+            runId: leaderboard.runId,
+            asOf: leaderboard.asOf,
+            publishedAt: leaderboard.publishedAt,
+          }}
+        />
+      </div>
     </div>
   );
 }

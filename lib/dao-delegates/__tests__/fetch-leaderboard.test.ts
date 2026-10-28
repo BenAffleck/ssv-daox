@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchAllocationCap, fetchLeaderboard, fetchScoreHealth } from '../api/fetch-leaderboard';
+import { fetchAllocationCap, fetchLeaderboard } from '../api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '../config';
 import type { ScoreRow } from '../types';
 
@@ -107,36 +107,6 @@ describe('fetchLeaderboard', () => {
     });
 
     await expect(fetchLeaderboard()).rejects.toThrow('404: No published run');
-  });
-});
-
-describe('fetchScoreHealth', () => {
-  beforeEach(() => {
-    mockFetch.mockReset();
-    vi.stubEnv('DELEGATE_SCORE_API_URL', BASE_URL);
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it('reads the body of a 503 as stale data', async () => {
-    const body = {
-      status: 'stale',
-      run_id: 8,
-      as_of: '2026-09-19',
-      latest_published_as_of: '2026-09-19',
-      age_hours: 60,
-    };
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 503, json: async () => body });
-
-    expect(await fetchScoreHealth()).toEqual(body);
-  });
-
-  it('returns null when the API is unreachable', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
-
-    expect(await fetchScoreHealth()).toBeNull();
   });
 });
 

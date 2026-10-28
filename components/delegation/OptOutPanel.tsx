@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount, useSignTypedData } from 'wagmi';
 
+import { loadScoreStatus } from '@/lib/dao-delegates/api/load-status';
+import { describeNextUpdate } from '@/lib/dao-delegates/logic/freshness';
 import {
   optOutActionFor,
   optOutBadgeOf,
@@ -77,8 +79,10 @@ async function postSubmission(submission: OptOutSubmission): Promise<Response> {
   });
 }
 
-function successMessage(action: OptOutAction): string {
-  return `${ACTION_LABELS[action]} requested. It takes effect at the next score run and can take up to 24 hours.`;
+async function successMessage(action: OptOutAction): Promise<string> {
+  const requested = `${ACTION_LABELS[action]} requested. It takes effect at the next score run.`;
+  const status = await loadScoreStatus();
+  return status ? `${requested} ${describeNextUpdate(status, new Date())}` : requested;
 }
 
 function formatUtc(iso: string): string {
@@ -175,7 +179,7 @@ export default function OptOutPanel({
         setOutcome({ kind: 'error', message: await errorMessage(response) });
         return;
       }
-      setOutcome({ kind: 'success', message: successMessage(request.action) });
+      setOutcome({ kind: 'success', message: await successMessage(request.action) });
       router.refresh();
     } catch {
       setOutcome({ kind: 'error', message: 'The check failed. Try again.' });
@@ -209,7 +213,7 @@ export default function OptOutPanel({
         setOutcome({ kind: 'error', message: await errorMessage(response) });
         return;
       }
-      setOutcome({ kind: 'success', message: successMessage(action) });
+      setOutcome({ kind: 'success', message: await successMessage(action) });
       router.refresh();
     } catch (error) {
       setOutcome({

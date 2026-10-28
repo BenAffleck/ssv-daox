@@ -3,7 +3,8 @@ import { Suspense } from 'react';
 import DelegatesTable from '@/components/dao-delegates/DelegatesTable';
 import DelegatesTableSkeleton from '@/components/dao-delegates/DelegatesTableSkeleton';
 import PoolBanner from '@/components/dao-delegates/PoolBanner';
-import { fetchLeaderboard, fetchScoreHealth } from '@/lib/dao-delegates/api/fetch-leaderboard';
+import ScoreFreshness from '@/components/dao-delegates/ScoreFreshness';
+import { fetchLeaderboard } from '@/lib/dao-delegates/api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '@/lib/dao-delegates/config';
 import { transformDelegates } from '@/lib/dao-delegates/logic/data-transformer';
 import type { ScoreRow } from '@/lib/dao-delegates/types';
@@ -98,21 +99,15 @@ export default async function DaoDelegatesPage() {
     );
   }
 
-  const [leaderboard, health] = await Promise.all([fetchLeaderboard(), fetchScoreHealth()]);
-
-  const isStale = health !== null && health.status !== 'ok';
+  const { runId, asOf, publishedAt, rows } = await fetchLeaderboard();
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
       <PageHeader>
-        {isStale && (
-          <p className="mt-2 text-[13px] text-warning">
-            Score data is {health.status}
-            {health.as_of && ` (latest as-of ${health.as_of}`}
-            {health.age_hours !== null && `, ${Math.round(health.age_hours)} h old`}
-            {health.as_of && ')'}. Figures may be out of date.
-          </p>
-        )}
+        <ScoreFreshness
+          run={{ runId, asOf, publishedAt }}
+          className="mt-2 text-[13px] text-muted"
+        />
       </PageHeader>
 
       {/* Both wait on Gnosis pin requests, so they stream in behind the header. */}
@@ -121,12 +116,8 @@ export default async function DaoDelegatesPage() {
       </Suspense>
 
       <Suspense fallback={<DelegatesTableSkeleton />}>
-        <DelegatesTableSection rows={leaderboard.rows} />
+        <DelegatesTableSection rows={rows} />
       </Suspense>
-
-      <p className="mt-10 text-right text-[12px] text-muted">
-        Scores as of {leaderboard.asOf} UTC.
-      </p>
     </div>
   );
 }

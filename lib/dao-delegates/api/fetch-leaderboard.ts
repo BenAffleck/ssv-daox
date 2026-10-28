@@ -1,21 +1,29 @@
 import { DELEGATE_SCORE_CONFIG } from '../config';
-import type { Leaderboard, ScoreHealth, ScoreRow } from '../types';
+import type { Leaderboard, ScoreRow, ScoreStatus } from '../types';
+
+/** Tags every cached run read, so a new run can expire them together. */
+export const SCORE_DATA_TAG = 'delegate-score-data';
 
 interface LeaderboardPage {
   run_id: number;
   as_of: string;
+  published_at: string;
   rows: ScoreRow[];
 }
 
 interface AllocationSummary {
+  run_id: number;
   /** `null` when the run is uncapped. */
   cap: number | null;
 }
 
-async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${DELEGATE_SCORE_CONFIG.apiBaseUrl}${path}`, {
-    next: { revalidate: DELEGATE_SCORE_CONFIG.cacheSeconds },
-  });
+async function getJson<T>(
+  path: string,
+  cache: RequestInit = {
+    next: { revalidate: DELEGATE_SCORE_CONFIG.cacheSeconds, tags: [SCORE_DATA_TAG] },
+  },
+): Promise<T> {
+  const response = await fetch(`${DELEGATE_SCORE_CONFIG.apiBaseUrl}${path}`, cache);
 
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { detail?: unknown } | null;
@@ -49,26 +57,18 @@ export async function fetchLeaderboard(): Promise<Leaderboard> {
     rows.push(...last.rows);
   }
 
-  return { runId: first.run_id, asOf: first.as_of, rows };
+  return { runId: first.run_id, asOf: first.as_of, publishedAt: first.published_at, rows };
 }
 
-/**
- * Fetches data freshness. `/health` answers 503 with the same body when the
- * data is stale or absent. Returns `null` when the API is unreachable.
- */
-export async function fetchScoreHealth(): Promise<ScoreHealth | null> {
-  try {
-    const response = await fetch(`${DELEGATE_SCORE_CONFIG.apiBaseUrl}/health`, {
-      next: { revalidate: DELEGATE_SCORE_CONFIG.cacheSeconds },
-    });
-    if (!response.ok && response.status !== 503) {
-      return null;
-    }
-    return (await response.json()) as ScoreHealth;
-  } catch (error) {
-    console.error('[Delegate Score API] Health check failed:', error);
-    return null;
-  }
+/** The latest, running, failed and next run. Cached for 30 seconds across visitors. */
+export async function fetchScoreStatus(): Promise<ScoreStatus> {
+  return getJson<ScoreStatus>('/v1/status', { next: { revalidate: 30 } });
+}
+
+/** The run the cached score data was read from. */
+export async function fetchCachedRunId(): Promise<number> {
+  const { run_id } = await getJson<AllocationSummary>('/v1/allocation');
+  return run_id;
 }
 
 /** The cap frozen in the latest run: the most pool power it allocates. `null` when uncapped. */
