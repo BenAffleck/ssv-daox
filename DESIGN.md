@@ -326,7 +326,7 @@ high-contrast box.
 
 ### Range brush (timeline date filter)
 
-A two-handle brush over an event-density histogram, the DAO Timeline's date
+A two-handle brush over an event-density histogram, the Timeline's date
 filter. Lives in a standard `.card` with `p-5`.
 
 - **Track surface:** the strip is `h-16`; the region before "now" sits on

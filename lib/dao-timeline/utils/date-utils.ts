@@ -1,5 +1,5 @@
 /**
- * Date utilities for the DAO Timeline module
+ * Date utilities for the Timeline module
  */
 
 /**

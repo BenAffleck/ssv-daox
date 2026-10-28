@@ -7,7 +7,7 @@ import { fetchGovernanceProposals } from '@/lib/snapshot/api/fetch-governance-pr
 import { getGovernanceSpaces } from '@/lib/snapshot/config';
 
 export const metadata = {
-  title: 'Governance Votes - DAOx',
+  title: 'Governance - DAOx',
   description:
     'All active and upcoming SSV governance votes across every Snapshot space in one place.',
 };
@@ -21,7 +21,7 @@ export default async function GovernanceVotesPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
       <div className="mb-10">
-        <h1 className="mb-2">Governance Votes</h1>
+        <h1 className="mb-2">Governance</h1>
         <p className="text-[15px] text-muted">
           Every active and upcoming vote across the SSV DAO&apos;s Snapshot spaces, at a glance.
         </p>

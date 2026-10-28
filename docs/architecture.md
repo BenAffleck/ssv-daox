@@ -42,12 +42,12 @@ ssv-daox/
 │   │       └── route.ts      # GET /api/vote-index
 │   ├── leaderboard/          # Leaderboard module (/delegates redirects here)
 │   │   └── page.tsx          # Server component (data orchestration)
-│   ├── dao-timeline/         # DAO Timeline module
+│   ├── dao-timeline/         # Timeline module
 │   │   └── page.tsx          # Server component (event aggregation)
 │   ├── delegation/           # Delegation module (/delegation?address=0x… or name.eth; no nav item)
 │   │   ├── page.tsx          # Server component (address overview)
 │   │   └── error.tsx         # Error boundary
-│   └── governance/           # Governance Votes module
+│   └── governance/           # Governance module
 │       ├── page.tsx          # Server component (cross-space aggregation)
 │       └── loading.tsx       # Loading skeleton
 │
@@ -94,7 +94,7 @@ ssv-daox/
 │   │   ├── OptOutPanel.tsx          # Client: EIP-712 opt-out / opt-in + Demo banner
 │   │   ├── OptOutStatusBadge.tsx
 │   │   └── ClaimStatusBadge.tsx
-│   └── dao-timeline/         # DAO Timeline components
+│   └── dao-timeline/         # Timeline components
 │       ├── Timeline.tsx          # Client: main container + AI state
 │       ├── TimelineFilterControls.tsx
 │       ├── TimelineRangeBrush.tsx # Client: date range brush
@@ -131,7 +131,7 @@ ssv-daox/
 │   │   ├── config.ts         # Server-only MAINNET_RPC_URL, proxy path
 │   │   ├── rpc-proxy.ts      # Method allowlist + forwarding (DI fetch)
 │   │   └── wagmi-config.ts   # Client: mainnet wagmi config + connectors
-│   ├── dao-timeline/         # DAO Timeline logic
+│   ├── dao-timeline/         # Timeline logic
 │   │   ├── types.ts          # Event types, sources
 │   │   ├── config.ts         # Source configuration
 │   │   ├── api/              # Source fetchers, registry
@@ -586,7 +586,7 @@ SNAPSHOT_DELEGATION_SPACE_FILTER=ssv.dao.eth
 
 ---
 
-## DAO Timeline Module
+## Timeline Module
 
 Displays events from multiple calendar sources in a chronological timeline view. Supports ICS calendars and Snapshot governance proposals.
 
@@ -1522,7 +1522,7 @@ SAFE_TX_SERVICE_URL=https://api.safe.global/tx-service/eth
 
 ---
 
-## Governance Votes Module ("Votes at a Glance")
+## Governance Module ("Votes at a Glance")
 
 A consolidated, read-only view of every active and upcoming SSV governance vote
 across all five Snapshot spaces. Route: `/governance` (module `dao-governance`).

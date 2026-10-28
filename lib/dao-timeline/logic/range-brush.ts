@@ -1,5 +1,5 @@
 /**
- * Range brush logic for the DAO Timeline date filter.
+ * Range brush logic for the Timeline date filter.
  *
  * The brush works in whole-day offsets relative to today (0 = today,
  * negative = past) rather than absolute dates. The control is anchored at

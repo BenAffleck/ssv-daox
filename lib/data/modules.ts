@@ -13,7 +13,7 @@ export const modules: Module[] = [
   {
     id: 'dao-timeline',
     slug: 'timeline',
-    name: 'DAO Timeline',
+    name: 'Timeline',
     description: 'Visual timeline of governance events, proposals, and key DAO milestones.',
     status: ModuleStatus.ACTIVE,
     sortOrder: 2,
@@ -21,7 +21,7 @@ export const modules: Module[] = [
   {
     id: 'dao-governance',
     slug: 'governance',
-    name: 'Governance Votes',
+    name: 'Governance',
     description:
       'All active and upcoming SSV votes across every Snapshot space in one place, with participation, quorum, and AI summaries.',
     status: ModuleStatus.ACTIVE,

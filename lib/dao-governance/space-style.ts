@@ -1,5 +1,5 @@
 /**
- * Per-space visual language for the Governance Votes view.
+ * Per-space visual language for the Governance view.
  *
  * Each governance space gets one semantic dot colour, shared by the card's
  * space label and the filter chip, so a space is recognizable at a glance.

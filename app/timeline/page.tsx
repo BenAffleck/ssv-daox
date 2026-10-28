@@ -8,7 +8,7 @@ import { serializeEvents } from '@/lib/dao-timeline/logic/event-transformer';
 import { fetchTimelineProposals } from '@/lib/snapshot/api/fetch-timeline-proposals';
 
 export const metadata = {
-  title: 'DAO Timeline - DAOx',
+  title: 'Timeline - DAOx',
   description: 'View upcoming DAO events and calendar',
 };
 
@@ -51,7 +51,7 @@ export default async function DaoTimelinePage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
       <div className="mb-10">
-        <h1 className="mb-2">DAO Timeline</h1>
+        <h1 className="mb-2">Timeline</h1>
         <p className="text-[15px] text-muted">
           Upcoming events and important dates for the DAO community
         </p>

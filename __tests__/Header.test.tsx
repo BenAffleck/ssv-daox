@@ -30,7 +30,7 @@ vi.mock('@/lib/data/modules', () => {
     {
       id: 'dao-timeline',
       slug: 'timeline',
-      name: 'DAO Timeline',
+      name: 'Timeline',
       description: '',
       status: ACTIVE,
       sortOrder: 2,
@@ -107,7 +107,7 @@ describe('Header', () => {
 
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getByText('Leaderboard')).toBeInTheDocument();
-    expect(screen.getByText('DAO Timeline')).toBeInTheDocument();
+    expect(screen.getByText('Timeline')).toBeInTheDocument();
   });
 
   it('renders More button for coming-soon modules', () => {

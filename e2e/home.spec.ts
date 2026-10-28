@@ -10,7 +10,7 @@ test.describe('Landing Page', () => {
 
     // Check that modules are displayed
     await expect(page.getByRole('heading', { name: 'Leaderboard' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Governance Votes' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Governance' })).toBeVisible();
   });
 
   test('displays the External Tools section', async ({ page }) => {
