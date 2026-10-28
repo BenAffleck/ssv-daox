@@ -113,7 +113,10 @@ export default function AutoDelegationPath({
   );
   const phase = useSubmissionPhase(submission);
   const indexed = state.kind === 'already-delegating';
-  const gaveUp = useRefreshWhile((phase === 'confirmed' || phase === 'proposed') && !indexed);
+  const gaveUp = useRefreshWhile(
+    (phase === 'confirmed' || phase === 'proposed') && !indexed,
+    address,
+  );
 
   // Once the indexed delegation shows the write, the remembered status has done its job.
   useEffect(() => {

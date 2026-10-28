@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { createPublicClient, http } from 'viem';
 import { mainnet } from 'viem/chains';
 
@@ -29,15 +30,26 @@ export async function resolveEnsName(name: string): Promise<EnsResolution> {
   }
 }
 
+/** Primary names change rarely, and the lookup sits on the Delegation page's critical path. */
+const REVERSE_ENS_CACHE_SECONDS = 3600;
+
+// A failed lookup throws, so it isn't cached. The RPC URL holds a key, so it stays out of the cache key.
+const cachedReverseEnsName = unstable_cache(
+  async (address: string) => {
+    const client = createPublicClient({ chain: mainnet, transport: http(getMainnetRpcUrl()) });
+    return client.getEnsName({ address: address as `0x${string}` });
+  },
+  ['reverse-ens-name'],
+  { revalidate: REVERSE_ENS_CACHE_SECONDS },
+);
+
 /** The primary ENS name of `address` on mainnet, or `null` when it has none or the lookup fails. */
 export async function reverseEnsName(address: string): Promise<string | null> {
-  const rpcUrl = getMainnetRpcUrl();
-  if (!rpcUrl) {
+  if (!getMainnetRpcUrl()) {
     return null;
   }
   try {
-    const client = createPublicClient({ chain: mainnet, transport: http(rpcUrl) });
-    return await client.getEnsName({ address: address as `0x${string}` });
+    return await cachedReverseEnsName(address.toLowerCase());
   } catch (error) {
     console.error(
       'ENS reverse lookup failed:',

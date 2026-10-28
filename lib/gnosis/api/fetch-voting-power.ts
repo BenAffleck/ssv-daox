@@ -11,6 +11,11 @@ export interface FetchVotingPowerOptions {
   fresh?: boolean;
 }
 
+/** Tags an address's cached pin, so a delegation write can expire it. */
+export function pinTag(address: string): string {
+  return `gnosis-pin:${address.toLowerCase()}`;
+}
+
 /**
  * Fetches voting power for a single address
  * @param address - The delegate address to fetch voting power for
@@ -32,7 +37,9 @@ async function fetchSingleVotingPower(
       },
       body: JSON.stringify(GNOSIS_CONFIG.strategyPayload),
       signal: controller.signal,
-      ...(fresh ? { cache: 'no-store' } : { next: { revalidate: GNOSIS_CONFIG.cacheSeconds } }),
+      ...(fresh
+        ? { cache: 'no-store' }
+        : { next: { revalidate: GNOSIS_CONFIG.cacheSeconds, tags: [pinTag(address)] } }),
     });
 
     if (!response.ok) {

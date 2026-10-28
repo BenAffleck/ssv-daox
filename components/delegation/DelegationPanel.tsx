@@ -181,6 +181,7 @@ export default function DelegationPanel({
   // Before still shows what it showed when sending, so the API hasn't indexed the write yet.
   const gaveUp = useRefreshWhile(
     (phase === 'confirmed' || phase === 'proposed') && sentFrom === beforeKey,
+    address,
   );
   const [mode, setMode] = useState<Mode>(before.length > 1 ? 'split' : 'all-to-one');
   const [target, setTarget] = useState(currentEntries[0]?.address ?? '');

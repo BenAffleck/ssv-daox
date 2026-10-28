@@ -24,12 +24,9 @@ export async function fetchPoolDelegations(): Promise<DelegationEntry[]> {
   return pool?.outgoingDelegations ?? [];
 }
 
-/**
- * Lowercase addresses the pool delegates to; `null` when the Gnosis API lookup fails.
- * Uncached, so it agrees with the selected address's fresh pin right after a batch lands.
- */
+/** Lowercase addresses the pool delegates to; `null` when the Gnosis API lookup fails. */
 export async function fetchPoolRecipients(): Promise<string[] | null> {
-  const pool = await fetchPin(AUTO_DELEGATION_POOL_ADDRESS, { fresh: true });
+  const pool = await fetchPin(AUTO_DELEGATION_POOL_ADDRESS);
   return pool && pool.outgoingDelegations.map((entry) => entry.address.toLowerCase());
 }
 

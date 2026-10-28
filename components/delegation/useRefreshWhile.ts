@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+
+import { refreshPins } from '@/lib/delegation/api/refresh-pins';
 
 export const REFRESH_INTERVAL_MS = 15_000;
 /** A tab left open stops polling after this long. */
@@ -12,19 +13,18 @@ export const STILL_INDEXING_NOTE =
   "The delegation API hasn't picked up the transaction yet. Reload the page in a few minutes.";
 
 /**
- * Re-renders the page's server components every 15 seconds while `active`,
- * so a write shows once the delegation API indexes it. Returns `true` once it
- * gave up after 10 minutes.
+ * Expires the pins of `address` and re-renders the page every 15 seconds while
+ * `active`, so a write shows once the delegation API indexes it. Returns `true`
+ * once it gave up after 10 minutes.
  */
-export function useRefreshWhile(active: boolean): boolean {
-  const router = useRouter();
+export function useRefreshWhile(active: boolean, address: string): boolean {
   const [gaveUp, setGaveUp] = useState(false);
 
   useEffect(() => {
     if (!active) {
       return;
     }
-    const interval = setInterval(() => router.refresh(), REFRESH_INTERVAL_MS);
+    const interval = setInterval(() => refreshPins(address), REFRESH_INTERVAL_MS);
     const limit = setTimeout(() => {
       clearInterval(interval);
       setGaveUp(true);
@@ -34,7 +34,7 @@ export function useRefreshWhile(active: boolean): boolean {
       clearTimeout(limit);
       setGaveUp(false);
     };
-  }, [active, router]);
+  }, [active, address]);
 
   return gaveUp;
 }

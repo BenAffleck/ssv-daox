@@ -84,7 +84,7 @@ ssv-daox/
 │   │   ├── ClaimIntroPanel.tsx      # "Claim on HighSignal" without an overview
 │   │   ├── ConnectToDelegateButton.tsx # Client: connect prompt for disconnected wallets
 │   │   ├── useConnectToDelegate.ts  # Client: connect, then open the wallet's own address
-│   │   ├── useRefreshWhile.ts       # Client: router.refresh() polling until a write is indexed
+│   │   ├── useRefreshWhile.ts       # Client: polls the refreshPins server action until a write is indexed
 │   │   ├── AutoDelegationPath.tsx   # Client: breakdown card + "Delegate to the DAO" action
 │   │   ├── VotingPowerBreakdownCard.tsx  # Selected address's voting power + Details
 │   │   ├── DelegationTransaction.tsx     # Client: registry write hook, EOA/Safe status, drop confirmation
@@ -120,7 +120,8 @@ ssv-daox/
 │   ├── delegation/           # Delegation logic
 │   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address
 │   │   ├── api/fetch-pin.ts  # Gnosis pin per address; pool pin → PoolSummary, shared by both pages
-│   │   ├── api/resolve-ens.ts  # ENS name → mainnet address via MAINNET_RPC_URL
+│   │   ├── api/resolve-ens.ts  # ENS name → mainnet address via MAINNET_RPC_URL; cached reverse name
+│   │   ├── api/refresh-pins.ts # Server action: expires an address's and the pool's cached pins
 │   │   ├── logic/ens.ts              # Pure: ENS name detection + normalization
 │   │   ├── logic/pool.ts             # Pure: pool name, isAutoDelegationPool, address matching
 │   │   ├── logic/auto-delegation.ts  # Pure: pool summary; auto-delegation view model (breakdown, action state); SSV formatting
@@ -958,8 +959,7 @@ clamps to 3 lines with "Show more". A "You" badge marks the owner's address.
       disabled "Done" toggle, body locked shut. Claim status is per identity.
    2. `OptOutPanel` - see [Opt-out](#opt-out). It shows for every owner. When
       the DAO doesn't delegate to any of the identity's addresses
-      (`fetchPoolRecipients()`, uncached like the selected address's pin, so
-      both agree right after a batch) and none has an opt-in to send, or the address
+      (`fetchPoolRecipients()`, cached like the selected address's pin) and none has an opt-in to send, or the address
       has no score row, it is a `disabled` step (`OptOutUnavailable`) whose
       summary gives the reason: not a DAO delegation target; the lookup failed
       (`fetchPoolRecipients()` returns `null`, or the pin failed without an
@@ -1032,8 +1032,8 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
   incoming and outgoing lists sit in a native `<details>` ("Details"),
   collapsed by default; entries flagged `isPool` show the address followed by "(DAO auto-delegation pool)" (`DelegateName`). The
   leaderboard tooltip's "Net Delegated" is not shown. A failed pin lookup shows
-  a status line. The page fetches the pin once (`fetchPin(address, { fresh: true })`,
-  bypassing the 5-minute data cache) and also feeds its outgoing delegations to
+  a status line. The page fetches the pin once (`fetchPin(address)`, 5-minute
+  data cache, see the write-lag note under Delegation) and also feeds its outgoing delegations to
   the Delegation step.
 - **Scope copy.** A split delegation is a share in basis points, so it covers
   SSV the address receives later. The panel's default subtitle and the
@@ -1428,11 +1428,16 @@ adapt their button:
 `proposed`, so a write can't be sent twice. Any edit in the Delegation step
 resets the submission.
 The delegation API lags indexing by a few minutes. The page reads the selected
-address's pin uncached, and `useRefreshWhile(active)` calls `router.refresh()`
-every 15 s while a write is `confirmed` or `proposed` but not indexed yet: in
+address's pin and the pool's pin from the 5-minute data cache, each tagged
+`pinTag(address)`. `useRefreshWhile(active, address)` calls the `refreshPins`
+server action (`lib/delegation/api/refresh-pins.ts`) every 15 s while a write is `confirmed` or `proposed` but not indexed yet: in
 "Delegate to the DAO" until the state turns `already-delegating`, in the
 Delegation step until Before differs from what it showed at send. It gives up
-after 10 minutes and swaps the lag note for a reload hint. While a submission
+after 10 minutes and swaps the lag note for a reload hint. The action expires
+both pins with `updateTag`, and a revalidating action re-renders the page, so
+each poll reads the pins fresh. A reload without a pending write can show a
+pin up to 5 minutes old. The reverse ENS name (`reverseEnsName()`) is cached
+for an hour through `unstable_cache`; a failed lookup is not cached. While a submission
 is locked, the Delegation step hides plan errors, so the indexed write doesn't
 read as "already matches".
 

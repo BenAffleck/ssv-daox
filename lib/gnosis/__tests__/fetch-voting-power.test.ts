@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchVotingPower } from '../api/fetch-voting-power';
+import { fetchVotingPower, pinTag } from '../api/fetch-voting-power';
 import { GNOSIS_CONFIG, SSV_STRATEGY_PAYLOAD } from '../config';
 
 const mockFetch = vi.fn();
@@ -96,8 +96,18 @@ describe('fetchVotingPower', () => {
     await fetchVotingPower(addresses(1));
 
     const [, init] = mockFetch.mock.calls[0];
-    expect(init.next).toEqual({ revalidate: GNOSIS_CONFIG.cacheSeconds });
+    expect(init.next.revalidate).toBe(GNOSIS_CONFIG.cacheSeconds);
     expect(init.cache).toBeUndefined();
+  });
+
+  it('tags each cached lookup with its address, so a write can expire it', async () => {
+    mockFetch.mockResolvedValue(ok(SAMPLE_RESPONSE));
+    const mixedCase = '0xAbCdEf1234567890aBcDeF1234567890AbCdEf12';
+
+    await fetchVotingPower([mixedCase]);
+
+    const [, init] = mockFetch.mock.calls[0];
+    expect(init.next.tags).toEqual([pinTag(mixedCase.toLowerCase())]);
   });
 
   it('skips the data cache for a fresh lookup', async () => {

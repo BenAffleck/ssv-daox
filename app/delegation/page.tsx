@@ -240,8 +240,8 @@ export default async function DelegationPage({
     reverseName,
   ] = await Promise.all([
     scoreContext,
-    // Uncached, so a delegation the API just indexed shows on the next refresh.
-    fetchPin(address, { fresh: true }),
+    // Cached; after a write, `useRefreshWhile` expires it until the API indexes the write.
+    fetchPin(address),
     fetchSnapshotProfile(address),
     fetchPoolRecipients(),
     reverseEnsName(address),
