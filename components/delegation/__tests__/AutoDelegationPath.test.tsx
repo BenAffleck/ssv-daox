@@ -169,14 +169,18 @@ describe('AutoDelegationPath on an address the DAO delegates to', () => {
     expect(screen.queryByText(/[↑↓]/)).not.toBeInTheDocument();
   });
 
-  it('tells the owner how much the DAO delegates and offers to opt out', () => {
+  it('tells the owner how much the DAO delegates and invites them to contribute', () => {
     session = { phase: 'connected', address: VIEWED };
     render(<AutoDelegationPath {...RECEIVING} />);
 
     expect(screen.getByRole('heading')).toHaveTextContent(
       `The DAO delegates ${(500).toLocaleString()} SSV to you`,
     );
-    expect(screen.getByRole('button', { name: 'Opt out first' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '🎉 Start contributing ↗' })).toHaveAttribute(
+      'href',
+      'https://ssv.network/governance',
+    );
+    expect(screen.getByRole('button', { name: 'opt out' })).toBeInTheDocument();
   });
 
   it('tells a connected visitor the address cannot delegate back, without an action', () => {

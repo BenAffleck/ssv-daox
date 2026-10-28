@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import NextRoundPower from '@/components/dao-delegates/NextRoundPower';
 import { useWalletSession } from '@/components/wallet/useWalletSession';
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
+import { SSV_GOVERNANCE_URL } from '@/lib/delegation/config';
 import { accountSwitchPrompt } from '@/lib/delegation/logic/address-overview';
 import {
   autoDelegationView,
@@ -26,7 +27,7 @@ import {
   useSubmissionPhase,
 } from './DelegationTransaction';
 import OpenOwnAddressLink from './OpenOwnAddressLink';
-import OpenStepButton from './OpenStepButton';
+import OpenStepButton, { SECONDARY_BUTTON } from './OpenStepButton';
 import { ownDelegateToDaoUrl, useConnectToDelegate } from './useConnectToDelegate';
 import { STILL_INDEXING_NOTE, useRefreshWhile } from './useRefreshWhile';
 
@@ -39,7 +40,7 @@ interface AutoDelegationPathProps {
   poolAddress: string;
   /** The selected address's opt-out request; `null` when it sent none. */
   optOut: OptOutStatus | null;
-  /** `false` when the page has no Opt-out step to open, so "Opt out first" isn't a link. */
+  /** `false` when the page has no Opt-out step to open, so "opt out" isn't a link. */
   optOutStepAvailable: boolean;
   /** Power the next score run allocates to the address; `null` when it isn't scored. */
   nextPower: number | null;
@@ -205,15 +206,33 @@ export default function AutoDelegationPath({
               {change && <NextRoundPower change={change} />} to {who}
             </>
           ),
-          subtitle: optedOut
-            ? `Opted out. ${isOwner ? 'You can' : 'It can'} delegate to the DAO once the next run removes the DAO's delegation.`
-            : isOwner
-              ? 'To delegate to the DAO yourself, opt out of its delegation first.'
-              : "It can't delegate to the DAO in return.",
-          action:
-            isOwner && !optedOut && optOutStepAvailable ? (
-              <OpenStepButton anchor="opt-out">Opt out first</OpenStepButton>
-            ) : undefined,
+          subtitle: optedOut ? (
+            `Opted out. ${isOwner ? 'You can' : 'It can'} delegate to the DAO once the next run removes the DAO's delegation.`
+          ) : isOwner ? (
+            <>
+              To delegate to the DAO yourself,{' '}
+              {optOutStepAvailable ? (
+                <OpenStepButton anchor="opt-out" variant="link">
+                  opt out
+                </OpenStepButton>
+              ) : (
+                'opt out'
+              )}{' '}
+              of its delegation first.
+            </>
+          ) : (
+            "It can't delegate to the DAO in return."
+          ),
+          action: isOwner && !optedOut && (
+            <a
+              href={SSV_GOVERNANCE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-block ${SECONDARY_BUTTON}`}
+            >
+              🎉 Start contributing ↗
+            </a>
+          ),
         };
       }
       default:

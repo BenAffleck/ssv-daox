@@ -1,7 +1,5 @@
 'use client';
 
-import { Info } from 'lucide-react';
-
 import { useWalletSession } from '@/components/wallet/useWalletSession';
 
 import StepPanel from './StepPanel';
@@ -24,7 +22,6 @@ export default function ManageDelegationPreview() {
         disabled
         title="Claim on HighSignal"
         summary="Link your address to climb the leaderboard and earn a cohort seat."
-        icon={<Info size={20} aria-hidden />}
       />
       <StepPanel
         disabled

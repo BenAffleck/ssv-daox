@@ -1,5 +1,3 @@
-import { Info } from 'lucide-react';
-
 import StepPanel from './StepPanel';
 
 /** "Claim on HighSignal" without a selected address: points to HighSignal. */
@@ -8,7 +6,6 @@ export default function ClaimIntroPanel({ projectUrl }: { projectUrl: string }) 
     <StepPanel
       title="Claim on HighSignal"
       summary="Link your address to climb the leaderboard and earn a cohort seat."
-      icon={<Info size={20} aria-hidden />}
     >
       <p className="text-[13px] text-muted">
         Sign in with Discord, add your Ethereum addresses and share them with the SSV project.

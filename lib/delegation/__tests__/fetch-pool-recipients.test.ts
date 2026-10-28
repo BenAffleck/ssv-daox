@@ -31,10 +31,10 @@ describe('fetchPoolRecipients', () => {
     ]);
   });
 
-  it('is empty when the Gnosis API lookup fails', async () => {
+  it('is null when the Gnosis API lookup fails, not an empty list', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503 }));
 
-    expect(await fetchPoolRecipients()).toEqual([]);
+    expect(await fetchPoolRecipients()).toBeNull();
   });
 });

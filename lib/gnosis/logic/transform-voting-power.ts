@@ -43,10 +43,11 @@ function toDelegationEntries(
  * Converts a pin endpoint response into the shape consumed by the UI
  */
 export function toVotingPowerData(data: GnosisDelegationResponse): VotingPowerData {
+  // Delegators who have since dropped to 0 power are stale and not counted.
   let incomingDelegations = toDelegationEntries(
     data.delegatorTree,
     (node) => (node as GnosisDelegatorTreeNode).delegator,
-  );
+  ).filter((entry) => entry.power !== 0);
 
   // Older/partial responses can list delegators without the weighted tree;
   // keep the addresses visible with an unknown amount rather than dropping them.

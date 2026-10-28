@@ -1,6 +1,6 @@
 import type { ClaimStatus } from '@/lib/delegation/logic/address-overview';
 
-export const CLAIM_STATUS_LABELS: Record<ClaimStatus, string> = {
+const CLAIM_STATUS_LABELS: Record<ClaimStatus, string> = {
   unclaimed: 'Unclaimed',
   claimed_pending: 'Claimed, pending',
   claimed_scored: 'Claimed',

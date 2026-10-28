@@ -27,7 +27,7 @@ const ENTRY: OverviewAddress = {
   safeRequest: null,
 };
 
-function renderPanel(targetAddresses: string[], entry = ENTRY) {
+function renderPanel(targetAddresses: string[] | null, entry = ENTRY) {
   return render(
     <OptOutPanel
       addresses={[entry]}
@@ -51,5 +51,13 @@ describe('OptOutPanel', () => {
 
     expect(screen.queryByText(/isn't a DAO delegation target/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Show/ })).toBeEnabled();
+  });
+
+  it('says it could not check, rather than "not a target", when the lookup failed', () => {
+    renderPanel(null);
+
+    expect(screen.getByText(/Couldn't check whether the DAO delegates/)).toBeInTheDocument();
+    expect(screen.queryByText(/isn't a DAO delegation target/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Show/ })).toBeDisabled();
   });
 });

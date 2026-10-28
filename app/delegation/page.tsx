@@ -11,7 +11,7 @@ import DelegateProfile from '@/components/delegation/DelegateProfile';
 import DelegateToDaoPanel from '@/components/delegation/DelegateToDaoPanel';
 import DelegationPanel from '@/components/delegation/DelegationPanel';
 import ManageDelegationPreview from '@/components/delegation/ManageDelegationPreview';
-import OptOutPanel, { OptOutNotATarget } from '@/components/delegation/OptOutPanel';
+import OptOutPanel, { OptOutUnavailable } from '@/components/delegation/OptOutPanel';
 import OwnerOnly from '@/components/delegation/OwnerOnly';
 import ScoreBreakdownPanel from '@/components/delegation/ScoreBreakdownPanel';
 import VotingPowerPanel from '@/components/delegation/VotingPowerPanel';
@@ -258,6 +258,13 @@ export default async function DelegationPage({
     leaderboard.rows,
   );
   const ownAddresses = overview?.addresses.map((a) => a.address) ?? [];
+  const { breakdown } = autoDelegationView({
+    address,
+    connected: undefined,
+    pin,
+    poolAddress: AUTO_DELEGATION_POOL_ADDRESS,
+    optOut: null,
+  });
   const requested = overview?.addresses[0] ?? null;
   const name =
     leaderboard.rows.find((r) => sameAddress(r.address, address))?.display_name ??
@@ -281,7 +288,7 @@ export default async function DelegationPage({
       {overview ? (
         <AddressOverviewTable
           addresses={overview.addresses}
-          delegatedAddresses={new Set(delegationRecipients)}
+          delegatedAddresses={new Set(delegationRecipients ?? [])}
           selectedPin={pin}
         />
       ) : (
@@ -301,17 +308,7 @@ export default async function DelegationPage({
         <DelegateToDaoPanel />
       )}
       {scoreBreakdown && <ScoreBreakdownPanel breakdown={scoreBreakdown} />}
-      <VotingPowerPanel
-        breakdown={
-          autoDelegationView({
-            address,
-            connected: undefined,
-            pin,
-            poolAddress: AUTO_DELEGATION_POOL_ADDRESS,
-            optOut: null,
-          }).breakdown
-        }
-      />
+      <VotingPowerPanel breakdown={breakdown} />
       <OwnerOnly address={address} fallback={<ManageDelegationPreview />}>
         <section aria-labelledby="manage-title" className="mt-10">
           <h2 id="manage-title">Manage Delegation</h2>
@@ -328,7 +325,9 @@ export default async function DelegationPage({
               signingAvailable={Boolean(getMainnetRpcUrl())}
             />
           ) : (
-            <OptOutNotATarget />
+            <OptOutUnavailable
+              reason={breakdown?.fromPool ? 'not-listed' : pin ? 'not-a-target' : 'lookup-failed'}
+            />
           )}
           <DelegationSection
             address={address}

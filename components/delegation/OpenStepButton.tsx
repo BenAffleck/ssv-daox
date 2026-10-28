@@ -2,9 +2,11 @@
 
 import { openStep, type StepAnchor } from './StepPanel';
 
+export const SECONDARY_BUTTON =
+  'rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-hover';
+
 const VARIANT_CLASS = {
-  button:
-    'rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-hover',
+  button: SECONDARY_BUTTON,
   link: 'text-primary hover:underline',
 };
 

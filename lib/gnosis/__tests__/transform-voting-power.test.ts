@@ -52,6 +52,21 @@ describe('toVotingPowerData', () => {
     expect(result.delegatorCount).toBe(2);
   });
 
+  it('ignores delegators that delegate 0 power', () => {
+    const result = toVotingPowerData(
+      response({
+        delegators: ['0xaaa', '0xbbb'],
+        delegatorTree: [
+          { delegator: '0xaaa', delegatedPower: 100 },
+          { delegator: '0xbbb', delegatedPower: 0 },
+        ],
+      }),
+    );
+
+    expect(result.incomingDelegations).toEqual([{ address: '0xaaa', power: 100 }]);
+    expect(result.delegatorCount).toBe(1);
+  });
+
   it('pairs each delegate with the absolute power delegated out to it', () => {
     const result = toVotingPowerData(
       response({

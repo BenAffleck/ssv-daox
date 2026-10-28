@@ -409,7 +409,7 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   `powerChangeOf()` in `lib/delegation/logic/power-change.ts`. The Delegation
   page's "The DAO delegates x SSV to this address" heading shows the same delta after the amount. The Delegation page's address table
   uses the same label. "Delegation Status" compares the cohort with the pool's
-  live delegation (the Split Delegation API's `delegateTree` for the pool, via `fetchPoolRecipients()`): Active (delegated, keeps a cohort), Nominated (gains a
+  live delegation (the Split Delegation API's `delegateTree` for the pool, via `fetchPoolDelegations()`): Active (delegated, keeps a cohort), Nominated (gains a
   cohort; the DAO delegates at the next update), Ending (delegated, loses its
   cohort). The labels are statuses, not actions, and carry a `title` that
   explains them.
@@ -930,14 +930,20 @@ clamps to 3 lines with "Show more". A "You" badge marks the owner's address.
 4. Up to three unnumbered `StepPanel`s for the owner, collapsed by default.
    They are independent actions, not a sequence:
    1. `ClaimWizard` - HighSignal claim steps for the requested address (no
-      address picker; the collapsed header carries the only status badge). Once the requested address is claimed it
-      stays visible as a done step (`StepPanel done`): green check, a
+      address picker; the collapsed header carries the only status badge,
+      "Unclaimed" or "Claimed, pending", and none once claimed and scored,
+      since the "Done" toggle says so). Once the requested address is claimed it
+      stays visible as a done step (`StepPanel done`): accent border, a
       disabled "Done" toggle, body locked shut. Claim status is per identity.
    2. `OptOutPanel` - see [Opt-out](#opt-out). It shows for every owner. When
       the DAO doesn't delegate to any of the identity's addresses
-      (`fetchPoolRecipients()`) and none has an opt-in to send, or the address
-      has no score row, it is a `disabled` step whose summary says the address
-      isn't a DAO delegation target (`OptOutNotATarget`).
+      (`fetchPoolRecipients()`, uncached like the selected address's pin, so
+      both agree right after a batch) and none has an opt-in to send, or the address
+      has no score row, it is a `disabled` step (`OptOutUnavailable`) whose
+      summary gives the reason: not a DAO delegation target; the lookup failed
+      (`fetchPoolRecipients()` returns `null`, or the pin failed without an
+      overview), never read as "not a target"; or the pin shows the pool
+      delegating in but the address has no score row, so it can't opt out here.
    3. `DelegationPanel` - see the Split Delegation section
 
 Each collapsed header shows a one-line summary and a status badge (claim
@@ -983,8 +989,6 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
     happens and holds the action. It needs a selected address.
   - `VotingPowerPanel` shows the breakdown card for a valid selected address
     (scored or not, wallet connected or not), below "Delegate to the DAO".
-  - "Claim on HighSignal" (`ClaimWizard`, or `ClaimIntroPanel` without an
-    overview) carries an info icon in the check's place until claimed.
 - **Auto-delegation view model.** `autoDelegationView()`
   (`lib/delegation/logic/auto-delegation.ts`) is pure. It takes the selected
   address, the connected account, the address's pin data (`null` when the
@@ -1025,8 +1029,10 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
      data decides; the opt-out status only picks the state:
      - `opt-out-required`: not opted out (no request, or an opt-in). The box
        reads "The DAO delegates X to you" with "To delegate to the DAO
-       yourself, opt out of its delegation first." and an "Opt out first"
-       button that runs `openStep('opt-out')`. A visitor reads "The
+       yourself, opt out of its delegation first." ("opt out" runs
+       `openStep('opt-out')` when the page has that step) and a "🎉 Start
+       contributing ↗" button linking to `SSV_GOVERNANCE_URL`
+       (`lib/delegation/config.ts`) in a new tab. A visitor reads "The
        DAO delegates X to this address" and "It can't delegate to the DAO in
        return." `X` falls back to "voting power" when the API omits the amount.
      - `awaiting-run`: an opt-out is pending or applied, but the pool still

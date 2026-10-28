@@ -25,8 +25,8 @@ import StepPanel from './StepPanel';
 interface OptOutPanelProps {
   /** The overview's addresses, requested one first. Only an address's owner can sign for it. */
   addresses: OverviewAddress[];
-  /** Addresses the DAO currently delegates to. Nothing to opt out of for the rest. */
-  targetAddresses: string[];
+  /** Addresses the DAO currently delegates to; `null` when the lookup failed. */
+  targetAddresses: string[] | null;
   mode: OptOutMode;
   /** `false` when MAINNET_RPC_URL is unset and signatures can't be checked. */
   signingAvailable: boolean;
@@ -78,7 +78,7 @@ async function postSubmission(submission: OptOutSubmission): Promise<Response> {
 }
 
 function successMessage(action: OptOutAction): string {
-  return `${ACTION_LABELS[action]} requested. It takes effect at the next score run.`;
+  return `${ACTION_LABELS[action]} requested. It takes effect at the next score run and can take up to 24 hours.`;
 }
 
 function formatUtc(iso: string): string {
@@ -89,14 +89,18 @@ function isUserRejection(error: unknown): boolean {
   return error instanceof Error && error.name === 'UserRejectedRequestError';
 }
 
-/** The opt-out step for an address the DAO doesn't delegate to. */
-export function OptOutNotATarget() {
+const UNAVAILABLE_SUMMARIES = {
+  'not-a-target': "This address isn't a DAO delegation target, so there's nothing to opt out of.",
+  'lookup-failed':
+    "Couldn't check whether the DAO delegates to this address. Reload the page to try again.",
+  'not-listed':
+    "The DAO delegates to this address, but it isn't on the leaderboard yet, so it can't opt out here.",
+};
+
+/** The opt-out step when there is nothing to sign for the address, with the reason. */
+export function OptOutUnavailable({ reason }: { reason: keyof typeof UNAVAILABLE_SUMMARIES }) {
   return (
-    <StepPanel
-      disabled
-      title="Opt out of delegation"
-      summary="This address isn't a DAO delegation target, so there's nothing to opt out of."
-    />
+    <StepPanel disabled title="Opt out of delegation" summary={UNAVAILABLE_SUMMARIES[reason]} />
   );
 }
 
@@ -125,13 +129,13 @@ export default function OptOutPanel({
     return null;
   }
   // An opt-in stays possible after the next run removes the DAO's delegation.
-  const relevant = addresses.some(
-    (a) =>
-      targetAddresses.some((t) => sameAddress(t, a.address)) ||
-      optOutActionFor(a.optOut) === 'opt-in',
-  );
-  if (!relevant) {
-    return <OptOutNotATarget />;
+  if (!addresses.some((a) => optOutActionFor(a.optOut) === 'opt-in')) {
+    if (targetAddresses === null) {
+      return <OptOutUnavailable reason="lookup-failed" />;
+    }
+    if (!addresses.some((a) => targetAddresses.some((t) => sameAddress(t, a.address)))) {
+      return <OptOutUnavailable reason="not-a-target" />;
+    }
   }
 
   const action = optOutActionFor(entry.optOut);

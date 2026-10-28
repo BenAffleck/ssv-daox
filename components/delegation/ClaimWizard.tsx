@@ -1,10 +1,8 @@
 'use client';
 
-import { Info } from 'lucide-react';
-
 import type { OverviewAddress } from '@/lib/delegation/logic/address-overview';
 
-import ClaimStatusBadge, { CLAIM_STATUS_LABELS } from './ClaimStatusBadge';
+import ClaimStatusBadge from './ClaimStatusBadge';
 import StepPanel from './StepPanel';
 
 interface ClaimWizardProps {
@@ -66,9 +64,13 @@ export default function ClaimWizard({ addresses }: ClaimWizardProps) {
           ? 'Your address is linked on HighSignal and you are climbing the leaderboard.'
           : 'Link your address to climb the leaderboard and earn a cohort seat.'
       }
-      icon={<Info size={20} aria-hidden />}
       done={claimed}
-      status={<ClaimStatusBadge status={requested.claimStatus} />}
+      // The "Done" toggle already says "Claimed"; a badge only adds the other statuses.
+      status={
+        requested.claimStatus !== 'claimed_scored' && (
+          <ClaimStatusBadge status={requested.claimStatus} />
+        )
+      }
     >
       <div className="space-y-5">
         <ol className="space-y-4">
@@ -100,8 +102,7 @@ export default function ClaimWizard({ addresses }: ClaimWizardProps) {
             Your claim appears after the next score run.
           </p>
           <p className="mt-1 text-[13px] text-muted">
-            The status then moves to &ldquo;{CLAIM_STATUS_LABELS.claimed_scored}&rdquo; once your
-            community activity counts.
+            Your community activity then counts toward the score.
           </p>
         </div>
       </div>

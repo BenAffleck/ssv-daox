@@ -29,6 +29,9 @@ export function getHighSignalConfig(): HighSignalConfig {
  */
 export const AUTO_DELEGATION_POOL_ADDRESS = '0x9a62c932F5a8Eb807F655E3D948EdaE174D39D3B';
 
+/** Where a DAO delegate starts contributing: proposals, forum and calls. */
+export const SSV_GOVERNANCE_URL = 'https://ssv.network/governance';
+
 /**
  * The DAO's own funding address; it delegates the pool's seed power. The pool
  * summary counts that power as DAO-held, not as a community delegator.

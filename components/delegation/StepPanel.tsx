@@ -27,8 +27,6 @@ interface StepPanelProps {
   status?: React.ReactNode;
   /** Element id; a URL fragment or `openStep` naming it opens the panel. */
   anchor?: StepAnchor;
-  /** Shown before the title; a `done` step shows a check instead. */
-  icon?: React.ReactNode;
   /** A completed step: checked and locked shut. */
   done?: boolean;
   /** Shown but not usable, e.g. before a wallet is connected. */
@@ -46,7 +44,6 @@ export default function StepPanel({
   summary,
   status,
   anchor,
-  icon,
   done = false,
   disabled = false,
   children,
@@ -110,20 +107,7 @@ export default function StepPanel({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h3 id={`${id}-title`} className="flex items-center gap-2">
-            {done ? (
-              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-white">
-                <Check size={13} strokeWidth={3} aria-hidden />
-              </span>
-            ) : (
-              icon && (
-                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center text-primary">
-                  {icon}
-                </span>
-              )
-            )}
-            {title}
-          </h3>
+          <h3 id={`${id}-title`}>{title}</h3>
           <p className="mt-1 text-[13px] text-muted">{summary}</p>
         </div>
         <div className="flex items-center gap-3">
