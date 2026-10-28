@@ -17,7 +17,11 @@ import VotingPowerPanel from '@/components/delegation/VotingPowerPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
 import ScoreFreshness from '@/components/leaderboard/ScoreFreshness';
 import { fetchPin, fetchPoolRecipients } from '@/lib/delegation/api/fetch-pin';
-import { resolveEnsName, type EnsResolution } from '@/lib/delegation/api/resolve-ens';
+import {
+  resolveEnsName,
+  reverseEnsName,
+  type EnsResolution,
+} from '@/lib/delegation/api/resolve-ens';
 import { AUTO_DELEGATION_POOL_ADDRESS, getHighSignalConfig } from '@/lib/delegation/config';
 import {
   buildAddressOverview,
@@ -233,12 +237,14 @@ export default async function DelegationPage({
     pin,
     profile,
     delegationRecipients,
+    reverseName,
   ] = await Promise.all([
     scoreContext,
     // Uncached, so a delegation the API just indexed shows on the next refresh.
     fetchPin(address, { fresh: true }),
     fetchSnapshotProfile(address),
     fetchPoolRecipients(),
+    reverseEnsName(address),
   ]);
   const overview =
     baseOverview && withSafeRequests(withOptOutStatuses(baseOverview, statuses), safeRequests);
@@ -256,10 +262,11 @@ export default async function DelegationPage({
     optOut: null,
   });
   const requested = overview?.addresses[0] ?? null;
+  const ensName = reverseName ?? requested?.ensName ?? null;
   const name =
     leaderboard.rows.find((r) => sameAddress(r.address, address))?.display_name ??
     profile?.name ??
-    requested?.ensName ??
+    ensName ??
     formatAddress(address);
 
   return (
@@ -270,6 +277,7 @@ export default async function DelegationPage({
       <DelegateProfile
         address={address}
         name={name}
+        ensName={ensName}
         avatarUrl={snapshotAvatarUrl(address)}
         profileUrl={snapshotProfileUrl(address)}
         highSignalProfileUrl={requested?.highSignal.profileUrl ?? null}

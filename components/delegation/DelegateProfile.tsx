@@ -10,6 +10,8 @@ import { useIsOwner } from './OwnerOnly';
 interface DelegateProfileProps {
   address: string;
   name: string;
+  /** The address's primary ENS name; `null` when it has none. */
+  ensName: string | null;
   avatarUrl: string;
   profileUrl: string;
   /** The public HighSignal profile; `null` until the address is claimed. */
@@ -70,6 +72,7 @@ function Statement({ text }: { text: string }) {
 export default function DelegateProfile({
   address,
   name,
+  ensName,
   avatarUrl,
   profileUrl,
   highSignalProfileUrl,
@@ -93,6 +96,9 @@ export default function DelegateProfile({
             <h2 className="min-w-0 break-words">{name}</h2>
             {isOwner && <span className="badge-sm-accent">You</span>}
           </div>
+          {ensName && ensName !== name && (
+            <p className="mt-1 truncate text-[13px] font-medium text-foreground">{ensName}</p>
+          )}
           <code className="mt-1 block truncate font-mono text-xs text-muted" title={address}>
             {address}
           </code>

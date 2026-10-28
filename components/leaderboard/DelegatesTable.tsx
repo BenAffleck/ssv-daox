@@ -64,8 +64,19 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
   const [searchInput, setSearchInput] = useState(searchQuery);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Sync local input when URL param changes externally (e.g., browser navigation)
+  // Values written to the URL whose echo hasn't arrived yet.
+  const pendingEchoesRef = useRef(new Set<string>());
+  const lastWrittenRef = useRef(searchQuery);
+
+  // Sync local input on external URL changes (e.g., browser navigation), not on echoes of our own
+  // writes: a late echo would overwrite what the user has typed since.
   useEffect(() => {
+    if (pendingEchoesRef.current.has(searchQuery)) {
+      if (searchQuery === lastWrittenRef.current) {
+        pendingEchoesRef.current.clear();
+      }
+      return;
+    }
     setSearchInput(searchQuery);
   }, [searchQuery]);
 
@@ -74,6 +85,8 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
       setSearchInput(value);
       clearTimeout(searchTimerRef.current);
       searchTimerRef.current = setTimeout(() => {
+        pendingEchoesRef.current.add(value);
+        lastWrittenRef.current = value;
         setMultiple({ searchQuery: value, page: 1 });
       }, 300);
     },

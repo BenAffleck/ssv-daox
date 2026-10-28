@@ -28,3 +28,21 @@ export async function resolveEnsName(name: string): Promise<EnsResolution> {
     return { status: 'unavailable' };
   }
 }
+
+/** The primary ENS name of `address` on mainnet, or `null` when it has none or the lookup fails. */
+export async function reverseEnsName(address: string): Promise<string | null> {
+  const rpcUrl = getMainnetRpcUrl();
+  if (!rpcUrl) {
+    return null;
+  }
+  try {
+    const client = createPublicClient({ chain: mainnet, transport: http(rpcUrl) });
+    return await client.getEnsName({ address: address as `0x${string}` });
+  } catch (error) {
+    console.error(
+      'ENS reverse lookup failed:',
+      error instanceof Error ? error.name : 'unknown error',
+    );
+    return null;
+  }
+}
