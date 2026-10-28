@@ -1046,11 +1046,12 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
        `openStep('opt-out')` when the page has that step) and a "🎉 Start
        contributing ↗" button linking to `SSV_GOVERNANCE_URL`
        (`lib/delegation/config.ts`) in a new tab. A visitor reads "The
-       DAO delegates X to this address" and "It can't delegate to the DAO in
-       return." `X` falls back to "voting power" when the API omits the amount.
+       DAO delegates X to this address" with no subtitle. `X` falls back to "voting power" when the API omits the amount.
      - `awaiting-run`: an opt-out is pending or applied, but the pool still
-       delegates in. The title is the same; the subtitle says delegating opens
-       once the next run removes the DAO's delegation.
+       delegates in. The title is the same; the subtitle says the DAO's
+       delegation is removed with the next Delegate Score update, gives its
+       expected time from `/api/score-status` (`nextUpdateEstimate`; left out
+       while the status is unavailable).
 
      Every viewer sees the box, connected or not. Once the DAO's delegation is gone, the states below apply. The guard
      precedes `switch-account`, `nothing-to-delegate`, `already-delegating`

@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 
 import NextRoundPower from '@/components/dao-delegates/NextRoundPower';
 import { useWalletSession } from '@/components/wallet/useWalletSession';
+import { loadScoreStatus } from '@/lib/dao-delegates/api/load-status';
+import { nextUpdateEstimate } from '@/lib/dao-delegates/logic/freshness';
+import type { ScoreStatus } from '@/lib/dao-delegates/types';
 import { formatAddress } from '@/lib/dao-delegates/utils/address';
 import { SSV_GOVERNANCE_URL } from '@/lib/delegation/config';
 import { accountSwitchPrompt } from '@/lib/delegation/logic/address-overview';
@@ -60,6 +63,29 @@ function blockedReason(state: AutoDelegationState) {
   return state.reason === 'pool'
     ? 'This is the DAO auto-delegation pool.'
     : 'This address has no voting power to delegate.';
+}
+
+/** Why delegating to the DAO is still closed after an opt-out, and when the Delegate Score update lifts it. */
+function OptedOutNote() {
+  const [status, setStatus] = useState<ScoreStatus | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void loadScoreStatus().then((loaded) => {
+      if (!cancelled) {
+        setStatus(loaded);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <span suppressHydrationWarning>
+      Opted out. The DAO's delegation is removed with the next Delegate Score update
+      {status && `, ${nextUpdateEstimate(status, new Date())}`}.
+    </span>
+  );
 }
 
 /** The "Delegate to the DAO" panel with its one-click action for the selected address. */
@@ -207,7 +233,7 @@ export default function AutoDelegationPath({
             </>
           ),
           subtitle: optedOut ? (
-            `Opted out. ${isOwner ? 'You can' : 'It can'} delegate to the DAO once the next run removes the DAO's delegation.`
+            <OptedOutNote />
           ) : isOwner ? (
             <>
               To delegate to the DAO yourself,{' '}
@@ -220,9 +246,7 @@ export default function AutoDelegationPath({
               )}{' '}
               of its delegation first.
             </>
-          ) : (
-            "It can't delegate to the DAO in return."
-          ),
+          ) : undefined,
           action: isOwner && !optedOut && (
             <a
               href={SSV_GOVERNANCE_URL}

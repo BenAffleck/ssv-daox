@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -6,6 +6,11 @@ import type { WalletSession } from '@/components/wallet/useWalletSession';
 import type { VotingPowerData } from '@/lib/gnosis/types';
 
 import AutoDelegationPath from '../AutoDelegationPath';
+
+const loadScoreStatus = vi.fn();
+vi.mock('@/lib/dao-delegates/api/load-status', () => ({
+  loadScoreStatus: () => loadScoreStatus(),
+}));
 
 const VIEWED = '0x1111111111111111111111111111111111111111';
 const SIBLING = '0x2222222222222222222222222222222222222222';
@@ -183,12 +188,41 @@ describe('AutoDelegationPath on an address the DAO delegates to', () => {
     expect(screen.getByRole('button', { name: 'opt out' })).toBeInTheDocument();
   });
 
-  it('tells a connected visitor the address cannot delegate back, without an action', () => {
+  it('shows a connected visitor only whom the DAO delegates to, without an action', () => {
     session = { phase: 'connected', address: STRANGER };
     render(<AutoDelegationPath {...RECEIVING} />);
 
     expect(screen.getByRole('heading')).toHaveTextContent('to this address');
-    expect(screen.getByText("It can't delegate to the DAO in return.")).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  describe('after an opt-out', () => {
+    const OPTED_OUT = {
+      ...RECEIVING,
+      optOut: { action: 'opt-out' as const, status: 'applied' as const },
+    };
+
+    it('says when the next Delegate Score update lifts the DAO delegation', async () => {
+      const eta = new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString();
+      loadScoreStatus.mockResolvedValue({
+        latest: null,
+        running: null,
+        last_failure: null,
+        next: { as_of: '2026-10-29', starts_at: eta, eta },
+      });
+      render(<AutoDelegationPath {...OPTED_OUT} />);
+
+      expect(await screen.findByText(/update, expected around/)).toBeInTheDocument();
+      expect(screen.getByText(/removed with the next Delegate Score update/)).toBeInTheDocument();
+    });
+
+    it('still explains the wait while the status is unavailable', async () => {
+      loadScoreStatus.mockResolvedValue(null);
+      render(<AutoDelegationPath {...OPTED_OUT} />);
+
+      await waitFor(() => expect(loadScoreStatus).toHaveBeenCalled());
+      expect(screen.getByText(/removed with the next Delegate Score update/)).toBeInTheDocument();
+      expect(screen.queryByText(/expected around/)).not.toBeInTheDocument();
+    });
   });
 });

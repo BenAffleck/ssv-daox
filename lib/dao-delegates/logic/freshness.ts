@@ -50,6 +50,12 @@ export function describeNextUpdate(status: ScoreStatus, now: Date): string {
   return expectedAround('Next update', next.eta ?? next.starts_at, now);
 }
 
+/** The next run's time as a clause: "expected around {time}", or that it is late. */
+export function nextUpdateEstimate(status: ScoreStatus, now: Date): string {
+  const instant = new Date(status.next.eta ?? status.next.starts_at);
+  return instant < now ? 'taking longer than usual' : `expected around ${formatLocal(instant)}`;
+}
+
 /** One line on what the leaderboard data is and when it changes next. */
 export function describeFreshness(status: ScoreStatus, now: Date): string {
   const { latest, running, next } = status;
