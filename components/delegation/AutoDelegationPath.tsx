@@ -186,9 +186,18 @@ export default function AutoDelegationPath({
       case 'ready': {
         const locked = isSubmissionLocked(phase);
         const power = (breakdown?.ownPower ?? 0) + (state.movesAlong?.power ?? 0);
+        const { remaining } = state;
         const confirm = !locked && state.droppedDelegates.length > 0;
         return {
-          title: <>Delegate your {powerLabel(power)} voting power to the DAO</>,
+          title: remaining ? (
+            <>
+              Delegate your remaining{' '}
+              {remaining.power !== null && <>{powerLabel(remaining.power)} </>}voting power to the
+              DAO
+            </>
+          ) : (
+            <>Delegate your {powerLabel(power)} voting power to the DAO</>
+          ),
           action: !locked && (
             <button
               type="button"
@@ -200,7 +209,9 @@ export default function AutoDelegationPath({
                 ? 'Confirm in your wallet…'
                 : phase === 'failed' || phase === 'error'
                   ? 'Try again'
-                  : 'Delegate to the DAO'}
+                  : remaining
+                    ? 'Delegate all to the DAO'
+                    : 'Delegate to the DAO'}
             </button>
           ),
           children: (confirm || phase !== 'idle') && (

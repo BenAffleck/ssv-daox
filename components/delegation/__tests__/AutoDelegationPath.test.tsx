@@ -226,3 +226,54 @@ describe('AutoDelegationPath on an address the DAO delegates to', () => {
     });
   });
 });
+
+describe('AutoDelegationPath for the owner', () => {
+  beforeEach(() => {
+    session = { phase: 'connected', address: VIEWED };
+    vi.clearAllMocks();
+  });
+
+  it('offers to delegate all voting power without a current delegation', () => {
+    renderPath();
+
+    expect(screen.getByRole('heading')).toHaveTextContent(
+      `Delegate your ${(1000).toLocaleString()} SSV voting power to the DAO`,
+    );
+    expect(screen.getByRole('button', { name: 'Delegate to the DAO' })).toBeInTheDocument();
+  });
+
+  it('offers only the remaining power when the DAO holds part of the delegation', () => {
+    const partial: VotingPowerData = {
+      ...PIN,
+      votingPower: 0,
+      outgoingPower: 1000,
+      outgoingDelegations: [
+        { address: POOL, power: 600, weight: 6000 },
+        { address: STRANGER, power: 400, weight: 4000 },
+      ],
+    };
+    render(<AutoDelegationPath {...PROPS} pin={partial} />);
+
+    expect(screen.getByRole('heading')).toHaveTextContent(
+      'Delegate your remaining 400 SSV voting power to the DAO',
+    );
+    expect(screen.getByRole('button', { name: 'Delegate all to the DAO' })).toBeInTheDocument();
+  });
+
+  it('leaves the remaining amount out when the API omits the DAO share', () => {
+    const unknown: VotingPowerData = {
+      ...PIN,
+      votingPower: 0,
+      outgoingPower: 1000,
+      outgoingDelegations: [
+        { address: POOL, power: null, weight: 6000 },
+        { address: STRANGER, power: 400, weight: 4000 },
+      ],
+    };
+    render(<AutoDelegationPath {...PROPS} pin={unknown} />);
+
+    expect(screen.getByRole('heading')).toHaveTextContent(
+      'Delegate your remaining voting power to the DAO',
+    );
+  });
+});
