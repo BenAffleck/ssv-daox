@@ -6,6 +6,8 @@ import { createPortal } from 'react-dom';
 import DelegateName from '@/components/delegation/DelegateName';
 import type { DelegationEntry, VotingPowerData } from '@/lib/gnosis/types';
 
+const POPOVER_MAX_WIDTH = 380;
+
 interface VotingPowerBadgeProps {
   votingPowerData: VotingPowerData | null;
   address: string;
@@ -155,9 +157,14 @@ export default function VotingPowerBadge({
   const updatePopoverPosition = useCallback(() => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      // Keep the popover on screen: one sticking out past the right edge
+      // widens the page, and Chrome on Android then zooms out to fit it.
+      const viewportWidth = document.documentElement.clientWidth;
+      const popoverWidth = Math.min(POPOVER_MAX_WIDTH, viewportWidth - 32);
+      const left = Math.min(rect.left - 16, viewportWidth - popoverWidth - 8);
       setPopoverPosition({
         top: rect.bottom + window.scrollY + 8,
-        left: Math.max(8, rect.left + window.scrollX - 16),
+        left: Math.max(8, left) + window.scrollX,
       });
     }
   }, []);
@@ -329,8 +336,9 @@ export default function VotingPowerBadge({
               position: 'absolute',
               top: popoverPosition.top,
               left: popoverPosition.left,
+              width: `min(${POPOVER_MAX_WIDTH}px, calc(100vw - 2rem))`,
             }}
-            className="z-50 w-[min(380px,calc(100vw-2rem))] rounded-lg border border-border bg-card shadow-lg"
+            className="z-50 rounded-lg border border-border bg-card shadow-lg"
           >
             <div className="space-y-2 p-3">
               <h4 className="font-heading text-sm font-semibold text-foreground">

@@ -196,7 +196,7 @@ export default function DelegatesTable({ delegates }: DelegatesTableProps) {
       )}
 
       {filteredDelegates.length > 0 && (
-        <div className="card overflow-x-auto">
+        <div className="card relative overflow-x-auto">
           <table className="w-full">
             <TableHeader
               sortField={sortField}

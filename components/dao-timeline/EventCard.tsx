@@ -96,7 +96,7 @@ export default function EventCard({ event, sourceColor, dayOffset }: EventCardPr
       }
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 wrap-anywhere">
           {/* Time, with a countdown that sharpens as the event approaches */}
           <div className="mb-1 flex flex-wrap items-center gap-2">
             <span className={`text-[13px] font-medium ${isPast ? 'text-muted' : 'text-primary'}`}>

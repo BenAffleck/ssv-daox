@@ -283,7 +283,7 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
             onKeyDown={onInputKey}
             placeholder="Search votes, modules and tools…"
             aria-label="Search query"
-            className="flex-1 border-none bg-transparent font-body text-[15px] text-foreground placeholder:text-muted/70 focus:outline-none"
+            className="min-w-0 flex-1 border-none bg-transparent font-body text-[15px] text-foreground placeholder:text-muted/70 focus:outline-none"
           />
           {q.length > 0 && (
             <button
@@ -338,21 +338,21 @@ export default function SearchPalette({ modules, tools }: SearchPaletteProps) {
         </div>
 
         <div className="flex items-center gap-3.5 border-t border-border bg-card-hover px-3.5 py-2 text-[11px] text-muted">
-          <span className="inline-flex items-center gap-1">
+          <span className="hidden items-center gap-1 sm:inline-flex">
             <kbd className={KBD_CLASS}>↑</kbd>
             <kbd className={KBD_CLASS}>↓</kbd>
             navigate
           </span>
-          <span className="inline-flex items-center gap-1">
+          <span className="hidden items-center gap-1 sm:inline-flex">
             <kbd className={KBD_CLASS}>↵</kbd>
             open
           </span>
-          <span className="inline-flex items-center gap-1">
+          <span className="hidden items-center gap-1 sm:inline-flex">
             <kbd className={KBD_CLASS}>Esc</kbd>
             close
           </span>
           <span className="flex-1" />
-          <span>
+          <span className="whitespace-nowrap">
             {results.length} result{results.length === 1 ? '' : 's'}
           </span>
         </div>

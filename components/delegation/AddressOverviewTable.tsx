@@ -25,7 +25,7 @@ export default function AddressOverviewTable({
   // The profile header names a lone address; sibling rows still need theirs.
   const showAddress = addresses.length > 1;
   return (
-    <div className="card overflow-x-auto">
+    <div className="card relative overflow-x-auto">
       <table className="w-full">
         <thead className="border-b border-border bg-muted/10">
           <tr>
