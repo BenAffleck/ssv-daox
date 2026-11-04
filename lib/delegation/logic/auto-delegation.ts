@@ -123,6 +123,8 @@ export type AutoDelegationState =
       droppedDelegates: Address[];
       /** `null` when no third party delegates in. */
       movesAlong: MovesAlong | null;
+      /** Power not yet with the pool; `null` without a pool share, `power` `null` when unknown. */
+      remaining: { power: number | null } | null;
     };
 
 export interface AutoDelegationView {
@@ -135,13 +137,16 @@ function flagPool(entries: DelegationEntry[], poolAddress: string): BreakdownEnt
   return entries.map((entry) => ({ ...entry, isPool: sameAddress(entry.address, poolAddress) }));
 }
 
+/** `null` when the API omitted any amount. */
+function sumPower(entries: DelegationEntry[]): number | null {
+  return entries.some((entry) => entry.power === null)
+    ? null
+    : entries.reduce((sum, entry) => sum + (entry.power ?? 0), 0);
+}
+
 function fromPool(incoming: BreakdownEntry[]): VotingPowerBreakdown['fromPool'] {
-  const pool = incoming.filter((entry) => entry.isPool);
-  if (pool.some((entry) => entry.power === null)) {
-    return { power: null };
-  }
-  const power = pool.reduce((sum, entry) => sum + (entry.power ?? 0), 0);
-  return power > 0 ? { power } : null;
+  const power = sumPower(incoming.filter((entry) => entry.isPool));
+  return power === null || power > 0 ? { power } : null;
 }
 
 function toBreakdown(pin: VotingPowerData, poolAddress: string): VotingPowerBreakdown {
@@ -160,9 +165,7 @@ function toBreakdown(pin: VotingPowerData, poolAddress: string): VotingPowerBrea
 
 function movesAlong(incoming: BreakdownEntry[]): MovesAlong | null {
   const thirdParties = incoming.filter((entry) => !entry.isPool);
-  const power = thirdParties.some((entry) => entry.power === null)
-    ? null
-    : thirdParties.reduce((sum, entry) => sum + (entry.power ?? 0), 0);
+  const power = sumPower(thirdParties);
   if (thirdParties.length === 0 || power === 0) {
     return null;
   }
@@ -176,6 +179,23 @@ function delegatesAllToPool(outgoing: DelegationEntry[], poolAddress: string): b
     sameAddress(planned[0].address, poolAddress) &&
     planned[0].bps === FULL_BPS
   );
+}
+
+function remaining(
+  breakdown: VotingPowerBreakdown,
+  along: MovesAlong | null,
+): Extract<AutoDelegationState, { kind: 'ready' }>['remaining'] {
+  const toPool = breakdown.outgoing.filter((entry) => entry.isPool);
+  if (toPool.length === 0) {
+    return null;
+  }
+  const toPoolPower = sumPower(toPool);
+  const alongPower = along === null ? 0 : along.power;
+  if (toPoolPower === null || alongPower === null) {
+    return { power: null };
+  }
+  const power = breakdown.ownPower + alongPower - toPoolPower;
+  return { power: power > DUST ? power : null };
 }
 
 function isOptedOut(optOut: OptOutStatus | null): boolean {
@@ -220,6 +240,7 @@ function stateOf(
     delegations: plan.delegations,
     droppedDelegates: plan.droppedDelegates,
     movesAlong: along,
+    remaining: remaining(breakdown, along),
   };
 }
 

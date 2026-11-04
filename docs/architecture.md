@@ -1088,6 +1088,11 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
      incoming delegators and their power (`null` without any; power `null`
      when the API omits an amount). The card notes that their power moves to
      the pool too, because a split delegation passes on delegated power.
+     `remaining` is the power not yet with the pool when the pool holds part
+     of the delegation (`null` without a pool share). Its `power` is `null`
+     when an amount is unknown or the difference isn't positive. With it, the
+     card offers "Delegate your remaining X" and the button reads "Delegate
+     all to the DAO".
 - **"Delegate to the DAO".** `AutoDelegationPath` (client) computes the view
   with `useWalletSession()` and renders the breakdown card and the action.
   Blocked states show only their reason, never a disabled button. The

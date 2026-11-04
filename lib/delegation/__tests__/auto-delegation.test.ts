@@ -235,6 +235,7 @@ describe('autoDelegationView state', () => {
       delegations: [{ address: POOL, bps: 10000 }],
       droppedDelegates: [],
       movesAlong: null,
+      remaining: null,
     });
   });
 
@@ -298,6 +299,62 @@ describe('autoDelegationView state', () => {
     });
 
     expect(view(pin).state.kind).toBe('ready');
+  });
+});
+
+describe('autoDelegationView remaining power', () => {
+  const partial = pinData({
+    votingPower: '0',
+    outgoingPower: '1000',
+    delegateTree: [
+      { delegate: POOL.toLowerCase(), delegatedPower: 600, weight: 6000 },
+      { delegate: DELEGATE, delegatedPower: 400, weight: 4000 },
+    ],
+  });
+
+  it('is the power not yet with the pool when the pool holds part of the delegation', () => {
+    expect(view(partial).state).toMatchObject({ kind: 'ready', remaining: { power: 400 } });
+  });
+
+  it('counts third-party power that moves along', () => {
+    const pin = pinData({
+      votingPower: '500',
+      incomingPower: '500',
+      outgoingPower: '1000',
+      delegatorTree: [{ delegator: '0xaaa', delegatedPower: 500 }],
+      delegateTree: [
+        { delegate: POOL.toLowerCase(), delegatedPower: 750, weight: 5000 },
+        { delegate: DELEGATE, delegatedPower: 750, weight: 5000 },
+      ],
+    });
+
+    expect(view(pin).state).toMatchObject({ kind: 'ready', remaining: { power: 750 } });
+  });
+
+  it('is unknown when the API omits the pool share', () => {
+    const pin = {
+      ...partial,
+      outgoingDelegations: partial.outgoingDelegations.map((entry) =>
+        entry.address === DELEGATE ? entry : { ...entry, power: null },
+      ),
+    };
+
+    expect(view(pin).state).toMatchObject({ kind: 'ready', remaining: { power: null } });
+  });
+
+  it('is unknown, never negative, when the API omits third-party amounts', () => {
+    const pin = pinData({
+      votingPower: '500',
+      incomingPower: '900',
+      outgoingPower: '1000',
+      delegators: ['0xaaa'],
+      delegateTree: [
+        { delegate: POOL.toLowerCase(), delegatedPower: 500, weight: 5000 },
+        { delegate: DELEGATE, delegatedPower: 500, weight: 5000 },
+      ],
+    });
+
+    expect(view(pin).state).toMatchObject({ kind: 'ready', remaining: { power: null } });
   });
 });
 
