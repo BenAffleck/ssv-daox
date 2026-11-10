@@ -1,6 +1,8 @@
+import { revalidateTag } from 'next/cache';
 import { NextResponse } from 'next/server';
 
 import { fetchPin } from '@/lib/delegation/api/fetch-pin';
+import { pinTag } from '@/lib/gnosis';
 
 export async function GET(request: Request, { params }: { params: Promise<{ address: string }> }) {
   const { address } = await params;
@@ -15,6 +17,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ addr
   const votingPowerData = await fetchPin(address, { fresh });
   if (!votingPowerData) {
     return NextResponse.json({ error: 'Failed to fetch voting power' }, { status: 502 });
+  }
+  // The fresh value isn't cached, so the entry is expired for the page this response links to.
+  if (fresh) {
+    revalidateTag(pinTag(address), { expire: 0 });
   }
   return NextResponse.json(votingPowerData);
 }

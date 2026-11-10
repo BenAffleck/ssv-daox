@@ -454,7 +454,8 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   button, "SSV holder? Delegate to the DAO →", that opens the connect
   modal and stays on the page. With a connected wallet it fetches
   `/api/voting-power/[address]?fresh=1` (uncached, so a delegation just made on
-  the profile shows here too) and, when `autoDelegationView()` is `ready`,
+  the profile shows here too; a successful read expires the address's cached pin, so the linked
+  profile matches it) and, when `autoDelegationView()` is `ready`,
   reads "Delegate your {power} voting power to the DAO" (power in accent green:
   tokens held + third-party power that moves along) and links to
   `/delegation?address={wallet}`. A wallet the DAO delegates to reads "You {power} received from the DAO" and links to its
