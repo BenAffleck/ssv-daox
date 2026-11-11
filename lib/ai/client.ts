@@ -11,6 +11,7 @@ import Anthropic, {
 } from '@anthropic-ai/sdk';
 
 import { AI_MODEL_CONFIG } from './config';
+import { LlmError, type Llm } from './llm';
 
 /**
  * Parse Anthropic API error into a user-friendly message
@@ -102,4 +103,32 @@ export function extractJSONFromResponse(text: string): unknown {
     return JSON.parse(jsonMatch[0]);
   }
   throw new Error('No JSON found in response');
+}
+
+/**
+ * The `Llm` adapter for the Anthropic API. SDK errors become `LlmError`s that
+ * carry the user-facing message.
+ */
+export function createAnthropicLlm(apiKey: string): Llm {
+  let client: Anthropic | null = null;
+  return {
+    async complete({ prompt, maxTokens }) {
+      let message: Anthropic.Message;
+      try {
+        client ??= createClient(apiKey);
+        message = await client.messages.create({
+          model: getModelId(),
+          max_tokens: maxTokens,
+          messages: [{ role: 'user', content: prompt }],
+        });
+      } catch (error) {
+        throw new LlmError(isCriticalAPIError(error) ? 'critical' : 'failed', parseAPIError(error));
+      }
+      const text = message.content.find((block) => block.type === 'text');
+      if (!text || text.type !== 'text') {
+        throw new LlmError('failed', 'No text in API response');
+      }
+      return text.text;
+    },
+  };
 }

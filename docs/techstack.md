@@ -41,6 +41,15 @@ Minimize moving parts while maximizing developer experience and production relia
 | Delegate scores   | **SSV Delegate Score API**   | Replaces the retired Karma API. Read-only JSON with an OpenAPI contract, daily runs, cohort allocation, cached 5 min via `fetch`.                                                                                                               |
 | Delegate profiles | **Snapshot hub + stamp.fyi** | Name and delegate statement from the Snapshot GraphQL hub DAOx already queries (cached 5 min). Avatars from Snapshot's `cdn.stamp.fyi`, which resolves profile and ENS avatars and falls back to a generated one, so no IPFS gateway is needed. |
 
+### AI features
+
+| Concern         | Choice                               | Rationale                                                                                                                                                               |
+| --------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Model           | **Anthropic Claude** (Haiku default) | Summary, Q&A and timeline extraction. Behind an injected `Llm` port (`lib/ai/llm.ts`), so tests script replies instead of mocking the SDK.                              |
+| Proposal text   | **Snapshot hub, proposal by id**     | The server looks proposals up itself and allows only configured spaces, so the endpoints take ids, not text: no LLM proxy, no cache poisoning.                          |
+| Cache           | **One JSON file, `.cache/ai.json`**  | Via `lib/json-file.ts` (serialized writes). Keys hash the proposal text, so edits invalidate. Ephemeral on serverless hosts; it only saves cost.                        |
+| Cost guard rail | **In-memory fixed-window limits**    | Per client and global per feature. Per process, not durable: the global cap bounds spend when client keys are spoofed. A shared store (e.g. Redis) is the upgrade path. |
+
 ### Wallet (app-wide)
 
 The providers wrap every page from the root layout, so the header's connect

@@ -7,16 +7,6 @@
  */
 export const AI_SUMMARY_CONFIG = {
   /**
-   * Cache file path (relative to project root)
-   */
-  cacheFilePath: '.cache/ai-summaries.json',
-
-  /**
-   * Cache version - increment when schema changes
-   */
-  cacheVersion: 1,
-
-  /**
    * Maximum age for cached summaries (in days)
    */
   maxCacheAgeDays: 7,

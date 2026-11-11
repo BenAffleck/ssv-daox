@@ -3,7 +3,7 @@ import path from 'path';
 
 /**
  * A JSON document on disk with serialized read-modify-write updates.
- * Serialization is per process, which is all the single-instance mock needs.
+ * Serialization is per process, so one process MUST own the file.
  */
 export function createJsonFile<T>(filePath: string, empty: () => T) {
   let queue: Promise<unknown> = Promise.resolve();

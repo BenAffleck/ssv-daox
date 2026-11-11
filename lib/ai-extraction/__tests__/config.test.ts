@@ -57,15 +57,9 @@ describe('AI Extraction Config', () => {
         maxBudgetUsd: expect.any(Number),
         perProposalBudgetUsd: 0.1,
         model: expect.stringMatching(/^(haiku|sonnet|opus)$/),
-        processingDelayMs: 100,
         maxProposalBodyLength: 50000,
-        cacheVersion: 2,
         maxCacheAgeDays: 30,
       });
-    });
-
-    it('should have valid cache file path', () => {
-      expect(AI_EXTRACTION_CONFIG.cacheFilePath).toBe('.cache/ai-extractions.json');
     });
   });
 

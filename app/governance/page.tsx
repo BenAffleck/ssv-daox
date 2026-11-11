@@ -1,8 +1,7 @@
 import { Suspense } from 'react';
 
 import GovernanceView from '@/components/dao-governance/GovernanceView';
-import { isProposalQnaAvailable } from '@/lib/ai-qna';
-import { isAISummaryAvailable } from '@/lib/ai-summary';
+import { isAiAvailable } from '@/lib/ai/server';
 import { fetchGovernanceProposals } from '@/lib/snapshot/api/fetch-governance-proposals';
 import { getGovernanceSpaces } from '@/lib/snapshot/config';
 
@@ -15,8 +14,7 @@ export const metadata = {
 export default async function GovernanceVotesPage() {
   const spaces = getGovernanceSpaces();
   const { proposals, failedSpaces } = await fetchGovernanceProposals(spaces);
-  const aiSummaryAvailable = isAISummaryAvailable();
-  const qnaAvailable = isProposalQnaAvailable();
+  const aiAvailable = isAiAvailable();
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
@@ -32,8 +30,8 @@ export default async function GovernanceVotesPage() {
           proposals={proposals}
           spaces={spaces}
           failedSpaces={failedSpaces}
-          isAISummaryAvailable={aiSummaryAvailable}
-          isQnaAvailable={qnaAvailable}
+          isAISummaryAvailable={aiAvailable}
+          isQnaAvailable={aiAvailable}
         />
       </Suspense>
     </div>
