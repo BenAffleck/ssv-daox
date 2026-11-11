@@ -542,11 +542,11 @@ The landing page displays currently active governance proposals when any exist (
 
 **ActiveVoteCard displays:**
 
-- Proposal title (linked to Snapshot)
+- Proposal title (linked to Snapshot, `ProposalTitleLink`)
 - Time remaining badge (e.g., "2d 5h left")
 - Stacked progress bar with score distribution per choice (semantic colors)
 - Voter count and quorum status
-- **"Vote Now" CTA** - Primary-colored button linking to Snapshot
+- **"Vote Now" CTA** - Primary-colored button linking to Snapshot (DAO votes only; committee votes get none)
 - **"AI TL;DR" button** (when AI is available) - Fetches/toggles AI-generated summary with choice explanations via `/api/ai-summary`
 
 **AI Summary flow:**
@@ -1568,8 +1568,10 @@ Closed proposals render via `ClosedVoteCard` with an outcome badge derived by
 `getProposalOutcome()` (`lib/dao-governance/outcome.ts`): Passed / Failed /
 Quorum not met, or the winning option for non-binary ballots. A vote short of
 quorum is never Passed or Failed: the quorum check comes first. The **"Vote Now"**
-CTA shows only for the token-weighted DAO space; member-vote committee spaces
-show **"View Proposal"** (whitelist-only voters).
+CTA is the only card button that links to Snapshot. It shows only on active DAO
+votes (`voteType: 'token'`). Committee votes, and every upcoming or past vote,
+carry no button. Every card title is a Snapshot link marked by
+`ProposalTitleLink` (inline external-link icon).
 
 ### Per-Space Visual Language
 
@@ -1625,8 +1627,8 @@ gates the **Vote Now** CTA. `SpaceBadge` maps each space to a distinct semantic 
 - `app/governance/page.tsx` + `loading.tsx` — route + skeleton
 - `components/dao-governance/GovernanceView.tsx` — client view (space + status filters, grouping, states)
 - `components/dao-governance/StatusFilter.tsx` — status segmented control
-- `components/dao-governance/FilterChips.tsx` — single-select space chips, `SpaceBadge.tsx`, `ClosedVoteCard.tsx`
-- `components/ActiveVoteCard.tsx` / `PendingVoteCard.tsx` — optional `space` prop (badge + quorum + Vote Now gating); `isQnaAvailable` gates the Ask button
+- `components/dao-governance/FilterChips.tsx` — single-select space chips, `SpaceBadge.tsx`, `ClosedVoteCard.tsx`, `ProposalTitleLink.tsx` (title link + external-link icon)
+- `components/ActiveVoteCard.tsx` / `PendingVoteCard.tsx` — required `space` prop (badge + Vote Now gating); `isQnaAvailable` gates the Ask button
 - `app/page.tsx`, `components/ActiveVotes.tsx` / `PendingVotes.tsx` — home page aggregates all spaces
 
 ### Environment Variables

@@ -9,7 +9,7 @@ import ActiveVoteCard from './ActiveVoteCard';
 const VISIBLE_COUNT = 2;
 
 interface ActiveVotesProps {
-  proposals: (SnapshotActiveProposal & { space?: GovernanceSpace })[];
+  proposals: (SnapshotActiveProposal & { space: GovernanceSpace })[];
   isAISummaryAvailable?: boolean;
   isQnaAvailable?: boolean;
 }

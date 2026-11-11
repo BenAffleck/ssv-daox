@@ -9,6 +9,7 @@ import type { GovernanceSpace, SnapshotActiveProposal } from '@/lib/snapshot/typ
 import { formatTimeAgo } from '@/lib/snapshot/utils/time-remaining';
 
 import AskButton from './AskButton';
+import ProposalTitleLink from './ProposalTitleLink';
 import QuorumMeter from './QuorumMeter';
 import SpaceBadge from './SpaceBadge';
 import VoteResults from './VoteResults';
@@ -17,7 +18,7 @@ interface ClosedVoteCardProps {
   proposal: SnapshotActiveProposal;
   isAISummaryAvailable?: boolean;
   isQnaAvailable?: boolean;
-  space?: GovernanceSpace;
+  space: GovernanceSpace;
 }
 
 const OUTCOME_BADGE_CLASS: Record<OutcomeVariant, string> = {
@@ -82,14 +83,7 @@ export default function ClosedVoteCard({
   return (
     <article className="card p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-4">
-        <a
-          href={proposal.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-heading text-[15px] leading-snug font-semibold tracking-tight text-foreground hover:text-primary"
-        >
-          {proposal.title}
-        </a>
+        <ProposalTitleLink href={proposal.link} title={proposal.title} />
         <div className="shrink-0">
           <span
             className={`inline-flex items-center gap-1 ${OUTCOME_BADGE_CLASS[outcome.variant]}`}
@@ -135,7 +129,7 @@ export default function ClosedVoteCard({
       {/* Stats + Actions */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
-          {space && <SpaceBadge space={space} />}
+          <SpaceBadge space={space} />
           <span>
             {proposal.votes} voter{proposal.votes !== 1 ? 's' : ''}
           </span>
@@ -159,14 +153,6 @@ export default function ClosedVoteCard({
             </button>
           )}
           {isQnaAvailable && <AskButton proposal={proposal} />}
-          <a
-            href={proposal.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-card-hover"
-          >
-            View Proposal
-          </a>
         </div>
       </div>
     </article>

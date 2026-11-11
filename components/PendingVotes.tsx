@@ -3,7 +3,7 @@ import type { GovernanceSpace, SnapshotActiveProposal } from '@/lib/snapshot/typ
 import PendingVoteCard from './PendingVoteCard';
 
 interface PendingVotesProps {
-  proposals: (SnapshotActiveProposal & { space?: GovernanceSpace })[];
+  proposals: (SnapshotActiveProposal & { space: GovernanceSpace })[];
   isAISummaryAvailable?: boolean;
   isQnaAvailable?: boolean;
 }

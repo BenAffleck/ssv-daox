@@ -8,14 +8,14 @@ import type { GovernanceSpace, SnapshotActiveProposal } from '@/lib/snapshot/typ
 import { formatTimeUntilStart } from '@/lib/snapshot/utils/time-remaining';
 
 import AskButton from './dao-governance/AskButton';
+import ProposalTitleLink from './dao-governance/ProposalTitleLink';
 import SpaceBadge from './dao-governance/SpaceBadge';
 
 interface PendingVoteCardProps {
   proposal: SnapshotActiveProposal;
   isAISummaryAvailable?: boolean;
   isQnaAvailable?: boolean;
-  /** When set, renders a space badge identifying the proposal's space. */
-  space?: GovernanceSpace;
+  space: GovernanceSpace;
 }
 
 export default function PendingVoteCard({
@@ -72,14 +72,7 @@ export default function PendingVoteCard({
   return (
     <article className="card p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-4">
-        <a
-          href={proposal.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-heading text-[15px] leading-snug font-semibold tracking-tight text-foreground hover:text-primary"
-        >
-          {proposal.title}
-        </a>
+        <ProposalTitleLink href={proposal.link} title={proposal.title} />
         <div className="shrink-0">
           <span className="badge-sm-muted">{timeUntilStart}</span>
         </div>
@@ -127,7 +120,9 @@ export default function PendingVoteCard({
 
       {/* Space + Actions */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-        <div className="text-[12px] text-muted">{space && <SpaceBadge space={space} />}</div>
+        <div className="text-[12px] text-muted">
+          <SpaceBadge space={space} />
+        </div>
         <div className="flex items-center gap-2">
           {isAISummaryAvailable && (
             <button
@@ -145,14 +140,6 @@ export default function PendingVoteCard({
             </button>
           )}
           {isQnaAvailable && <AskButton proposal={proposal} />}
-          <a
-            href={proposal.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-card-hover"
-          >
-            View Proposal
-          </a>
         </div>
       </div>
     </article>
