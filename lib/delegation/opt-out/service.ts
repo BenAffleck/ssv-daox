@@ -1,6 +1,6 @@
-import { randomBytes } from 'crypto';
 import { getAddress, hashTypedData, type Address, type Hex } from 'viem';
 
+import type { IssuedNonce, NonceRecord, NonceStore, RedemptionFailure } from './nonce-store';
 import { safeMessageHashOf, type SafeTransactionService } from './safe-tx-service';
 import {
   ScoreApiRefusal,
@@ -15,28 +15,6 @@ import {
   type OptOutTypedData,
 } from './typed-data';
 
-/** Matches the Score API's window, so Safe co-signers have time. */
-const NONCE_TTL_MS = 24 * 60 * 60 * 1000;
-
-export interface NonceRecord {
-  nonce: string;
-  /** Lowercase address the nonce was issued to. */
-  address: string;
-  action: OptOutAction;
-  issuedAt: string;
-  expiresAt: string;
-  used: boolean;
-}
-
-export interface NonceStore {
-  save(record: NonceRecord): Promise<void>;
-  find(nonce: string): Promise<NonceRecord | null>;
-  /** The most recently issued record for a lowercase address. */
-  findLatest(address: string): Promise<NonceRecord | null>;
-  /** Returns `false` when the nonce is unknown or already used. */
-  markUsed(nonce: string): Promise<boolean>;
-}
-
 /** Checks `signature` against `address`; contract wallets go through EIP-1271. */
 export type SignatureVerifier = (args: {
   address: Address;
@@ -49,21 +27,10 @@ export interface OptOutServiceDeps {
   scoreApi: ScoreApiOptOutClient;
   verifySignature: SignatureVerifier;
   safeTxService: SafeTransactionService;
-  now?: () => Date;
-}
-
-export interface IssuedNonce {
-  nonce: string;
-  issuedAt: string;
 }
 
 export type OptOutErrorCode =
-  | 'unknown_nonce'
-  | 'nonce_mismatch'
-  | 'nonce_expired'
-  | 'nonce_used'
-  | 'nonce_address_mismatch'
-  | 'invalid_signature'
+  | RedemptionFailure
   | 'score_api_unavailable'
   | 'not_a_safe'
   | 'safe_lookup_unavailable'
@@ -137,10 +104,7 @@ export function createOptOutService({
   scoreApi,
   verifySignature,
   safeTxService,
-  now = () => new Date(),
 }: OptOutServiceDeps) {
-  const isExpired = (record: NonceRecord) => now().getTime() > Date.parse(record.expiresAt);
-
   async function lookUpSafeSignature(typedData: OptOutTypedData): Promise<SafeSignatureResult> {
     const address = typedData.message.address;
     const info = await safeTxService.getSafe(address);
@@ -172,47 +136,18 @@ export function createOptOutService({
   return {
     mode: scoreApi.mode,
 
-    async issueNonce(address: string, action: OptOutAction): Promise<IssuedNonce> {
-      const issued = now();
-      const record: NonceRecord = {
-        nonce: randomBytes(16).toString('hex'),
-        address: address.toLowerCase(),
-        action,
-        issuedAt: issued.toISOString(),
-        expiresAt: new Date(issued.getTime() + NONCE_TTL_MS).toISOString(),
-        used: false,
-      };
-      await nonces.save(record);
-      return { nonce: record.nonce, issuedAt: record.issuedAt };
+    issueNonce(address: string, action: OptOutAction): Promise<IssuedNonce> {
+      return nonces.issue(address, action);
     },
 
     async submitOptOut({ typedData, signature }: OptOutSubmission): Promise<OptOutResult> {
       // Only the message is trusted from the client; domain and types are ours.
       const canonical = buildOptOutTypedData(typedData.message);
-      const { address, nonce, issuedAt } = canonical.message;
-
-      const record = await nonces.find(nonce);
-      if (!record) {
-        return failure('unknown_nonce');
-      }
-      if (record.address !== address.toLowerCase()) {
-        return failure('nonce_address_mismatch');
-      }
-      if (record.issuedAt !== issuedAt || record.action !== canonical.message.action) {
-        return failure('nonce_mismatch');
-      }
-      if (isExpired(record)) {
-        return failure('nonce_expired');
-      }
-      if (record.used) {
-        return failure('nonce_used');
-      }
-      if (!(await verifySignature({ address, typedData: canonical, signature }))) {
-        return failure('invalid_signature');
-      }
-      // A concurrent submission of the same nonce may have won the race.
-      if (!(await nonces.markUsed(nonce))) {
-        return failure('nonce_used');
+      const redeemed = await nonces.redeem(canonical.message, () =>
+        verifySignature({ address: canonical.message.address, typedData: canonical, signature }),
+      );
+      if (!redeemed.ok) {
+        return failure(redeemed.reason);
       }
       try {
         const receipt = await scoreApi.submit({ typedData: canonical, signature });
@@ -233,16 +168,11 @@ export function createOptOutService({
      * message the owners signed.
      */
     async findSafeSignature(nonce: string): Promise<SafeSignatureResult> {
-      const record = await nonces.find(nonce);
-      if (!record) {
-        return failure('unknown_nonce');
+      const opened = await nonces.open(nonce);
+      if (!opened.ok) {
+        return failure(opened.reason);
       }
-      if (isExpired(record)) {
-        return failure('nonce_expired');
-      }
-      if (record.used) {
-        return failure('nonce_used');
-      }
+      const { record } = opened;
       const typedData = buildOptOutTypedData({
         address: getAddress(record.address),
         action: record.action,
@@ -265,8 +195,8 @@ export function createOptOutService({
       const entries = await Promise.all(
         addresses.map(async (address) => {
           const key = address.toLowerCase();
-          const record = await nonces.findLatest(key);
-          if (!record || record.used || !(await safeTxService.getSafe(getAddress(key)))) {
+          const record = await nonces.latestUnused(key);
+          if (!record || !(await safeTxService.getSafe(getAddress(key)))) {
             return [key, null] as const;
           }
           const { action, nonce, issuedAt, expiresAt } = record;
