@@ -1,6 +1,6 @@
 import Timeline from '@/components/dao-timeline/Timeline';
-import { isAIExtractionAvailable } from '@/lib/ai-extraction';
 import { ProposalForExtraction } from '@/lib/ai-extraction/types';
+import { isAiAvailable } from '@/lib/ai/server';
 import { fetchAllEvents, getSourcesMetadata } from '@/lib/dao-timeline/api/event-source-registry';
 import { getSnapshotTimelineSpaceId } from '@/lib/dao-timeline/config';
 import { sortEventsByDate } from '@/lib/dao-timeline/logic/event-aggregator';
@@ -27,7 +27,7 @@ export default async function DaoTimelinePage() {
 
   // Fetch proposals for AI extraction if available
   let proposals: ProposalForExtraction[] = [];
-  const aiAvailable = isAIExtractionAvailable();
+  const aiAvailable = isAiAvailable();
 
   if (aiAvailable) {
     const spaceId = getSnapshotTimelineSpaceId();

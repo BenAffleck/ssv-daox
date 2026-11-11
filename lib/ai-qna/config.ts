@@ -3,23 +3,9 @@
  */
 
 /**
- * Parse a positive integer from an env var, falling back on anything invalid.
- */
-function envInt(name: string, fallback: number): number {
-  const parsed = Number.parseInt(process.env[name] ?? '', 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-/**
  * Q&A configuration
  */
 export const AI_QNA_CONFIG = {
-  /** Cache file path (relative to project root) */
-  cacheFilePath: '.cache/ai-qna.json',
-
-  /** Cache version - increment when the answer schema changes */
-  cacheVersion: 1,
-
   /**
    * Maximum age for cached answers (in days). Answers are grounded in the
    * proposal's static text only, so they don't go stale with vote results.
@@ -35,20 +21,6 @@ export const AI_QNA_CONFIG = {
   /** Token ceiling for the answer */
   maxAnswerTokens: 800,
 } as const;
-
-/**
- * Per-client rate limit for the Q&A endpoint.
- *
- * Unlike the summary endpoint, Q&A accepts free-form user text, so an
- * unthrottled endpoint is a cost and abuse vector. Read at call time so tests
- * and deployments can override it without a rebuild.
- */
-export function getRateLimitConfig(): { windowMs: number; maxRequests: number } {
-  return {
-    windowMs: 10 * 60 * 1000,
-    maxRequests: envInt('AI_QNA_RATE_LIMIT_PER_WINDOW', 10),
-  };
-}
 
 /**
  * Build the Q&A prompt.

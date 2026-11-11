@@ -1,4 +1,5 @@
-import { createJsonFile } from './json-file';
+import { createJsonFile } from '@/lib/json-file';
+
 import type { OptOutStatus, ScoreApiOptOutClient } from './score-api';
 
 interface MockFile {

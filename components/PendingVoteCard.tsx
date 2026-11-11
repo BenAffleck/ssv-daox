@@ -45,12 +45,7 @@ export default function PendingVoteCard({
       const response = await fetch('/api/ai-summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          proposalId: proposal.id,
-          title: proposal.title,
-          body: proposal.body,
-          choices: proposal.choices,
-        }),
+        body: JSON.stringify({ proposalId: proposal.id }),
       });
 
       const data = await response.json();
@@ -67,7 +62,7 @@ export default function PendingVoteCard({
     } finally {
       setIsLoading(false);
     }
-  }, [summary, proposal.id, proposal.title, proposal.body, proposal.choices]);
+  }, [summary, proposal.id]);
 
   return (
     <article className="card p-4 sm:p-5">

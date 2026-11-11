@@ -168,20 +168,3 @@ export interface ExtractionStats {
   /** User-friendly error message if extraction failed */
   errorMessage?: string;
 }
-
-/**
- * Cache entry structure for storing extracted events
- */
-export interface CachedExtraction {
-  proposalId: string;
-  extractedAt: string; // ISO date string
-  events: AIExtractedEvent[];
-}
-
-/**
- * Full cache structure
- */
-export interface ExtractionCache {
-  version: number;
-  extractions: Record<string, CachedExtraction>;
-}

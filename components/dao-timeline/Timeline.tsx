@@ -10,6 +10,7 @@ import {
   ProposalForExtraction,
   TimeWindow,
 } from '@/lib/ai-extraction/types';
+import type { AiErrorCode } from '@/lib/ai/features';
 import {
   clampRange,
   computeDomain,
@@ -33,6 +34,13 @@ interface SourceMetadata {
   name: string;
   color?: string;
 }
+
+/** Error codes after which every further extraction request fails too. */
+const STOPPING_ERRORS: ReadonlySet<AiErrorCode> = new Set([
+  'ai_critical',
+  'rate_limited',
+  'unavailable',
+]);
 
 interface TimelineProps {
   events: SerializedEvent[];
@@ -66,9 +74,6 @@ export default function Timeline({
 
   // Time window state for AI extraction
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('30d');
-
-  // Flag to skip cache on next extraction (set after retry)
-  const [skipCache, setSkipCache] = useState(false);
 
   // Compute proposal counts for each time window
   const proposalCounts = useMemo(() => getProposalCountsByWindow(proposals), [proposals]);
@@ -115,10 +120,6 @@ export default function Timeline({
       return;
     }
 
-    // Capture current skipCache value and reset it
-    const shouldSkipCache = skipCache;
-    setSkipCache(false);
-
     setIsExtracting(true);
     setExtractionError(null);
     setExtractionProgress({ current: 0, total: filteredProposals.length });
@@ -142,63 +143,31 @@ export default function Timeline({
         try {
           const response = await fetch('/api/ai-extraction', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              proposals: [proposal],
-              skipCache: shouldSkipCache,
-            }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ proposalId: proposal.id }),
           });
-
           const data = await response.json();
 
           if (!response.ok) {
-            throw new Error(data.error || 'Extraction failed');
-          }
-
-          // Accumulate events
-          if (data.events && data.events.length > 0) {
-            allExtractedEvents.push(...data.events);
-            stats.eventsFound += data.events.length;
-          }
-
-          // Track stats
-          if (data.stats) {
-            stats.proposalsProcessed += data.stats.proposalsProcessed || 0;
-            stats.proposalsFromCache += data.stats.proposalsFromCache || 0;
-            stats.eventsFiltered += data.stats.eventsFiltered || 0;
-            if (data.stats.errors > 0) {
-              stats.errors += data.stats.errors;
-            }
-          }
-
-          // Check for critical errors (billing, auth)
-          if (data.error || data.stats?.errorMessage) {
-            const errorMsg = data.error || data.stats.errorMessage;
-            // Stop on billing/auth errors
-            if (
-              errorMsg.toLowerCase().includes('credit') ||
-              errorMsg.toLowerCase().includes('billing') ||
-              errorMsg.toLowerCase().includes('api key')
-            ) {
-              stats.errorMessage = errorMsg;
+            stats.errors++;
+            if (STOPPING_ERRORS.has(data.code)) {
+              stats.errorMessage = data.error;
               break;
             }
+            continue;
+          }
+
+          allExtractedEvents.push(...data.events);
+          stats.eventsFound += data.events.length;
+          stats.eventsFiltered += data.eventsFiltered;
+          if (data.fromCache) {
+            stats.proposalsFromCache++;
+          } else {
+            stats.proposalsProcessed++;
           }
         } catch (error) {
           console.error(`Error extracting from proposal ${proposal.id}:`, error);
           stats.errors++;
-          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-          // Stop on critical errors
-          if (
-            errorMsg.toLowerCase().includes('credit') ||
-            errorMsg.toLowerCase().includes('billing') ||
-            errorMsg.toLowerCase().includes('api key')
-          ) {
-            stats.errorMessage = errorMsg;
-            break;
-          }
         }
       }
 
@@ -218,7 +187,7 @@ export default function Timeline({
     } finally {
       setIsExtracting(false);
     }
-  }, [filteredProposals, skipCache]);
+  }, [filteredProposals]);
 
   // Handle retry - reset to initial state and allow time window reselection
   const handleRefresh = useCallback(() => {
@@ -227,8 +196,6 @@ export default function Timeline({
     setExtractionStats(null);
     setExtractionError(null);
     setExtractionProgress(null);
-    // Set flag to skip cache on next extraction
-    setSkipCache(true);
   }, []);
 
   // Events narrowed by source only. The range brush summarises these, so its

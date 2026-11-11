@@ -27,39 +27,3 @@ export const ProposalSummarySchema = z.object({
  */
 export type ChoiceExplanation = z.infer<typeof ChoiceExplanationSchema>;
 export type ProposalSummary = z.infer<typeof ProposalSummarySchema>;
-
-/**
- * Request to generate a proposal summary
- */
-export interface SummaryRequest {
-  proposalId: string;
-  title: string;
-  body: string;
-  choices: string[];
-}
-
-/**
- * Response from summary generation
- */
-export interface SummaryResponse {
-  summary: ProposalSummary | null;
-  fromCache: boolean;
-  error?: string;
-}
-
-/**
- * Cache entry for a proposal summary
- */
-export interface CachedSummary {
-  proposalId: string;
-  cachedAt: string; // ISO date string
-  summary: ProposalSummary;
-}
-
-/**
- * Full summary cache structure
- */
-export interface SummaryCache {
-  version: number;
-  summaries: Record<string, CachedSummary>;
-}

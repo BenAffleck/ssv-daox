@@ -2,8 +2,7 @@ import ActiveVotes from '@/components/ActiveVotes';
 import ExternalToolsSection from '@/components/ExternalToolsSection';
 import ModuleCard from '@/components/ModuleCard';
 import PendingVotes from '@/components/PendingVotes';
-import { isProposalQnaAvailable } from '@/lib/ai-qna';
-import { isAISummaryAvailable } from '@/lib/ai-summary';
+import { isAiAvailable } from '@/lib/ai/server';
 import { getExternalToolsSorted } from '@/lib/data/external-tools';
 import { getModulesSorted } from '@/lib/data/modules';
 import { fetchGovernanceProposals } from '@/lib/snapshot/api/fetch-governance-proposals';
@@ -17,8 +16,7 @@ export default async function Home() {
   const { proposals } = await fetchGovernanceProposals(undefined, { includeClosed: false });
   const activeProposals = proposals.filter((p) => p.state === 'active');
   const pendingProposals = proposals.filter((p) => p.state === 'pending');
-  const aiSummaryAvailable = isAISummaryAvailable();
-  const qnaAvailable = isProposalQnaAvailable();
+  const aiAvailable = isAiAvailable();
 
   return (
     <div className="container mx-auto max-w-6xl px-6 py-16">
@@ -50,15 +48,15 @@ export default async function Home() {
       {activeProposals.length > 0 && (
         <ActiveVotes
           proposals={activeProposals}
-          isAISummaryAvailable={aiSummaryAvailable}
-          isQnaAvailable={qnaAvailable}
+          isAISummaryAvailable={aiAvailable}
+          isQnaAvailable={aiAvailable}
         />
       )}
       {pendingProposals.length > 0 && (
         <PendingVotes
           proposals={pendingProposals}
-          isAISummaryAvailable={aiSummaryAvailable}
-          isQnaAvailable={qnaAvailable}
+          isAISummaryAvailable={aiAvailable}
+          isQnaAvailable={aiAvailable}
         />
       )}
 

@@ -7,6 +7,4 @@
 
 export * from './types';
 export * from './config';
-export * from './cache';
-export * from './extract-events';
 export * from './transform';

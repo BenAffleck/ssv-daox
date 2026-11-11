@@ -32,12 +32,12 @@ ssv-daox/
 │   │   │   ├── nonce/route.ts   # POST /api/opt-out/nonce
 │   │   │   ├── safe-signature/route.ts # GET /api/opt-out/safe-signature
 │   │   │   └── status/route.ts  # GET /api/opt-out/status
-│   │   ├── ai-extraction/    # AI extraction endpoint
-│   │   │   └── route.ts      # POST /api/ai-extraction
+│   │   ├── ai-extraction/    # AI extraction endpoint (one proposal per request)
+│   │   │   └── route.ts      # POST /api/ai-extraction  { proposalId }
 │   │   ├── ai-summary/       # AI summary endpoint
-│   │   │   └── route.ts      # POST /api/ai-summary
+│   │   │   └── route.ts      # POST /api/ai-summary  { proposalId }
 │   │   ├── proposal-qna/     # AI proposal Q&A endpoint
-│   │   │   └── route.ts      # POST /api/proposal-qna
+│   │   │   └── route.ts      # POST /api/proposal-qna  { proposalId, question }
 │   │   └── vote-index/       # Searchable vote index for the command palette
 │   │       └── route.ts      # GET /api/vote-index
 │   ├── leaderboard/          # Leaderboard module (/delegates redirects here)
@@ -139,31 +139,19 @@ ssv-daox/
 │   │   ├── parsers/          # ICS parser
 │   │   ├── logic/            # Transform, expand, aggregate
 │   │   └── utils/            # Date + ICS utilities
-│   ├── ai/                   # Shared AI infrastructure
+│   ├── ai/                   # AI features: summary, Q&A, extraction (see "AI features")
+│   │   ├── features.ts       # createAiFeatures(deps): summarize, answer, extractEvents
+│   │   ├── server.ts         # getAiFeatures() wiring + limits, isAiAvailable()
+│   │   ├── http.ts           # aiRoute(): result → HTTP response
+│   │   ├── proposal-source.ts # Snapshot proposal by id, space allowlist
+│   │   ├── rate-limit.ts     # Per-client + global fixed-window limits
+│   │   ├── llm.ts            # Llm port + LlmError
 │   │   ├── config.ts         # isAIEnabled(), getAnthropicApiKey(), model config
-│   │   └── client.ts         # getModelId(), parseAPIError(), truncateBody(), createClient()
-│   ├── ai-extraction/        # AI-powered event extraction
-│   │   ├── types.ts          # AI extraction types + Zod schemas
-│   │   ├── config.ts         # Extraction-specific config + prompt (delegates to lib/ai/)
-│   │   ├── cache.ts          # File-based caching
-│   │   ├── extract-events.ts # Claude API integration (uses lib/ai/ client)
-│   │   ├── transform.ts      # AI events → UnifiedEvent
-│   │   └── __tests__/        # Unit tests
-│   ├── ai-summary/           # AI proposal TL;DR summaries
-│   │   ├── types.ts          # ProposalSummary type + Zod schemas
-│   │   ├── config.ts         # Summary-specific config + prompt
-│   │   ├── cache.ts          # File-based caching (.cache/ai-summaries.json)
-│   │   ├── generate-summary.ts # Core logic (uses lib/ai/ client)
-│   │   ├── index.ts          # Module exports
-│   │   └── __tests__/        # Unit tests
-│   ├── ai-qna/               # AI proposal Q&A (single question per proposal)
-│   │   ├── types.ts          # ProposalAnswer type + Zod schemas
-│   │   ├── config.ts         # Q&A config + prompt + rate-limit config
-│   │   ├── cache.ts          # File-based caching (.cache/ai-qna.json)
-│   │   ├── rate-limit.ts     # In-memory fixed-window limiter
-│   │   ├── answer-question.ts # Core logic (uses lib/ai/ client)
-│   │   ├── index.ts          # Module exports
-│   │   └── __tests__/        # Unit tests
+│   │   └── client.ts         # Anthropic Llm adapter + response helpers
+│   ├── ai-extraction/        # Extraction schema, prompt, relevance gate, transform
+│   ├── ai-summary/           # Summary schema + prompt
+│   ├── ai-qna/               # Q&A schema + prompt
+│   ├── json-file.ts          # JSON file with serialized read-modify-write (AI cache, opt-out stores)
 │   └── snapshot/             # Snapshot.org integration
 │       ├── config.ts         # API config + env vars
 │       ├── types.ts          # API types
@@ -537,7 +525,7 @@ The landing page displays currently active governance proposals when any exist (
 **Data flow:**
 
 1. `fetchActiveProposals()` called in `app/page.tsx` (async server component)
-2. `isAISummaryAvailable()` checked server-side and passed as prop
+2. `isAiAvailable()` (`lib/ai/server.ts`) checked server-side and passed as prop
 3. `ActiveVotes` section renders `ActiveVoteCard` for each proposal
 
 **ActiveVoteCard displays:**
@@ -552,18 +540,17 @@ The landing page displays currently active governance proposals when any exist (
 **AI Summary flow:**
 
 1. User clicks "AI TL;DR" on an ActiveVoteCard (client component)
-2. Client POSTs `{ proposalId, title, body, choices }` to `/api/ai-summary`
-3. Server checks file cache (`.cache/ai-summaries.json`), returns cached if valid
-4. Otherwise calls Claude API via shared `lib/ai/` client
-5. Caches result and returns `ProposalSummary` with `tldr` + `choiceExplanations`
-6. Card displays summary inline; subsequent clicks toggle visibility
+2. Client POSTs `{ proposalId }` to `/api/ai-summary`
+3. `getAiFeatures().summarize()` looks the proposal up in the governance spaces and
+   returns a cached or fresh `ProposalSummary` (see [AI features](#ai-features-libai))
+4. Card displays summary inline; subsequent clicks toggle visibility
 
 **Files:**
 
 - `lib/snapshot/api/fetch-active-proposals.ts` - GraphQL query for active proposals (includes `body`)
 - `lib/snapshot/api/fetch-active-vote-status.ts` - Orchestrator combining proposals + votes
 - `lib/snapshot/utils/time-remaining.ts` - Time formatting utility
-- `lib/ai-summary/` - Summary generation module (types, config, cache, generate)
+- `lib/ai-summary/` - Summary schema and prompt (run by `lib/ai/features.ts`)
 - `app/api/ai-summary/route.ts` - POST endpoint for summary generation
 - `components/ActiveVotes.tsx` - Section wrapper (passes `isAISummaryAvailable`)
 - `components/ActiveVoteCard.tsx` - Client component with Vote Now CTA + AI TL;DR
@@ -625,10 +612,11 @@ Displays events from multiple calendar sources in a chronological timeline view.
 - Uses Anthropic Claude API to extract milestones and deadlines from proposal text
 - Client-triggered extraction via button in Timeline UI
 - Time window selection (30d/90d/6m/all) to control costs
-- File-based caching to avoid re-processing proposals
+- Cached per proposal for 30 days; re-extraction happens when the proposal text,
+  the TTL or the task version changes, never on a client's request
 - Displays with distinct "AI Insights" badge and sparkle icon
 - Shows confidence level (high/medium/low) and source proposal link
-- Cost-controlled with budget limits (~$0.10 per extraction run)
+- Cost-controlled by per-client and global rate limits (see [AI features](#ai-features-libai))
 - Uses Claude Haiku model for efficiency
 - Can mark an event as recurring. The model emits a **structured** recurrence
   (`freq`/`interval`/`byDay`/`count`/`until`), never a raw RRULE; `buildRRule`
@@ -640,9 +628,9 @@ Displays events from multiple calendar sources in a chronological timeline view.
   `community` or `internal`, and internal ones — a council's monthly review, a
   team's weekly sync — are dropped. `audience` defaults to `internal`, so an
   unlabelled cadence fails closed and the timeline stays crisp. One-off events
-  are never gated. The filter runs on read in `hydrateEvents`, so it applies to
+  are never gated. The filter runs on read (the extraction task's `present`), so it applies to
   cached extractions too and tightening the policy costs nothing to re-extract.
-  Dropped events are reported as `ExtractionStats.eventsFiltered`.
+  Dropped events are reported per response as `eventsFiltered`.
 - **Public reporting is exempt.** `isPublicReportingObligation` overrides the
   audience label for standing obligations to report to the DAO — transparency
   reports, treasury statements, anything published to the forum. These are the
@@ -663,15 +651,13 @@ Displays events from multiple calendar sources in a chronological timeline view.
 1. User selects time window (30d, 90d, 6m, all)
 2. User clicks "Extract Events" button
 3. Client filters proposals by selected time window
-4. Client → POST /api/ai-extraction with filtered proposals
-5. Server checks cache for existing extractions
-6. For uncached proposals:
-   - Generate extraction prompt with proposal body
-   - Call Claude API with Zod schema for structured output
-   - Parse dates (absolute or relative to proposal end date)
-   - Cache results to .cache/ai-extractions.json
-7. Transform AI events → SerializedEvent format
-8. Return to client with extraction stats
+4. For each proposal, client → POST /api/ai-extraction { proposalId }
+   (one request per proposal drives the progress bar)
+5. Server looks the id up in the timeline space (404 otherwise)
+6. Cached result, or: prompt from the server-side text → Claude → Zod → cache
+7. Relevance filter + transform AI events → SerializedEvent format
+8. Respond { events, eventsFiltered, fromCache }; client sums the stats and stops
+   on `ai_critical`, `rate_limited` or `unavailable`
 9. Client merges AI events with regular events
 10. Display with filtering support
 ```
@@ -765,36 +751,33 @@ lib/dao-timeline/
     ├── date-utils.ts           # Date helpers
     └── ics-utils.ts            # ICS parsing utilities
 
-lib/ai/                             # Shared AI infrastructure
+lib/ai/                             # AI features (see "AI features" below)
+├── features.ts                     # createAiFeatures(deps): summarize, answer, extractEvents
+├── llm.ts                          # Llm port + LlmError (critical | failed)
+├── proposal-source.ts              # ProposalSource adapter: Snapshot proposal by id, space allowlist
+├── rate-limit.ts                   # In-memory fixed-window limiter (per client + global)
+├── http.ts                         # aiRoute(): result → HTTP, client key from proxy headers
+├── server.ts                       # getAiFeatures() production wiring, limits, isAiAvailable()
 ├── config.ts                       # isAIEnabled(), getAnthropicApiKey(), AI_MODEL_CONFIG
-└── client.ts                       # createClient(), getModelId(), parseAPIError(),
+└── client.ts                       # createAnthropicLlm() adapter, getModelId(), parseAPIError(),
                                     #   truncateBody(), extractJSONFromResponse()
 
-lib/ai-extraction/                  # AI event extraction (uses lib/ai/)
+lib/ai-extraction/                  # Extraction schema, prompt, relevance, transform
 ├── types.ts                        # AI event types, Zod schemas, time window utils
-├── config.ts                       # Extraction-specific config + prompt (re-exports from lib/ai/)
-├── cache.ts                        # File-based extraction cache
-├── extract-events.ts               # Claude API integration
+├── config.ts                       # Extraction config + prompt (re-exports from lib/ai/)
+├── relevance.ts                    # Recurrence relevance gate
 ├── transform.ts                    # AI events → UnifiedEvent
 ├── index.ts                        # Module exports
 └── __tests__/
 
-lib/ai-summary/                     # AI proposal summaries (uses lib/ai/)
+lib/ai-summary/                     # Summary schema + prompt
 ├── types.ts                        # ProposalSummary, Zod schemas
-├── config.ts                       # Summary-specific config + prompt
-├── cache.ts                        # File-based summary cache
-├── generate-summary.ts             # Claude API integration
-├── index.ts                        # Module exports
+├── config.ts                       # Summary config + prompt
 └── __tests__/
 
-lib/ai-qna/                         # AI proposal Q&A (uses lib/ai/)
+lib/ai-qna/                         # Q&A schema + prompt
 ├── types.ts                        # ProposalAnswer, Zod schemas
-├── config.ts                       # Q&A config, prompt, rate-limit config
-├── cache.ts                        # File-based answer cache, keyed proposal + question
-├── rate-limit.ts                   # In-memory fixed-window limiter
-├── answer-question.ts              # Claude API integration
-├── index.ts                        # Module exports
-└── __tests__/
+└── config.ts                       # Q&A config + prompt
 
 lib/dao-governance/
 └── vote-search.ts                  # Proposal → SearchItem adapter, snippet builder,
@@ -1644,6 +1627,56 @@ SNAPSHOT_MULTISIG_SPACE_ID=                              # MSIG
 
 Reuses the existing AI TL;dr service (`/api/ai-summary`) for per-proposal summaries.
 
+### AI features (`lib/ai/`)
+
+Summary, Q&A and timeline extraction run through one module,
+`createAiFeatures(deps)`, wired once by `getAiFeatures()` (`lib/ai/server.ts`), the
+same shape as the opt-out service. Each route is `aiRoute(...)` over one method.
+
+**Security invariants**, enforced in one place:
+
+- **Ids in, never text.** Clients send `proposalId` (and `question`). The text the model
+  reads comes from the feature's `ProposalSource`: summary and Q&A use the governance
+  spaces, extraction the timeline space. The source queries Snapshot by id and finds only
+  unflagged proposals of its allowed spaces, so the endpoints are no general LLM proxy.
+  Any proposal of those spaces is reachable, including closed ones older than the vote
+  cards and the timeline list show.
+- **Unpoisonable cache.** A result is cached only after a model call on server-side text,
+  and its key holds a hash of that text: `feature@version:id:textHash[:questionHash]`.
+  Editing a proposal or bumping a task's `version` makes old entries stop matching.
+- **Invalid model output is not cached**, so a proposal whose reply keeps failing Zod is
+  billed again on the next request; the rate limits bound that cost.
+- **No client cache bypass.** The force re-extract button is gone; bump the extraction
+  task's `version` to re-extract.
+- **Every model call is metered**; cache hits are free. Limits (in `server.ts`):
+
+  | Feature    | Per client  | Global (all clients) |
+  | ---------- | ----------- | -------------------- |
+  | Summary    | 30 / hour   | 300 / day            |
+  | Q&A        | 10 / 10 min | 300 / day            |
+  | Extraction | 60 / hour   | 300 / day            |
+
+  The client key is `x-real-ip`, else the right-most `X-Forwarded-For` entry; the
+  left-most is client-controlled. Buckets are per process, so the global cap is what
+  bounds spend when keys are spoofed or instances multiply.
+
+**Order per call:** enabled (503) → validate (400) → resolve the proposal (404, or 502
+`source_unavailable` when Snapshot fails) → cache → rate limit (429 + `Retry-After`) →
+model (502 `ai_critical` for auth/billing, `ai_failed` otherwise) → Zod (502
+`invalid_model_output`, nothing cached) → cache write.
+
+Error bodies are `{ error, code, fromCache: false }`; clients branch on `code`, not on
+message text. Success bodies keep their keys: `{ summary }`, `{ answer }`,
+`{ events, eventsFiltered }`, each with `fromCache`.
+
+**Cache:** one file, `.cache/ai.json`, through `lib/json-file.ts` (serialized writes,
+expired entries pruned on write). Ephemeral on serverless hosts; a cost optimisation,
+never a source of truth.
+
+**Testing:** `lib/ai/__tests__/features.test.ts` drives the module with a scripted `Llm`,
+in-memory proposal sources and a temp cache file, and proves each invariant above.
+`proposal-source.test.ts` and `http.test.ts` cover the two adapters.
+
 ### Proposal Q&A
 
 Beside the TL;DR button, each vote card carries an **"Ask"** pill opening a modal dialog
@@ -1654,15 +1687,11 @@ out — asking again replaces the previous answer rather than building a thread.
 
 1. User clicks "Ask" on any vote card → `AskProposalDialog` opens (portal modal).
 2. Client POSTs `{ proposalId, question }` to `/api/proposal-qna`.
-3. Route validates the body, then rate-limits per client (fixed window, default 10 per
-   10 min) — free-form user input makes this endpoint a cost vector that `/api/ai-summary`
-   is not.
-4. Route resolves the proposal **server-side** from `fetchGovernanceProposals()`. It
-   deliberately does not accept proposal text from the client, which would let the
-   endpoint act as a general-purpose LLM proxy. Unknown id → 404.
-5. `lib/ai-qna/` checks the file cache (`.cache/ai-qna.json`, keyed by proposal +
-   normalized-question hash), else calls Claude via the shared `lib/ai/` client.
-6. Returns `ProposalAnswer` — `answer`, `answered`, and up to 3 `supportingQuotes`.
+3. `getAiFeatures().answer()` validates the question (1–500 characters), looks the
+   proposal up in the governance spaces, and returns a cached answer (keyed by proposal
+   text + normalized-question hash) or a fresh one, rate-limited at 10 model calls per
+   client per 10 min. See [AI features](#ai-features-libai).
+4. Returns `ProposalAnswer` — `answer`, `answered`, and up to 3 `supportingQuotes`.
 
 **Grounding:** answers use the proposal's title, body and choices only — never live
 scores, quorum or dates. The prompt instructs the model to set `answered: false` and say
@@ -1700,7 +1729,7 @@ works regardless of the active space/status/search filters.
 
 **Files:**
 
-- `lib/ai-qna/` — Q&A module (types, config/prompt, cache, rate-limit, answer-question)
+- `lib/ai-qna/` — Q&A schema and prompt (run by `lib/ai/features.ts`)
 - `app/api/proposal-qna/route.ts` — POST endpoint + GET availability probe
 - `app/api/vote-index/route.ts` — GET slim vote index for the palette
 - `lib/dao-governance/vote-search.ts` — proposal → `SearchItem` adapter + query filter

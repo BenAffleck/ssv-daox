@@ -28,26 +28,10 @@ export const AI_EXTRACTION_CONFIG = {
   model: (process.env.AI_EXTRACTION_MODEL || 'haiku') as 'haiku' | 'sonnet' | 'opus',
 
   /**
-   * Delay between processing proposals (ms)
-   * Helps with rate limiting
-   */
-  processingDelayMs: 100,
-
-  /**
    * Maximum proposal body length to process.
    * Matches Snapshot's 50,000-character cap.
    */
   maxProposalBodyLength: 50000,
-
-  /**
-   * Cache file path (relative to project root)
-   */
-  cacheFilePath: '.cache/ai-extractions.json',
-
-  /**
-   * Cache version - increment when schema changes
-   */
-  cacheVersion: 2,
 
   /**
    * Maximum age for cached extractions (in days)
@@ -176,5 +160,29 @@ Proposal Title: ${proposalTitle}
 Proposal Passed On: ${proposalEndDate}
 
 --- Proposal Body ---
-${proposalBody}`;
+${proposalBody}
+
+Respond with ONLY a valid JSON object in this exact format, no other text:
+{
+  "events": [
+    {
+      "title": "Event title",
+      "date": "YYYY-MM-DD",
+      "dateConfidence": "high" | "medium" | "low",
+      "description": "What happens",
+      "excerpt": "Original text mentioning date",
+      "eventType": "milestone" | "deadline" | "launch" | "meeting" | "other",
+      "recurrence": null | {
+        "audience": "community" | "internal",
+        "freq": "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY",
+        "interval": 1,
+        "byDay": ["MO"] | null,
+        "count": null,
+        "until": null
+      }
+    }
+  ]
+}
+
+If no events with specific dates are found, return: {"events": []}`;
 }
