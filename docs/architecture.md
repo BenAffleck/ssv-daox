@@ -127,7 +127,7 @@ ssv-daox/
 │   │   ├── logic/auto-delegation.ts  # Pure: pool summary; auto-delegation view model (breakdown, action state); SSV formatting
 │   │   ├── logic/address-overview.ts # Pure: siblings, claim status, opt-out and Safe request merge, switch prompt
 │   │   ├── logic/delegation-plan.ts  # Pure: split-delegation form input → delegations, diff, warnings, errors
-│   │   └── opt-out/          # Opt-out service (DI), typed data, Score API and Safe clients, file stores
+│   │   └── opt-out/          # Opt-out service (DI), nonce store, HTTP handlers, typed data, Score API and Safe clients
 │   ├── wallet/               # Wallet stack
 │   │   ├── config.ts         # Server-only MAINNET_RPC_URL, proxy path
 │   │   ├── rpc-proxy.ts      # Method allowlist + forwarding (DI fetch)
@@ -1137,16 +1137,35 @@ or brought back in (opt-in) by signing EIP-712 typed data with its wallet.
   expires after 1 day, the Score API's own window, so Safe co-signers have
   time. The record keeps the whole message, so a Safe request can be resumed.
 
+#### Nonce store
+
+`lib/delegation/opt-out/nonce-store.ts` owns the replay protection behind
+four methods:
+
+- `issue(address, action)` → `{ nonce, issuedAt }`; throws
+  `NonceStoreFullError` past `maxRecords`.
+- `redeem(message, isAuthentic)` checks, in order: nonce known, issued to the
+  address, same `issuedAt` and action, unexpired, unused. Only then does it
+  call `isAuthentic` (the signature check), so a forged signature never uses
+  up the nonce. The mark-used write is compare-and-set: of concurrent
+  redemptions, one wins.
+- `open(nonce)`: the record while unexpired and unused (Safe resume).
+- `latestUnused(address)`: the address's latest record while unused.
+
+Two adapters share that logic and one contract test suite
+(`__tests__/nonce-store.test.ts`): `createFileNonceStore(path, options)` (JSON
+file, production) and `createMemoryNonceStore(options)` (tests). Options:
+`now`, `maxRecords` (default 10,000).
+
 #### Service
 
-`createOptOutService({ nonces, scoreApi, verifySignature, safeTxService, now })` in
+`createOptOutService({ nonces, scoreApi, verifySignature, safeTxService })` in
 `lib/delegation/opt-out/service.ts`. All dependencies are injected:
 
 - `issueNonce(address, action)` → `{ nonce, issuedAt }`.
 - `submitOptOut({ typedData, signature })` rebuilds domain and types itself
-  (only the message is taken from the client), then checks in order: nonce
-  exists, belongs to the address, has the `issuedAt` and action it was issued
-  with, unexpired, unused; signature valid. It then marks the nonce used and records
+  (only the message is taken from the client), then redeems the nonce through
+  the [nonce store](#nonce-store) with the signature check. It then records
   or forwards the request; a failed forward still uses up the nonce. Errors are
   results, not throws, each with an `httpStatus`: `unknown_nonce`,
   `nonce_address_mismatch`, `nonce_mismatch`, `nonce_expired` (`400`),
@@ -1159,6 +1178,18 @@ or brought back in (opt-in) by signing EIP-712 typed data with its wallet.
 - `findSafeRequests(addresses)` and `findSafeSignature(nonce)`: see
   [Safe resume](#safe-resume).
 - `mode` is `mock` or `live`, from the Score API client.
+
+#### HTTP
+
+`createOptOutHttp({ service, rpcConfigured })` (`opt-out/http.ts`) holds the
+four routes as Request → Response handlers: `issueNonce`, `submit`,
+`safeSignature`, `statuses`. It parses and validates input, maps service
+errors to `{ error: { code, message } }` with their status, answers `503
+rpc_unconfigured` for signed requests without `MAINNET_RPC_URL`, `429` when
+the nonce store is full, and `502` when the status lookup fails. Each
+`app/api/opt-out/**/route.ts` only calls `getOptOutHttp()`. Tests
+(`__tests__/opt-out-http.test.ts`) drive it with real signatures and the
+memory store.
 
 `getOptOutService()` (`opt-out/server.ts`) wires one instance per process:
 

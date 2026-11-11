@@ -6,12 +6,11 @@ import { privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createMockScoreApiClient } from '../opt-out/mock-score-api';
+import { createMemoryNonceStore } from '../opt-out/nonce-store';
 import { createSafeTransactionService } from '../opt-out/safe-tx-service';
 import { createScoreApiClient } from '../opt-out/score-api';
 import {
   createOptOutService,
-  type NonceRecord,
-  type NonceStore,
   type OptOutServiceDeps,
   type SignatureVerifier,
 } from '../opt-out/service';
@@ -28,30 +27,6 @@ const BOB = privateKeyToAccount(
   '0x2222222222222222222222222222222222222222222222222222222222222222',
 );
 const CAROL = '0xca401ca401ca401ca401ca401ca401ca401ca401';
-
-function memoryNonceStore(): NonceStore {
-  const records = new Map<string, NonceRecord>();
-  return {
-    async save(record) {
-      records.set(record.nonce, { ...record });
-    },
-    async find(nonce) {
-      return records.get(nonce) ?? null;
-    },
-    async findLatest(address) {
-      const own = [...records.values()].filter((r) => r.address === address);
-      return own.sort((a, b) => a.issuedAt.localeCompare(b.issuedAt)).at(-1) ?? null;
-    },
-    async markUsed(nonce) {
-      const record = records.get(nonce);
-      if (!record || record.used) {
-        return false;
-      }
-      record.used = true;
-      return true;
-    },
-  };
-}
 
 const verifyEoa: SignatureVerifier = ({ address, typedData, signature }) =>
   verifyTypedData({ address, signature, ...typedData });
@@ -77,14 +52,13 @@ describe('opt-out service', () => {
     safeFetch?: typeof fetch;
   } = {}) {
     return createOptOutService({
-      nonces: memoryNonceStore(),
+      nonces: createMemoryNonceStore({ now: () => clock }),
       scoreApi,
       verifySignature,
       safeTxService: createSafeTransactionService({
         baseUrl: 'http://safe.test',
         fetch: safeFetch,
       }),
-      now: () => clock,
     });
   }
 

@@ -11,8 +11,9 @@ import {
   type OverviewAddress,
 } from '@/lib/delegation/logic/address-overview';
 import { sameAddress } from '@/lib/delegation/logic/pool';
+import type { IssuedNonce } from '@/lib/delegation/opt-out/nonce-store';
 import type { OptOutMode } from '@/lib/delegation/opt-out/score-api';
-import type { IssuedNonce, SafeRequest } from '@/lib/delegation/opt-out/service';
+import type { SafeRequest } from '@/lib/delegation/opt-out/service';
 import {
   buildOptOutTypedData,
   type OptOutAction,

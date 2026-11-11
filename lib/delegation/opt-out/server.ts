@@ -6,8 +6,9 @@ import { DELEGATE_SCORE_CONFIG } from '@/lib/leaderboard/config';
 import { getMainnetRpcUrl } from '@/lib/wallet/config';
 
 import { OPT_OUT_CONFIG } from './config';
-import { createFileNonceStore } from './file-nonce-store';
+import { createOptOutHttp, type OptOutHttp } from './http';
 import { createMockScoreApiClient } from './mock-score-api';
+import { createFileNonceStore } from './nonce-store';
 import { createSafeTransactionService } from './safe-tx-service';
 import { createScoreApiClient, type OptOutStatuses } from './score-api';
 import {
@@ -61,6 +62,17 @@ export function getOptOutService(): OptOutService {
     }),
   });
   return service;
+}
+
+let optOutHttp: OptOutHttp | null = null;
+
+/** The opt-out routes' handlers over `getOptOutService()`. */
+export function getOptOutHttp(): OptOutHttp {
+  optOutHttp ??= createOptOutHttp({
+    service: getOptOutService(),
+    rpcConfigured: () => Boolean(getMainnetRpcUrl()),
+  });
+  return optOutHttp;
 }
 
 /**
