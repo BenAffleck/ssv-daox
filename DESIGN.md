@@ -295,6 +295,11 @@ Community and featured cards add a gradient overlay
 `from-secondary/10 to-accent/10` with `border-secondary/40
 hover:border-secondary` and `hover:shadow-secondary/20`.
 
+A vote card title that opens Snapshot ends in a muted 13px lucide
+`ExternalLink` icon placed inline so it wraps with the last word. Title and
+icon turn primary on hover. The icon is `aria-hidden`; sr-only text
+"(opens on Snapshot)" names the destination. Use `ProposalTitleLink`.
+
 ### Badges
 
 `.badge` base (`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs

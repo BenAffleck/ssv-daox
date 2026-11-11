@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import type { SnapshotActiveProposal } from '@/lib/snapshot/types';
+import type { GovernanceSpace, SnapshotActiveProposal } from '@/lib/snapshot/types';
 
 import ClosedVoteCard from '../ClosedVoteCard';
 
@@ -21,16 +21,18 @@ const closed: SnapshotActiveProposal = {
   link: 'https://snapshot.org/#/x/proposal/p1',
 };
 
+const dao: GovernanceSpace = { key: 'main', label: 'DAO', spaceId: 'x', voteType: 'token' };
+
 describe('ClosedVoteCard quorum', () => {
   it('says the vote did not pass when For wins but quorum was missed', () => {
-    render(<ClosedVoteCard proposal={closed} />);
+    render(<ClosedVoteCard proposal={closed} space={dao} />);
     expect(screen.getByText('Quorum not met')).toBeInTheDocument();
     expect(screen.getByText('Quorum not reached')).toBeInTheDocument();
     expect(screen.queryByText('Passed')).not.toBeInTheDocument();
   });
 
   it('shows Passed and a reached quorum when the threshold is met', () => {
-    render(<ClosedVoteCard proposal={{ ...closed, quorum: 500 }} />);
+    render(<ClosedVoteCard proposal={{ ...closed, quorum: 500 }} space={dao} />);
     expect(screen.getByText('Passed')).toBeInTheDocument();
     expect(screen.getByText('Quorum reached')).toBeInTheDocument();
   });
@@ -42,7 +44,7 @@ describe('ClosedVoteCard quorum', () => {
   });
 
   it('states that no quorum applies when none is configured', () => {
-    render(<ClosedVoteCard proposal={{ ...closed, quorum: 0 }} />);
+    render(<ClosedVoteCard proposal={{ ...closed, quorum: 0 }} space={dao} />);
     expect(screen.getByText('No quorum')).toBeInTheDocument();
     expect(screen.getByText('Passed')).toBeInTheDocument();
   });

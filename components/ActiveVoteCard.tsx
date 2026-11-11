@@ -8,6 +8,7 @@ import type { GovernanceSpace, SnapshotActiveProposal } from '@/lib/snapshot/typ
 import { formatTimeRemaining } from '@/lib/snapshot/utils/time-remaining';
 
 import AskButton from './dao-governance/AskButton';
+import ProposalTitleLink from './dao-governance/ProposalTitleLink';
 import QuorumMeter from './dao-governance/QuorumMeter';
 import SpaceBadge from './dao-governance/SpaceBadge';
 import VoteResults from './dao-governance/VoteResults';
@@ -16,8 +17,7 @@ interface ActiveVoteCardProps {
   proposal: SnapshotActiveProposal;
   isAISummaryAvailable?: boolean;
   isQnaAvailable?: boolean;
-  /** When set, renders a space badge and switches quorum display by vote type. */
-  space?: GovernanceSpace;
+  space: GovernanceSpace;
 }
 
 export default function ActiveVoteCard({
@@ -27,7 +27,6 @@ export default function ActiveVoteCard({
   space,
 }: ActiveVoteCardProps) {
   const timeRemaining = formatTimeRemaining(proposal.end);
-  const isMemberVote = space?.voteType === 'member';
 
   const [showSummary, setShowSummary] = useState(false);
   const [summary, setSummary] = useState<ProposalSummary | null>(null);
@@ -75,14 +74,7 @@ export default function ActiveVoteCard({
   return (
     <article className="card p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-4">
-        <a
-          href={proposal.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-heading text-[15px] leading-snug font-semibold tracking-tight text-foreground hover:text-primary"
-        >
-          {proposal.title}
-        </a>
+        <ProposalTitleLink href={proposal.link} title={proposal.title} />
         <div className="shrink-0">
           <span className="badge-sm-primary">{timeRemaining}</span>
         </div>
@@ -121,7 +113,7 @@ export default function ActiveVoteCard({
       {/* Stats + Actions */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
-          {space && <SpaceBadge space={space} />}
+          <SpaceBadge space={space} />
           <span>
             {proposal.votes} voter{proposal.votes !== 1 ? 's' : ''}
           </span>
@@ -144,18 +136,7 @@ export default function ActiveVoteCard({
             </button>
           )}
           {isQnaAvailable && <AskButton proposal={proposal} />}
-          {isMemberVote ? (
-            // Committee spaces are whitelist-only voters — link out, don't imply
-            // the viewer can cast a vote.
-            <a
-              href={proposal.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-card-hover"
-            >
-              View Proposal
-            </a>
-          ) : (
+          {space.voteType === 'token' && (
             <a
               href={proposal.link}
               target="_blank"

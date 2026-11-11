@@ -90,6 +90,35 @@ describe('GovernanceView', () => {
     expect(screen.getByText('Proposal m-closed')).toBeInTheDocument();
   });
 
+  describe('vote actions', () => {
+    const ALL_STATES = [
+      ...PROPOSALS,
+      proposal('o-pending', OPERATORS, 'pending'),
+      proposal('o-closed', OPERATORS, 'closed'),
+    ];
+
+    it('offers Vote Now only on the active DAO vote', () => {
+      renderView({ proposals: ALL_STATES });
+      const voteNow = screen.getAllByRole('link', { name: 'Vote Now' });
+      expect(voteNow).toHaveLength(1);
+      expect(voteNow[0]).toHaveAttribute('href', 'https://snapshot.org/#/x/proposal/m-active');
+    });
+
+    it('shows no View Proposal button on any card', () => {
+      renderView({ proposals: ALL_STATES });
+      expect(screen.queryByRole('link', { name: 'View Proposal' })).not.toBeInTheDocument();
+    });
+
+    it('marks every title as a link that opens on Snapshot', () => {
+      renderView({ proposals: ALL_STATES });
+      for (const p of ALL_STATES) {
+        expect(
+          screen.getByRole('link', { name: `${p.title} (opens on Snapshot)` }),
+        ).toHaveAttribute('href', p.link);
+      }
+    });
+  });
+
   it('renders an outcome badge on a closed proposal', () => {
     renderView();
     // m-closed: token-weighted, "For" wins, no quorum → Passed
