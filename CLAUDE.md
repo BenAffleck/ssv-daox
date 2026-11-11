@@ -12,12 +12,7 @@
 
 ## Testing
 
-- Write tests that exercise real code through public interfaces / observable behavior.
-- Do not write tests for what the type system already guarantees.
-- Do not write tests that merely restate the implementation.
-- Do not write tautological tests
 - Prefer vertical-slice TDD: one failing test → minimal code to pass → refactor.
-- Never mock the unit under test; never test private methods.
 - Run the tests after major changes before claiming the work is done.
 
 ## Agent skills
