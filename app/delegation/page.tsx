@@ -16,6 +16,7 @@ import ScoreBreakdownPanel from '@/components/delegation/ScoreBreakdownPanel';
 import VotingPowerPanel from '@/components/delegation/VotingPowerPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
 import ScoreFreshness from '@/components/leaderboard/ScoreFreshness';
+import TrackEvent from '@/components/telemetry/TrackEvent';
 import { fetchPin, fetchPoolRecipients } from '@/lib/delegation/api/fetch-pin';
 import {
   resolveEnsName,
@@ -213,6 +214,7 @@ export default async function DelegationPage({
           <WalletSection address={address} overview={null} />
         </PageHeader>
         <LookupProblem address={address} resolution={resolution} />
+        <TrackEvent name="delegation_lookup" properties={{ result: 'unresolved' }} />
       </div>
     );
   }
@@ -279,6 +281,10 @@ export default async function DelegationPage({
       <PageHeader>
         <WalletSection address={address} overview={overview} />
       </PageHeader>
+      <TrackEvent
+        name="delegation_lookup"
+        properties={{ result: overview ? 'listed' : 'not_listed' }}
+      />
       <DelegateProfile
         address={address}
         name={name}

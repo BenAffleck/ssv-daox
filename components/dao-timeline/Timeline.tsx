@@ -23,6 +23,7 @@ import {
 } from '@/lib/dao-timeline/logic/series-collapse';
 import { EventGroup, SerializedEvent } from '@/lib/dao-timeline/types';
 import { getDateLabel, isSameDay, startOfDay } from '@/lib/dao-timeline/utils/date-utils';
+import { trackEvent } from '@/lib/telemetry/events';
 
 import AIExtractionPanel from './AIExtractionPanel';
 import TimelineFilterControls from './TimelineFilterControls';
@@ -115,6 +116,7 @@ export default function Timeline({
 
   // Handle AI extraction - process proposals one by one for progress indication
   const handleExtract = useCallback(async () => {
+    trackEvent('timeline_extract_clicked', {});
     if (filteredProposals.length === 0) {
       setExtractionError('No proposals available for extraction');
       return;

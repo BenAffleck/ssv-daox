@@ -21,6 +21,7 @@ import {
 } from '@/lib/delegation/opt-out/typed-data';
 import { loadScoreStatus } from '@/lib/leaderboard/api/load-status';
 import { describeNextUpdate } from '@/lib/leaderboard/logic/freshness';
+import { trackEvent, type TelemetryEvents } from '@/lib/telemetry/events';
 
 import OptOutStatusBadge from './OptOutStatusBadge';
 import StepPanel from './StepPanel';
@@ -53,8 +54,28 @@ async function errorBodyOf(response: Response): Promise<ErrorBody | null> {
   return response.json().catch(() => null);
 }
 
-async function errorMessage(response: Response): Promise<string> {
-  return messageOf(await errorBodyOf(response), response.status);
+type FailedStage = TelemetryEvents['optout_failed']['stage'];
+
+/** Records the refusal and returns the message to show. */
+async function refusal(
+  response: Response,
+  action: OptOutAction,
+  stage: FailedStage,
+): Promise<string> {
+  const body = await errorBodyOf(response);
+  recordRefusal(body, response.status, action, stage);
+  return messageOf(body, response.status);
+}
+
+function recordRefusal(
+  body: ErrorBody | null,
+  httpStatus: number,
+  action: OptOutAction,
+  stage: FailedStage,
+) {
+  const code = body?.error?.code;
+  const reason = typeof code === 'string' ? code : `http_${httpStatus}`;
+  trackEvent('optout_failed', { action, stage, reason });
 }
 
 function messageOf(body: ErrorBody | null, httpStatus: number): string {
@@ -164,6 +185,7 @@ export default function OptOutPanel({
           setExpiredNonces((nonces) => [...nonces, request.nonce]);
           return;
         }
+        recordRefusal(body, lookup.status, request.action, 'safe_check');
         setOutcome({ kind: 'error', message: messageOf(body, lookup.status) });
         return;
       }
@@ -177,12 +199,17 @@ export default function OptOutPanel({
       }
       const response = await postSubmission(found.submission);
       if (!response.ok) {
-        setOutcome({ kind: 'error', message: await errorMessage(response) });
+        setOutcome({
+          kind: 'error',
+          message: await refusal(response, request.action, 'submit'),
+        });
         return;
       }
+      trackEvent('optout_submitted', { action: request.action, via: 'safe' });
       setOutcome({ kind: 'success', message: await successMessage(request.action) });
       router.refresh();
     } catch {
+      trackEvent('optout_failed', { action: request.action, stage: 'safe_check', reason: 'error' });
       setOutcome({ kind: 'error', message: 'The check failed. Try again.' });
     } finally {
       setChecking(false);
@@ -195,6 +222,8 @@ export default function OptOutPanel({
     }
     setBusy(true);
     setOutcome(null);
+    trackEvent('optout_started', { action });
+    let stage: FailedStage = 'nonce';
     try {
       const nonceResponse = await fetch('/api/opt-out/nonce', {
         method: 'POST',
@@ -202,24 +231,30 @@ export default function OptOutPanel({
         body: JSON.stringify({ address: connected, action }),
       });
       if (!nonceResponse.ok) {
-        setOutcome({ kind: 'error', message: await errorMessage(nonceResponse) });
+        setOutcome({ kind: 'error', message: await refusal(nonceResponse, action, 'nonce') });
         return;
       }
       const { nonce, issuedAt } = (await nonceResponse.json()) as IssuedNonce;
       const typedData = buildOptOutTypedData({ address: connected, action, nonce, issuedAt });
+      stage = 'sign';
       const signature = await signTypedDataAsync(typedData);
+      trackEvent('optout_signed', { action });
 
+      stage = 'submit';
       const response = await postSubmission({ typedData, signature });
       if (!response.ok) {
-        setOutcome({ kind: 'error', message: await errorMessage(response) });
+        setOutcome({ kind: 'error', message: await refusal(response, action, 'submit') });
         return;
       }
+      trackEvent('optout_submitted', { action, via: 'wallet' });
       setOutcome({ kind: 'success', message: await successMessage(action) });
       router.refresh();
     } catch (error) {
+      const rejected = isUserRejection(error);
+      trackEvent('optout_failed', { action, stage, reason: rejected ? 'rejected' : 'error' });
       setOutcome({
         kind: 'error',
-        message: isUserRejection(error)
+        message: rejected
           ? 'The signature request was rejected in your wallet.'
           : 'Signing failed. Try again.',
       });

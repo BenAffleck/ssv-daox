@@ -19,7 +19,7 @@ Next.js 16 App Router application with TypeScript strict mode. Modular design wh
 ssv-daox/
 ├── app/                      # Next.js App Router
 │   ├── page.tsx              # Landing page (module grid)
-│   ├── layout.tsx            # Root layout + ThemeProvider + Footer
+│   ├── layout.tsx            # Root layout + ThemeProvider + Footer + Telemetry
 │   ├── terms/page.tsx        # Terms of Service (defers to the SSV Network terms)
 │   ├── privacy/page.tsx      # Privacy Policy (DAOx data flows)
 │   ├── globals.css           # Tailwind v4 + theme tokens
@@ -95,6 +95,7 @@ ssv-daox/
 │   │   ├── OptOutPanel.tsx          # Client: EIP-712 opt-out / opt-in + Demo banner
 │   │   ├── OptOutStatusBadge.tsx
 │   │   └── ClaimStatusBadge.tsx
+│   ├── telemetry/            # Client: Analytics + Speed Insights, TrackEvent, WalletConnectTracker
 │   └── dao-timeline/         # Timeline components
 │       ├── Timeline.tsx          # Client: main container + AI state
 │       ├── TimelineFilterControls.tsx
@@ -148,16 +149,20 @@ ssv-daox/
 │   │   ├── rate-limit.ts     # Per-client + global fixed-window limits
 │   │   ├── llm.ts            # Llm port + LlmError
 │   │   ├── config.ts         # isAIEnabled(), getAnthropicApiKey(), model config
+│   │   ├── requests.ts       # Browser: summary + Q&A requests, with telemetry
 │   │   └── client.ts         # Anthropic Llm adapter + response helpers
 │   ├── ai-extraction/        # Extraction schema, prompt, relevance gate, transform
 │   ├── ai-summary/           # Summary schema + prompt
 │   ├── ai-qna/               # Q&A schema + prompt
 │   ├── json-file.ts          # JSON file with serialized read-modify-write (AI cache, opt-out stores)
+│   ├── cache-dir.ts          # Writable cache dir: .cache/, or /tmp/.cache on Vercel
+│   ├── telemetry/            # Typed analytics events, address redaction, request-error records (see "Telemetry")
 │   └── snapshot/             # Snapshot.org integration
 │       ├── config.ts         # API config + env vars
 │       ├── types.ts          # API types
 │       └── api/              # GraphQL queries
 │
+├── instrumentation.ts        # onRequestError → one JSON log line per failed server request
 ├── __tests__/                # Unit tests (Vitest)
 └── e2e/                      # E2E tests (Playwright)
 ```
@@ -1205,9 +1210,9 @@ memory store.
 
 `getOptOutService()` (`opt-out/server.ts`) wires one instance per process:
 
-- **Cache location:** `.cache/` under the working directory, or under
-  `os.tmpdir()` when `VERCEL` is set, because Vercel functions can write only
-  to `/tmp`.
+- **Cache location:** `cacheDir()` (`lib/cache-dir.ts`): `.cache/` under the
+  working directory, or under `os.tmpdir()` when `VERCEL` is set, because
+  Vercel functions can write only to `/tmp`.
 - **Nonce store:** `.cache/opt-out-nonces.json`. Records are pruned a day
   after expiry, so a late submission reads as expired, not unknown. At most
   10,000 records (about 2 MB); beyond that the nonce route answers `429`.
@@ -1712,9 +1717,13 @@ Error bodies are `{ error, code, fromCache: false }`; clients branch on `code`, 
 message text. Success bodies keep their keys: `{ summary }`, `{ answer }`,
 `{ events, eventsFiltered }`, each with `fromCache`.
 
-**Cache:** one file, `.cache/ai.json`, through `lib/json-file.ts` (serialized writes,
-expired entries pruned on write). Ephemeral on serverless hosts; a cost optimisation,
-never a source of truth.
+**Cache:** one file, `ai.json` in `cacheDir()` (`/tmp/.cache` on Vercel), through
+`lib/json-file.ts` (serialized writes, expired entries pruned on write). Per instance and
+ephemeral on serverless hosts; a cost optimisation, never a source of truth.
+
+**Browser side:** `lib/ai/requests.ts` (`requestProposalSummary`, `askProposalQuestion`)
+is the one place the vote cards and the Q&A dialog call the routes; it records the
+telemetry events below.
 
 **Testing:** `lib/ai/__tests__/features.test.ts` drives the module with a scripted `Llm`,
 in-memory proposal sources and a temp cache file, and proves each invariant above.
@@ -1782,6 +1791,42 @@ works regardless of the active space/status/search filters.
 
 ---
 
+## Telemetry
+
+Answers "where do users drop off, and what breaks" at launch scale, without tying
+a visit to a wallet.
+
+- **Web Analytics + Speed Insights:** `components/telemetry/Telemetry.tsx` in the root
+  layout. Its `beforeSend` (`redactEventUrl`) strips addresses and ENS names from page
+  URLs, since `/delegation?address=` carries one. UTM parameters stay, for campaign links.
+- **Custom events:** only through `trackEvent(name, props)` (`lib/telemetry/events.ts`).
+  `TelemetryEvents` is the catalog: one typed property set per event, none holding an
+  address. String values are redacted anyway, and a throwing tracker never breaks a flow.
+
+  | Event                                  | Where                                        | Properties                                                                      |
+  | -------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------- |
+  | `wallet_connected`                     | `WalletConnectTracker` (fresh, not restored) | `connector`                                                                     |
+  | `delegation_lookup`                    | `/delegation` via `TrackEvent`               | `result`: listed / not_listed / unresolved                                      |
+  | `optout_started` / `_signed`           | `OptOutPanel`                                | `action`                                                                        |
+  | `optout_submitted`                     | `OptOutPanel`                                | `action`, `via`: wallet / safe                                                  |
+  | `optout_failed`                        | `OptOutPanel`                                | `action`, `stage`, `reason` (server code, `http_<status>`, `rejected`, `error`) |
+  | `ai_summary_requested`, `ai_qna_asked` | `lib/ai/requests.ts`                         | none; the question is never sent                                                |
+  | `ai_rate_limited`                      | `lib/ai/requests.ts`                         | `feature`                                                                       |
+  | `timeline_extract_clicked`             | `Timeline`                                   | none                                                                            |
+  | `client_error`                         | `app/error.tsx`, `app/[slug]/error.tsx`      | `boundary`, `digest`                                                            |
+
+  Custom events need the Vercel Pro plan; on Hobby they are dropped.
+
+- **Server errors:** `instrumentation.ts` `onRequestError` logs one JSON line per failed
+  request (`describeRequestError`: route, route type, method, redacted path and message,
+  digest; no headers). Search Vercel logs or a log drain for `"event":"request_error"`.
+  A `client_error` digest matches the server line's digest.
+
+**Testing:** `lib/telemetry/__tests__/` covers redaction, `trackEvent` and the error
+record; `lib/ai/__tests__/requests.test.ts` and `OptOutPanel.test.tsx` cover the events.
+
+---
+
 ## Testing Strategy
 
 - **Unit tests** (`__tests__/`): Pure functions, business logic
@@ -1825,6 +1870,6 @@ _Last Updated: 2026-06-29_
 copy the text: they incorporate the SSV Network Terms of Service
 (`ssv.network/legal/terms-of-service`) by link and add a short DAOx addendum, so
 they follow that document. The privacy policy lists DAOx's actual data flows
-(Vercel hosting, wallet addresses, opt-out records, Anthropic for AI features,
-theme in local storage, no analytics). **Update it whenever a feature adds a
+(Vercel hosting and analytics, wallet addresses, opt-out records, Anthropic for AI
+features, theme in local storage). **Update it whenever a feature adds a
 third-party call, stored data or a tracker.** `Footer` links both from every page.
