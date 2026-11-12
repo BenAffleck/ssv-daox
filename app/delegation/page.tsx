@@ -180,7 +180,7 @@ function NotScored() {
 export default async function DelegationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ address?: string | string[] }>;
+  searchParams: Promise<{ address?: string | string[]; via?: string | string[] }>;
 }) {
   if (!DELEGATE_SCORE_CONFIG.apiBaseUrl) {
     return (
@@ -195,7 +195,7 @@ export default async function DelegationPage({
     );
   }
 
-  const { address: param } = await searchParams;
+  const { address: param, via } = await searchParams;
   const address = (Array.isArray(param) ? param[0] : param)?.trim() ?? '';
   // The leaderboard is the lookup.
   if (!address) {
@@ -313,6 +313,7 @@ export default async function DelegationPage({
           optOutStepAvailable={overview !== null}
           nextPower={leaderboard.rows.find((r) => sameAddress(r.address, address))?.power ?? null}
           campaignUrl={campaignUrl}
+          source={via === 'leaderboard' ? 'leaderboard' : 'profile'}
         />
       ) : (
         <DelegateToDaoPanel campaignUrl={campaignUrl} />

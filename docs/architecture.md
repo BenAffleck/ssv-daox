@@ -61,6 +61,7 @@ ssv-daox/
 │   │   ├── WalletProvider.tsx    # Client: wagmi, React Query, RainbowKit, session-restored flag
 │   │   ├── WalletButton.tsx      # Client: header connect / account / wrong-network button
 │   │   ├── AccountMenu.tsx       # Client: connected account dropdown (profile, copy, Etherscan, disconnect)
+│   │   ├── useConnectAttempt.ts  # Client: open the connect modal, report connected or dismissed
 │   │   └── useWalletSession.ts   # loading | disconnected | connected
 │   ├── leaderboard/          # Leaderboard components
 │   │   ├── DelegatesTable.tsx    # Client: filter/sort state
@@ -1815,6 +1816,28 @@ a visit to a wallet.
   | `timeline_extract_clicked`             | `Timeline`                                   | none                                                                            |
   | `client_error`                         | `app/error.tsx`, `app/[slug]/error.tsx`      | `boundary`, `digest`                                                            |
 
+  **Campaign funnel.** The route from the leaderboard's pool banner or a profile's
+  "Delegate to the DAO" panel to a confirmed delegation. `source` is the placement
+  (`banner` / `panel`) for what the user sees and clicks, and the route (`leaderboard` /
+  `profile`) for the write: the banner's links carry `?via=leaderboard`, which
+  `/delegation` passes to `AutoDelegationPath`.
+
+  | Event                   | Where                                                                             | Properties                                                                                                        |
+  | ----------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+  | `delegate_cta_clicked`  | `PoolBannerAction`, `useConnectToDelegate`                                        | `source`: banner / panel, `step`: connect / open                                                                  |
+  | `connect_modal_closed`  | same, via `useConnectAttempt`                                                     | `source`; the modal closed without a wallet                                                                       |
+  | `delegate_offer_shown`  | `PoolBannerAction` (after the power fetch), `AutoDelegationPath` (connected only) | `source`, `offer`: delegate / received / delegated / none / unavailable / switch_account                          |
+  | `delegation_requested`  | `AutoDelegationPath` button                                                       | `source`: leaderboard / profile, `drops`: yes / no                                                                |
+  | `delegation_sent`       | `AutoDelegationPath`, phase pending / proposed                                    | `source`, `wallet`: eoa / safe                                                                                    |
+  | `delegation_confirmed`  | `AutoDelegationPath`, phase confirmed                                             | `source`                                                                                                          |
+  | `delegation_failed`     | `AutoDelegationPath`, phase error / failed                                        | `stage`: wallet (`reason`: rejected / chain_mismatch / error) or chain (`reason`: failed: reverted or no receipt) |
+  | `delegation_index_slow` | `AutoDelegationPath`, `useRefreshWhile` gave up                                   | none                                                                                                              |
+  | `campaign_link_clicked` | `CampaignRibbon` "Check eligibility"                                              | `placement`: banner / panel                                                                                       |
+
+  Delivery events and `delegation_index_slow` follow only a write sent on this visit; one
+  restored from storage after a reload is not counted again. The panel records its offer
+  once per connected wallet, so the state change after a delegation isn't a second offer.
+
   Custom events need the Vercel Pro plan; on Hobby they are dropped.
 
 - **Server errors:** `instrumentation.ts` `onRequestError` logs one JSON line per failed
@@ -1824,6 +1847,8 @@ a visit to a wallet.
 
 **Testing:** `lib/telemetry/__tests__/` covers redaction, `trackEvent` and the error
 record; `lib/ai/__tests__/requests.test.ts` and `OptOutPanel.test.tsx` cover the events.
+The campaign funnel is covered by `PoolBannerAction.test.tsx`, `CampaignRibbon.test.tsx`,
+`AutoDelegationPath.events.test.tsx` and `useDelegationWrite.test.tsx` (wallet failure reason).
 
 ---
 

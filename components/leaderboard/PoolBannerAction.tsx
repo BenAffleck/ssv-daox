@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
 
+import TrackEvent from '@/components/telemetry/TrackEvent';
+import { useConnectAttempt } from '@/components/wallet/useConnectAttempt';
 import { useWalletSession } from '@/components/wallet/useWalletSession';
 import { autoDelegationView, formatPower } from '@/lib/delegation/logic/auto-delegation';
 import type { VotingPowerData } from '@/lib/gnosis/types';
+import { trackEvent } from '@/lib/telemetry/events';
 
 type Offer =
   | { kind: 'delegate'; power: number }
@@ -62,8 +64,13 @@ export default function PoolBannerAction({
   boosted?: boolean;
 }) {
   const session = useWalletSession();
-  const { openConnectModal } = useConnectModal();
-  const [pin, setPin] = useState<{ address: string; data: VotingPowerData } | null>(null);
+  const connect = useConnectAttempt((connected) => {
+    if (connected === null) {
+      trackEvent('connect_modal_closed', { source: 'banner' });
+    }
+  });
+  /** `data` is `null` when the wallet's power couldn't be loaded. */
+  const [pin, setPin] = useState<{ address: string; data: VotingPowerData | null } | null>(null);
 
   useEffect(() => {
     if (session.phase !== 'connected') {
@@ -73,63 +80,97 @@ export default function PoolBannerAction({
     const controller = new AbortController();
     fetch(`/api/voting-power/${address}?fresh=1`, { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
-      .then((data: VotingPowerData | null) => data && setPin({ address, data }))
-      .catch(() => {});
+      .then((data: VotingPowerData | null) => setPin({ address, data }))
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setPin({ address, data: null });
+        }
+      });
     return () => controller.abort();
   }, [session.phase, session.address]);
 
   const address = session.phase === 'connected' ? session.address : undefined;
-  const offer =
-    address && pin && pin.address === address ? offerFor(address, pin.data, poolAddress) : null;
+  const loaded = address && pin && pin.address === address ? pin : null;
+  const offer = loaded?.data ? offerFor(loaded.address, loaded.data, poolAddress) : null;
+  const offerShownEvent = loaded && (
+    <TrackEvent
+      name="delegate_offer_shown"
+      properties={{ source: 'banner', offer: offer?.kind ?? 'unavailable' }}
+    />
+  );
+  const profileUrl = `/delegation?via=leaderboard&address=${address}`;
 
   const actionClass = boosted ? BOOSTED_ACTION_CLASS : ACTION_CLASS;
   const delegateClass = boosted ? `${actionClass} campaign-pulse` : actionClass;
 
   if (session.phase === 'disconnected') {
     return (
-      <button type="button" onClick={openConnectModal} className={delegateClass}>
+      <button
+        type="button"
+        onClick={() => {
+          trackEvent('delegate_cta_clicked', { source: 'banner', step: 'connect' });
+          connect();
+        }}
+        className={delegateClass}
+      >
         SSV or cSSV holder? Delegate to the DAO →
       </button>
     );
   }
-  if (!address || !offer) {
-    return null;
+  if (!offer) {
+    return offerShownEvent || null;
   }
   if (offer.kind === 'received') {
     return (
-      <Link href={`/delegation?address=${address}`} className={actionClass}>
-        {YOU_BADGE}
-        <span className="text-accent tabular-nums">
-          {offer.power === null ? 'Voting power' : formatPower(offer.power)}
-        </span>{' '}
-        received from the DAO
-      </Link>
+      <>
+        {offerShownEvent}
+        <Link href={profileUrl} className={actionClass}>
+          {YOU_BADGE}
+          <span className="text-accent tabular-nums">
+            {offer.power === null ? 'Voting power' : formatPower(offer.power)}
+          </span>{' '}
+          received from the DAO
+        </Link>
+      </>
     );
   }
   if (offer.kind === 'delegated') {
     return (
-      <Link href={`/delegation?address=${address}`} className={actionClass}>
-        {YOU_BADGE}
-        <span className="text-accent tabular-nums">{formatPower(offer.power)}</span> delegated to
-        the DAO
-      </Link>
+      <>
+        {offerShownEvent}
+        <Link href={profileUrl} className={actionClass}>
+          {YOU_BADGE}
+          <span className="text-accent tabular-nums">{formatPower(offer.power)}</span> delegated to
+          the DAO
+        </Link>
+      </>
     );
   }
   if (offer.kind === 'none') {
     return (
-      <button type="button" disabled className={`${actionClass} cursor-not-allowed opacity-60`}>
-        {YOU_BADGE}
-        <span className="tabular-nums">{formatPower(0)}</span> voting power to delegate
-      </button>
+      <>
+        {offerShownEvent}
+        <button type="button" disabled className={`${actionClass} cursor-not-allowed opacity-60`}>
+          {YOU_BADGE}
+          <span className="tabular-nums">{formatPower(0)}</span> voting power to delegate
+        </button>
+      </>
     );
   }
   return (
-    <Link href={`/delegation?address=${address}`} className={delegateClass}>
-      {YOU_BADGE}
-      Delegate your <span className="text-accent tabular-nums">
-        {formatPower(offer.power)}
-      </span>{' '}
-      voting power to the DAO →
-    </Link>
+    <>
+      {offerShownEvent}
+      <Link
+        href={profileUrl}
+        onClick={() => trackEvent('delegate_cta_clicked', { source: 'banner', step: 'open' })}
+        className={delegateClass}
+      >
+        {YOU_BADGE}
+        Delegate your <span className="text-accent tabular-nums">
+          {formatPower(offer.power)}
+        </span>{' '}
+        voting power to the DAO →
+      </Link>
+    </>
   );
 }

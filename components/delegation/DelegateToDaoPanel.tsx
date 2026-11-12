@@ -30,7 +30,7 @@ export default function DelegateToDaoPanel({
       aria-labelledby="delegate-to-dao-title"
       className={`card mt-6 scroll-mt-24 border-primary/50 shadow-glow ${campaignUrl ? 'overflow-hidden' : ''}`}
     >
-      {campaignUrl && <CampaignRibbon url={campaignUrl} />}
+      {campaignUrl && <CampaignRibbon url={campaignUrl} placement="panel" />}
       <div className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="min-w-0">

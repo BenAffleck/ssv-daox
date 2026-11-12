@@ -26,7 +26,7 @@ export default function PoolBanner({ pool, poolAddress, campaignUrl }: PoolBanne
       aria-label="DAO auto-delegation pool"
       className={campaignUrl ? 'card mb-6 overflow-hidden' : 'card mb-6'}
     >
-      {campaignUrl && <CampaignRibbon url={campaignUrl} />}
+      {campaignUrl && <CampaignRibbon url={campaignUrl} placement="banner" />}
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="font-heading text-xs font-semibold tracking-wide text-muted uppercase">

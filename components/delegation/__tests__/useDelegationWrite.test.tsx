@@ -54,3 +54,23 @@ describe('useDelegationWrite with a storage key', () => {
     expect(reloaded.result.current.submission).toBeNull();
   });
 });
+
+describe('useDelegationWrite when the wallet refuses', () => {
+  beforeEach(() => {
+    writeContractAsync.mockReset();
+  });
+
+  it.each([
+    ['UserRejectedRequestError', 'rejected'],
+    ['ConnectorChainMismatchError', 'chain_mismatch'],
+    ['ChainMismatchError', 'chain_mismatch'],
+    ['InternalRpcError', 'error'],
+  ])('reports a %s as %s', async (name, reason) => {
+    writeContractAsync.mockRejectedValue(Object.assign(new Error('refused'), { name }));
+    const { result } = renderHook(() => useDelegationWrite());
+
+    await act(() => result.current.send('clear'));
+
+    expect(result.current.submission).toMatchObject({ kind: 'error', reason });
+  });
+});
