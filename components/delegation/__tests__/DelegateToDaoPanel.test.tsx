@@ -12,7 +12,7 @@ describe('DelegateToDaoPanel', () => {
     expect(screen.getByRole('region', { name: 'Delegate to the DAO' })).toHaveTextContent(
       'The Distributed Vote · Incentives live for cSSV delegated to the DAO pool',
     );
-    const link = screen.getByRole('link', { name: /Boosted/ });
+    const link = screen.getByRole('link', { name: /Check eligibility/ });
     expect(link).toHaveAttribute('href', CAMPAIGN_URL);
     expect(link).toHaveAttribute('target', '_blank');
   });
@@ -21,6 +21,6 @@ describe('DelegateToDaoPanel', () => {
     render(<DelegateToDaoPanel />);
 
     expect(screen.queryByText(/The Distributed Vote/)).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Boosted/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Check eligibility/ })).not.toBeInTheDocument();
   });
 });

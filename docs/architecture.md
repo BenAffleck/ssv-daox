@@ -1005,7 +1005,7 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
   pass it as `campaignUrl` to `PoolBanner` and to `DelegateToDaoPanel` (through
   `AutoDelegationPath`, a client component, so the URL stays server config).
   - `CampaignRibbon` tops both cards: "The Distributed Vote · Incentives live
-    for cSSV delegated to the DAO pool", with a "Boosted ↗" pill that opens the
+    for cSSV delegated to the DAO pool", with a "Check eligibility ↗" pill that opens the
     campaign page in a new tab. It shows in every wallet state.
   - The leaderboard action takes a brand outline (`boosted`). Only the actions
     that lead to delegating pulse (`.campaign-pulse`): connect and "Delegate

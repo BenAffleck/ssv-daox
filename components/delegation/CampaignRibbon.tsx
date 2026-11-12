@@ -13,7 +13,7 @@ export default function CampaignRibbon({ url }: { url: string }) {
         rel="noopener noreferrer"
         className="badge badge-accent gap-1 font-semibold hover:bg-accent/30"
       >
-        <span aria-hidden>⚡</span> Boosted ↗
+        <span aria-hidden>⚡</span> Check eligibility ↗
         <span className="sr-only"> (opens the campaign page)</span>
       </a>
     </div>

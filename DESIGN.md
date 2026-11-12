@@ -298,7 +298,7 @@ hover:border-secondary` and `hover:shadow-secondary/20`.
 **Campaign ribbon.** A time-boxed incentive campaign (`CampaignRibbon`) tops
 its card with a strip: `from-primary/15 to-accent/15` over a
 `border-b border-primary/30`, the campaign name in `font-heading`, muted copy,
-and a `badge badge-accent` "Boosted ↗" pill on the right linking out.
+and a `badge badge-accent` "Check eligibility ↗" pill on the right linking out.
 The card gains `overflow-hidden`. The action that joins the campaign
 breathes its brand glow (`.campaign-pulse`, `--shadow-glow` ↔
 `--shadow-glow-lg`) while it is enabled and idle; actions that don't join it

@@ -247,7 +247,7 @@ describe('AutoDelegationPath for the owner', () => {
       <AutoDelegationPath {...PROPS} campaignUrl="https://example.com/the-distributed-vote" />,
     );
 
-    expect(screen.getByRole('link', { name: /Boosted/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Check eligibility/ })).toHaveAttribute(
       'href',
       'https://example.com/the-distributed-vote',
     );
