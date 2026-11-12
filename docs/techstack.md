@@ -20,12 +20,12 @@ Minimize moving parts while maximizing developer experience and production relia
 
 ### Infrastructure
 
-| Layer         | Choice                        | Rationale                                                                                         |
-| ------------- | ----------------------------- | ------------------------------------------------------------------------------------------------- |
-| Hosting       | **Vercel**                    | Zero-config Next.js deployment                                                                    |
-| CI            | **GitHub Actions**            | Lint + tests + catalog-sync check on every PR (`.github/workflows/ci.yml`)                        |
-| PR automation | **Claude Code GitHub Action** | Auto-reviews community tool PRs and answers `@claude` mentions                                    |
-| Toolchain     | **Node 24 (CI), npm 11**      | npm 10 can't resolve the Vercel packages' optional peers against this tree; `engines` enforces it |
+| Layer         | Choice                        | Rationale                                                                                                                              |
+| ------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Hosting       | **Vercel**                    | Zero-config Next.js deployment                                                                                                         |
+| CI            | **GitHub Actions**            | Lint + tests + catalog-sync check on every PR (`.github/workflows/ci.yml`)                                                             |
+| PR automation | **Claude Code GitHub Action** | Auto-reviews community tool PRs and answers `@claude` mentions                                                                         |
+| Toolchain     | **Node 24 (CI), npm 11**      | npm 10 can't resolve the Vercel packages' optional peers against this tree; `engines` warns on older npm; Vercel MUST build on Node 24 |
 
 ### Observability
 

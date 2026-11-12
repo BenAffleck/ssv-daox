@@ -1797,8 +1797,8 @@ Answers "where do users drop off, and what breaks" at launch scale, without tyin
 a visit to a wallet.
 
 - **Web Analytics + Speed Insights:** `components/telemetry/Telemetry.tsx` in the root
-  layout. Its `beforeSend` (`redactEventUrl`) strips addresses and ENS names from page
-  URLs, since `/delegation?address=` carries one. UTM parameters stay, for campaign links.
+  layout. Its `beforeSend` (`redactEventUrl`) blanks the whole `address=` value (an
+  encoded unicode ENS name matches no pattern), then strips any other address or ENS name. UTM parameters stay, for campaign links.
 - **Custom events:** only through `trackEvent(name, props)` (`lib/telemetry/events.ts`).
   `TelemetryEvents` is the catalog: one typed property set per event, none holding an
   address. String values are redacted anyway, and a throwing tracker never breaks a flow.

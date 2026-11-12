@@ -12,6 +12,7 @@ export default function TrackEvent<E extends TelemetryEvent>({
   name: E;
   properties: TelemetryEvents[E];
 }) {
+  // A fresh properties object each render must not re-fire the event.
   const key = JSON.stringify(properties);
   useEffect(() => {
     trackEvent(name, JSON.parse(key) as TelemetryEvents[E]);
