@@ -55,6 +55,9 @@ export const IMMINENT_DAYS = 1;
 /** Above this, month ticks are thinned to quarters, half-years or years. */
 export const MAX_MONTH_TICKS = 12;
 
+/** Room one tick label needs along the axis; "Jan '25" at 12px is the widest. */
+export const MIN_TICK_SPACING_PX = 56;
+
 /** Tick spacings, in months, tried in order. */
 const TICK_STEP_MONTHS = [1, 2, 3, 6, 12];
 
@@ -164,6 +167,11 @@ export function buildHistogram(
 /** The tallest bucket, used to scale bar heights. Never zero. */
 export function peakCount(buckets: HistogramBucket[]): number {
   return buckets.reduce((max, bucket) => Math.max(max, bucket.count), 1);
+}
+
+/** Tick budget for an axis of this rendered width, for `buildMonthTicks`. */
+export function maxTicksForWidth(widthPx: number): number {
+  return Math.max(2, Math.min(MAX_MONTH_TICKS, Math.floor(widthPx / MIN_TICK_SPACING_PX)));
 }
 
 /**

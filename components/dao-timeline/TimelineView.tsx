@@ -2,6 +2,7 @@
 
 import { isPastOffset, toDayOffset } from '@/lib/dao-timeline/logic/range-brush';
 import { EventGroup } from '@/lib/dao-timeline/types';
+import { getShortDateLabel } from '@/lib/dao-timeline/utils/date-utils';
 
 import EventCard from './EventCard';
 
@@ -48,11 +49,12 @@ export default function TimelineView({ groups, sourceColors, today }: TimelineVi
           <div key={group.date.toISOString()}>
             {/* Day header */}
             <div className="mb-4 flex items-center gap-4">
-              <h2 className={`text-lg ${isPastOffset(dayOffset) ? 'text-muted' : ''}`}>
-                {group.label}
+              <h2 className={`min-w-0 text-lg ${isPastOffset(dayOffset) ? 'text-muted' : ''}`}>
+                <span className="sm:hidden">{getShortDateLabel(group.date, today)}</span>
+                <span className="hidden sm:inline">{group.label}</span>
               </h2>
               <div className="h-px flex-1 bg-border" />
-              <span className="text-sm text-muted">
+              <span className="shrink-0 text-sm whitespace-nowrap text-muted">
                 {group.events.length} event{group.events.length !== 1 ? 's' : ''}
               </span>
             </div>

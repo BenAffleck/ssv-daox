@@ -7,7 +7,6 @@ import { describe, expect, it } from 'vitest';
 import type { GovernanceProposal, GovernanceSpace } from '@/lib/snapshot/types';
 
 import {
-  buildSnippet,
   buildVoteSearchIndex,
   filterProposalsByQuery,
   getStateLabel,
@@ -58,29 +57,6 @@ const PROPOSALS = [
   proposal('p2', 'Fund the grants programme', 'Allocates 500k SSV to grantees.', OPERATORS),
   proposal('p3', 'Onboard new verified operators', 'Adds three operators.', OPERATORS, 'closed'),
 ];
-
-describe('buildSnippet', () => {
-  it('strips markdown formatting into a single line', () => {
-    const snippet = buildSnippet('# Heading\n\n- A **bold** point\n- Another `code` point');
-    expect(snippet).toBe('Heading A bold point Another code point');
-  });
-
-  it('keeps link text and drops the target', () => {
-    expect(buildSnippet('See [the forum post](https://forum.example/x) for detail')).toBe(
-      'See the forum post for detail',
-    );
-  });
-
-  it('removes fenced code blocks and images', () => {
-    expect(buildSnippet('Before ```const x = 1;``` ![alt](img.png) after')).toBe('Before after');
-  });
-
-  it('truncates to the requested length with an ellipsis', () => {
-    const snippet = buildSnippet('word '.repeat(100), 20);
-    expect(snippet.length).toBeLessThanOrEqual(21);
-    expect(snippet.endsWith('…')).toBe(true);
-  });
-});
 
 describe('getStateLabel', () => {
   it('maps snapshot states to display labels', () => {

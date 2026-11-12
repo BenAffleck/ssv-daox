@@ -158,6 +158,7 @@ ssv-daox/
 │   ├── json-file.ts          # JSON file with serialized read-modify-write (AI cache, opt-out stores)
 │   ├── cache-dir.ts          # Writable cache dir: .cache/, or /tmp/.cache on Vercel
 │   ├── telemetry/            # Typed analytics events, address redaction, request-error records (see "Telemetry")
+│   ├── utils/markdown.ts     # markdownToSnippet(): markdown → one-line plain-text snippet
 │   └── snapshot/             # Snapshot.org integration
 │       ├── config.ts         # API config + env vars
 │       ├── types.ts          # API types
@@ -787,7 +788,7 @@ lib/ai-qna/                         # Q&A schema + prompt
 └── config.ts                       # Q&A config + prompt
 
 lib/dao-governance/
-└── vote-search.ts                  # Proposal → SearchItem adapter, snippet builder,
+└── vote-search.ts                  # Proposal → SearchItem adapter (snippet via lib/utils/markdown),
                                     #   filterProposalsByQuery() (reuses lib/search scorer)
 
 lib/snapshot/api/
@@ -817,8 +818,12 @@ AI_EXTRACTION_MODEL=haiku              # Model: haiku, sonnet, or opus
 - **Timeline.tsx** (client) - Filter state, event grouping, AI extraction state
 - **TimelineFilterControls.tsx** (client) - Source filter
 - **TimelineRangeBrush.tsx** (client) - Two-handle date range brush over an event histogram
-- **TimelineView.tsx** (client) - Day groups with headers
-- **EventCard.tsx** - Event display with time, countdown, title, description, badges, AI source info
+- **TimelineView.tsx** (client) - Day groups with headers. Phones get the short label
+  (`getShortDateLabel`, "Wed, Nov 4, 2026"); both labels resolve Today/Tomorrow against
+  the same `today` the countdowns use.
+- **EventCard.tsx** - Event display with time, countdown, title, description, badges, AI source info.
+  Descriptions and AI excerpts are flattened with `markdownToSnippet` and clamped to three lines.
+  Below `sm` the badges stack under the content instead of taking a side column.
 - **SourceBadge.tsx** - Color-coded source indicator
 - **AIExtractionPanel.tsx** (client) - AI extraction button, progress, stats
 - **AISourceBadge.tsx** - Specialized badge with sparkle icon for AI events
@@ -842,7 +847,10 @@ histogram behind the brush does track the source filter.
 
 **Adaptive ticks.** A calendar with years of history would collide dozens of
 month labels, so `buildMonthTicks` widens the step to quarters, half-years or
-years (aligned to natural boundaries) to stay within `MAX_MONTH_TICKS`.
+years (aligned to natural boundaries) to stay within its tick budget. The
+brush measures its axis with a `ResizeObserver` and sets the budget via
+`maxTicksForWidth` (one tick per `MIN_TICK_SPACING_PX`, capped at
+`MAX_MONTH_TICKS`), so phone-width axes fall back to fewer, wider steps.
 Year-stepped ticks render as bare years; January carries its year otherwise.
 
 **Initial range.** `resolveInitialRange` prefers the near-term window

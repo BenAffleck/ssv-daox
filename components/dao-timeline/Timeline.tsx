@@ -255,7 +255,7 @@ export default function Timeline({
       if (!currentGroup || !isSameDay(currentGroup.date, eventDay)) {
         currentGroup = {
           date: eventDay,
-          label: getDateLabel(eventDay),
+          label: getDateLabel(eventDay, today),
           events: [],
         };
         groups.push(currentGroup);
@@ -265,7 +265,7 @@ export default function Timeline({
     }
 
     return groups;
-  }, [visibleEvents]);
+  }, [visibleEvents, today]);
 
   return (
     <div>

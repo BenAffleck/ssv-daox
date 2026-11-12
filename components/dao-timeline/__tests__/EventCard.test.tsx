@@ -104,4 +104,17 @@ describe('EventCard', () => {
     expect(card.className).toContain('border-transparent');
     expect(screen.queryByText('Add to calendar')).not.toBeInTheDocument();
   });
+
+  it('shows a proposal body as plain text, not raw markdown', () => {
+    const body =
+      '# Proposal Summary\n\nThis proposal amends **[DIP-31] Development Roadmap** ' +
+      'by [SSV Labs](https://ssv.network) (hereinafter: **"DIP-31"**).';
+    render(<EventCard event={event({ description: body })} dayOffset={0} />);
+
+    expect(
+      screen.getByText(
+        'Proposal Summary This proposal amends [DIP-31] Development Roadmap by SSV Labs (hereinafter: "DIP-31").',
+      ),
+    ).toBeInTheDocument();
+  });
 });

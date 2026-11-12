@@ -14,22 +14,6 @@ export function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 /**
- * Check if a date is today
- */
-export function isToday(date: Date): boolean {
-  return isSameDay(date, new Date());
-}
-
-/**
- * Check if a date is tomorrow
- */
-export function isTomorrow(date: Date): boolean {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return isSameDay(date, tomorrow);
-}
-
-/**
  * Check if a date is in the past (before start of today)
  */
 export function isPastDate(date: Date): boolean {
@@ -39,20 +23,30 @@ export function isPastDate(date: Date): boolean {
 }
 
 /**
- * Get a human-readable label for a date
+ * Day-header label: "Today", "Tomorrow", else "Monday, January 15, 2024".
+ * `today` is the same reference day the countdowns use.
  */
-export function getDateLabel(date: Date): string {
-  if (isToday(date)) {
+export function getDateLabel(date: Date, today: Date): string {
+  return formatDayLabel(date, today, 'long');
+}
+
+/** `getDateLabel` abbreviated for narrow screens: "Mon, Jan 15, 2024". */
+export function getShortDateLabel(date: Date, today: Date): string {
+  return formatDayLabel(date, today, 'short');
+}
+
+function formatDayLabel(date: Date, today: Date, nameStyle: 'long' | 'short'): string {
+  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  if (isSameDay(date, today)) {
     return 'Today';
   }
-  if (isTomorrow(date)) {
+  if (isSameDay(date, tomorrow)) {
     return 'Tomorrow';
   }
-  // Format: "Monday, January 15, 2024"
   return date.toLocaleDateString('en-US', {
-    weekday: 'long',
+    weekday: nameStyle,
     year: 'numeric',
-    month: 'long',
+    month: nameStyle,
     day: 'numeric',
   });
 }

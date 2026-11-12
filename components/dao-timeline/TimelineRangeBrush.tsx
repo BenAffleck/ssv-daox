@@ -1,6 +1,6 @@
 'use client';
 
-import { KeyboardEvent, PointerEvent, useMemo, useRef, useState } from 'react';
+import { KeyboardEvent, PointerEvent, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   BrushDomain,
@@ -14,6 +14,8 @@ import {
   getPresets,
   isPastOffset,
   isPresetActive,
+  MAX_MONTH_TICKS,
+  maxTicksForWidth,
   peakCount,
   toDayOffset,
   toFraction,
@@ -68,7 +70,24 @@ export default function TimelineRangeBrush({
 
   const buckets = useMemo(() => buildHistogram(events, domain, today), [events, domain, today]);
   const peak = useMemo(() => peakCount(buckets), [buckets]);
-  const monthTicks = useMemo(() => buildMonthTicks(domain, today), [domain, today]);
+  // The tick budget follows the axis width, so phone-width axes get fewer,
+  // wider-spaced labels. Until measured, the default budget applies.
+  const axisRef = useRef<HTMLDivElement>(null);
+  const [maxTicks, setMaxTicks] = useState(MAX_MONTH_TICKS);
+  useLayoutEffect(() => {
+    const axis = axisRef.current;
+    if (!axis || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) =>
+      setMaxTicks(maxTicksForWidth(entry.contentRect.width)),
+    );
+    observer.observe(axis);
+    return () => observer.disconnect();
+  }, []);
+
+  const monthTicks = useMemo(
+    () => buildMonthTicks(domain, today, maxTicks),
+    [domain, today, maxTicks],
+  );
   const presets = useMemo(() => getPresets(domain), [domain]);
 
   const inRange = useMemo(
@@ -302,7 +321,7 @@ export default function TimelineRangeBrush({
           </button>
         </div>
 
-        <div className="relative mt-1.5 h-5">
+        <div ref={axisRef} className="relative mt-1.5 h-5">
           {monthTicks.map((tick) => (
             <span
               key={tick.offset}

@@ -16,6 +16,7 @@ import {
   isPastOffset,
   isPresetActive,
   MAX_MONTH_TICKS,
+  maxTicksForWidth,
   MIN_FUTURE_DAYS,
   MIN_PAST_DAYS,
   peakCount,
@@ -252,6 +253,32 @@ describe('range-brush', () => {
 
     it('returns nothing for a degenerate domain', () => {
       expect(buildMonthTicks({ min: 4, max: 4 }, TODAY)).toEqual([]);
+    });
+  });
+
+  describe('maxTicksForWidth', () => {
+    /** Widest label ("Jan '25") at 12px plus its left padding and some air. */
+    const LABEL_ROOM_PX = 56;
+
+    it('spaces ticks wide enough for their labels on a phone-width axis', () => {
+      // The real calendar on a 375px screen: ~3 years across a 287px axis.
+      const domain = { min: -900, max: 240 };
+      const width = 287;
+      const ticks = buildMonthTicks(domain, TODAY, maxTicksForWidth(width));
+      const px = ticks.map((tick) => toFraction(tick.offset, domain) * width);
+
+      expect(ticks.length).toBeGreaterThanOrEqual(2);
+      for (let i = 1; i < px.length; i++) {
+        expect(px[i] - px[i - 1]).toBeGreaterThanOrEqual(LABEL_ROOM_PX);
+      }
+    });
+
+    it('keeps the full tick budget on a desktop-width axis', () => {
+      expect(maxTicksForWidth(808)).toBe(MAX_MONTH_TICKS);
+    });
+
+    it('never drops below two ticks', () => {
+      expect(maxTicksForWidth(40)).toBe(2);
     });
   });
 

@@ -6,6 +6,7 @@ import {
 import { EventSource, SerializedEvent } from '@/lib/dao-timeline/types';
 import { downloadICS } from '@/lib/dao-timeline/utils/calendar-export';
 import { formatDateRange } from '@/lib/dao-timeline/utils/date-utils';
+import { markdownToSnippet } from '@/lib/utils/markdown';
 
 import AISourceBadge from './AISourceBadge';
 import RecurringBadge from './RecurringBadge';
@@ -56,18 +57,12 @@ export default function EventCard({ event, sourceColor, dayOffset }: EventCardPr
   const aiMeta = getAIMetadata(event);
   const isAIEvent = aiMeta !== null;
 
-  // For AI events, show the excerpt as description
-  // For other events, truncate the description if too long
-  const maxDescLength = 150;
-  const displayDesc = isAIEvent
-    ? aiMeta.excerpt
-      ? `"${aiMeta.excerpt}"`
-      : event.description
-    : event.description;
-  const truncatedDesc =
-    displayDesc && displayDesc.length > maxDescLength
-      ? displayDesc.substring(0, maxDescLength) + '...'
-      : displayDesc;
+  // AI events show their quoted excerpt, others their description. Either can
+  // carry proposal markdown, so it is flattened to plain text. The paragraph
+  // clamps to three lines; this cap only bounds the text, sized for desktop.
+  const maxDescLength = 300;
+  const displayDesc = isAIEvent && aiMeta.excerpt ? `"${aiMeta.excerpt}"` : event.description;
+  const truncatedDesc = displayDesc && markdownToSnippet(displayDesc, maxDescLength);
 
   // A collapsed series shows only two cards, so each one points at the other
   // to make the rhythm legible without listing every occurrence.
@@ -95,7 +90,9 @@ export default function EventCard({ event, sourceColor, dayOffset }: EventCardPr
           : 'card p-4 transition-colors hover:bg-card-hover'
       }
     >
-      <div className="flex items-start justify-between gap-4">
+      {/* Below sm the badges drop under the content, so a side column cannot
+          squeeze the title into a narrow strip on phones. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="min-w-0 flex-1 wrap-anywhere">
           {/* Time, with a countdown that sharpens as the event approaches */}
           <div className="mb-1 flex flex-wrap items-center gap-2">
@@ -132,7 +129,7 @@ export default function EventCard({ event, sourceColor, dayOffset }: EventCardPr
           {/* Description or Excerpt for AI events */}
           {truncatedDesc && (
             <p
-              className={`mt-1.5 text-[13px] leading-relaxed ${isAIEvent ? 'text-muted/80 italic' : 'text-muted'}`}
+              className={`mt-1.5 line-clamp-3 text-[13px] leading-relaxed ${isAIEvent ? 'text-muted/80 italic' : 'text-muted'}`}
             >
               {truncatedDesc}
             </p>
@@ -197,7 +194,7 @@ export default function EventCard({ event, sourceColor, dayOffset }: EventCardPr
         </div>
 
         {/* Badges */}
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:flex-nowrap sm:items-end">
           {isAIEvent ? (
             <AISourceBadge confidence={aiMeta.confidence} />
           ) : (

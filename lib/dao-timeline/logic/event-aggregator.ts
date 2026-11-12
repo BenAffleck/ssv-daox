@@ -83,7 +83,7 @@ export function groupEventsByDay(events: UnifiedEvent[]): EventGroup[] {
     if (!currentGroup || !isSameDay(currentGroup.date, eventDay)) {
       currentGroup = {
         date: eventDay,
-        label: getDateLabel(eventDay),
+        label: getDateLabel(eventDay, new Date()),
         events: [],
       };
       groups.push(currentGroup);

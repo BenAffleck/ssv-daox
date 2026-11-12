@@ -8,6 +8,7 @@
 
 import { searchItems, type SearchItem } from '@/lib/search';
 import type { GovernanceProposal } from '@/lib/snapshot/types';
+import { markdownToSnippet } from '@/lib/utils/markdown';
 
 /** Characters of proposal body used as the searchable/preview snippet. */
 const SNIPPET_LENGTH = 180;
@@ -39,34 +40,13 @@ export function getStateLabel(state: string): string {
 }
 
 /**
- * Flatten proposal body markdown into a short single-line snippet: strips
- * fenced code, images, link syntax, headings, emphasis and list markers so a
- * search for plain words isn't defeated by formatting characters.
- */
-export function buildSnippet(body: string, maxLength: number = SNIPPET_LENGTH): string {
-  const plain = body
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
-    .replace(/^\s{0,3}[-*+]\s+/gm, '')
-    .replace(/^\s{0,3}>\s?/gm, '')
-    .replace(/[*_`~]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  if (plain.length <= maxLength) return plain;
-  return plain.slice(0, maxLength).trimEnd() + '…';
-}
-
-/**
  * Project a proposal into the wire/index shape.
  */
 export function toVoteIndexEntry(proposal: GovernanceProposal): VoteIndexEntry {
   return {
     id: proposal.id,
     title: proposal.title,
-    snippet: buildSnippet(proposal.body),
+    snippet: markdownToSnippet(proposal.body, SNIPPET_LENGTH),
     spaceKey: proposal.space.key,
     spaceLabel: proposal.space.label,
     state: proposal.state,
