@@ -445,7 +445,7 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   count. It uses `fetchPoolSummary()` (see [Auto-delegation](#auto-delegation)). A
   failed pool lookup hides the banner; a failed cap lookup fails the page.
 - `PoolBannerAction` (client) is the banner's action. Without a wallet it is a
-  button, "SSV holder? Delegate to the DAO →", that opens the connect
+  button, "SSV or cSSV holder? Delegate to the DAO →", that opens the connect
   modal and stays on the page. With a connected wallet it fetches
   `/api/voting-power/[address]?fresh=1` (uncached, so a delegation just made on
   the profile shows here too; a successful read expires the address's cached pin, so the linked

@@ -88,7 +88,7 @@ export default function PoolBannerAction({
   if (session.phase === 'disconnected') {
     return (
       <button type="button" onClick={openConnectModal} className={delegateClass}>
-        SSV holder? Delegate to the DAO →
+        SSV or cSSV holder? Delegate to the DAO →
       </button>
     );
   }

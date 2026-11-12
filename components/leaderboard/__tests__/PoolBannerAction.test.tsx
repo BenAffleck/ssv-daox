@@ -48,7 +48,9 @@ describe('PoolBannerAction', () => {
   it('offers a visitor without a wallet a button that opens the connect modal', () => {
     render(<PoolBannerAction poolAddress={POOL} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'SSV holder? Delegate to the DAO →' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'SSV or cSSV holder? Delegate to the DAO →' }),
+    );
 
     expect(openConnectModal).toHaveBeenCalledOnce();
   });
