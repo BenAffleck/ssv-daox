@@ -7,6 +7,7 @@ import {
 } from '@/lib/delegation/logic/auto-delegation';
 
 import PoolBannerAction from './PoolBannerAction';
+import PoolBannerPrototype from './PoolBannerPrototype';
 
 interface PoolBannerProps {
   /** `null` when the pool lookup failed; the banner is then hidden. */
@@ -20,6 +21,10 @@ interface PoolBannerProps {
 export default function PoolBanner({ pool, poolAddress, campaignUrl }: PoolBannerProps) {
   if (!pool) {
     return null;
+  }
+  // PROTOTYPE: story variants; revert before merging.
+  if (process.env.NODE_ENV === 'development') {
+    return <PoolBannerPrototype pool={pool} poolAddress={poolAddress} campaignUrl={campaignUrl} />;
   }
   return (
     <section
