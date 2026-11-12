@@ -1,6 +1,6 @@
 ## General Rules (IMPORTANT!)
 
-- After adding a major feature or technology, ALWAYS update `docs/architecture.md` and `docs/techstack.md`.
+- After adding a feature, update `docs/architecture.md`. After adding a dependency or build step, update `docs/techstack.md`.
 - Check types with `npm run type-check` (whole project, tests included; the pre-commit hook and CI run it). Run `tsc` only through that script: on single files it loses the `@/` aliases.
 
 ## Key Files
