@@ -60,7 +60,6 @@ const PROPS = {
   optOut: null,
   optOutStepAvailable: true,
   nextPower: null,
-  campaignUrl: null,
 };
 
 function renderPath() {

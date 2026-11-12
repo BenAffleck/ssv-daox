@@ -12,8 +12,8 @@ interface DelegateToDaoPanelProps {
   action?: React.ReactNode;
   /** Notes, confirmations and transaction status below the title. */
   children?: React.ReactNode;
-  /** The Distributed Vote campaign page; `null` when no campaign runs. */
-  campaignUrl: string | null;
+  /** The Distributed Vote campaign page; unset when no campaign runs. */
+  campaignUrl?: string;
 }
 
 /** "Delegate to the DAO": the page's primary action, highlighted with the brand glow. */

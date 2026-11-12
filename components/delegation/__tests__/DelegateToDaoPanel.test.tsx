@@ -18,7 +18,7 @@ describe('DelegateToDaoPanel', () => {
   });
 
   it('shows no campaign without a campaign URL', () => {
-    render(<DelegateToDaoPanel campaignUrl={null} />);
+    render(<DelegateToDaoPanel />);
 
     expect(screen.queryByText(/The Distributed Vote/)).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Boosted/ })).not.toBeInTheDocument();

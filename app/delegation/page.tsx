@@ -258,6 +258,7 @@ export default async function DelegationPage({
     leaderboard.rows,
   );
   const ownAddresses = overview?.addresses.map((a) => a.address) ?? [];
+  const campaignUrl = getCampaignUrl();
   const { breakdown } = autoDelegationView({
     address,
     connected: undefined,
@@ -305,10 +306,10 @@ export default async function DelegationPage({
           optOut={statuses[selected] ?? null}
           optOutStepAvailable={overview !== null}
           nextPower={leaderboard.rows.find((r) => sameAddress(r.address, address))?.power ?? null}
-          campaignUrl={getCampaignUrl()}
+          campaignUrl={campaignUrl}
         />
       ) : (
-        <DelegateToDaoPanel campaignUrl={getCampaignUrl()} />
+        <DelegateToDaoPanel campaignUrl={campaignUrl} />
       )}
       {scoreBreakdown && <ScoreBreakdownPanel breakdown={scoreBreakdown} />}
       <VotingPowerPanel breakdown={breakdown} />

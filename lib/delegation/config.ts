@@ -39,6 +39,6 @@ export const SSV_GOVERNANCE_URL = 'https://ssv.network/governance';
 export const DAO_FUNDING_ADDRESS = '0x2Be7549f1B58Fc3E81427a09E61e6D0B050A4C1D';
 
 /** The Distributed Vote campaign page. Unset when no campaign runs, which hides the campaign UI. */
-export function getCampaignUrl(): string | null {
-  return process.env.DISTRIBUTED_VOTE_CAMPAIGN_URL?.trim() || null;
+export function getCampaignUrl(): string | undefined {
+  return process.env.DISTRIBUTED_VOTE_CAMPAIGN_URL?.trim() || undefined;
 }

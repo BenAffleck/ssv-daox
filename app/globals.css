@@ -236,8 +236,6 @@ select,
     box-shadow: var(--shadow-glow);
   }
   50% {
-    box-shadow:
-      var(--shadow-glow-lg),
-      0 0 0 4px oklch(from var(--color-primary) l c h / 0.15);
+    box-shadow: var(--shadow-glow-lg);
   }
 }

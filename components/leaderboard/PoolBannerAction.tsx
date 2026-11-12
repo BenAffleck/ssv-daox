@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 
-import { CAMPAIGN_PULSE } from '@/components/delegation/CampaignRibbon';
 import { useWalletSession } from '@/components/wallet/useWalletSession';
 import { autoDelegationView, formatPower } from '@/lib/delegation/logic/auto-delegation';
 import type { VotingPowerData } from '@/lib/gnosis/types';
@@ -56,11 +55,11 @@ const BOOSTED_ACTION_CLASS = `${ACTION_BASE} border-primary bg-primary/10 text-p
  */
 export default function PoolBannerAction({
   poolAddress,
-  boosted,
+  boosted = false,
 }: {
   poolAddress: string;
   /** A campaign runs: the action takes the brand outline, and the delegate offers pulse. */
-  boosted: boolean;
+  boosted?: boolean;
 }) {
   const session = useWalletSession();
   const { openConnectModal } = useConnectModal();
@@ -84,7 +83,7 @@ export default function PoolBannerAction({
     address && pin && pin.address === address ? offerFor(address, pin.data, poolAddress) : null;
 
   const actionClass = boosted ? BOOSTED_ACTION_CLASS : ACTION_CLASS;
-  const delegateClass = boosted ? `${actionClass} ${CAMPAIGN_PULSE}` : actionClass;
+  const delegateClass = boosted ? `${actionClass} campaign-pulse` : actionClass;
 
   if (session.phase === 'disconnected') {
     return (

@@ -46,7 +46,7 @@ describe('PoolBannerAction', () => {
   });
 
   it('offers a visitor without a wallet a button that opens the connect modal', () => {
-    render(<PoolBannerAction poolAddress={POOL} boosted={false} />);
+    render(<PoolBannerAction poolAddress={POOL} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'SSV holder? Delegate to the DAO →' }));
 
@@ -55,7 +55,7 @@ describe('PoolBannerAction', () => {
 
   it('shows nothing while the wallet session is restoring', () => {
     session = { phase: 'loading', address: undefined };
-    const { container } = render(<PoolBannerAction poolAddress={POOL} boosted={false} />);
+    const { container } = render(<PoolBannerAction poolAddress={POOL} />);
 
     expect(container).toBeEmptyDOMElement();
   });
@@ -63,7 +63,7 @@ describe('PoolBannerAction', () => {
   it("names the connected wallet's power and links to its address", async () => {
     session = { phase: 'connected', address: WALLET };
     respondWith(pin());
-    render(<PoolBannerAction poolAddress={POOL} boosted={false} />);
+    render(<PoolBannerAction poolAddress={POOL} />);
 
     const link = await screen.findByRole('link', {
       name: `You Delegate your ${(1234).toLocaleString()} SSV voting power to the DAO →`,
@@ -80,7 +80,7 @@ describe('PoolBannerAction', () => {
         outgoingDelegations: [{ address: POOL, power: 1234 }],
       }),
     );
-    render(<PoolBannerAction poolAddress={POOL} boosted={false} />);
+    render(<PoolBannerAction poolAddress={POOL} />);
 
     const link = await screen.findByRole('link', { name: /You.*delegated to the DAO/ });
     expect(link).toHaveTextContent(`${(1234).toLocaleString()} SSV`);
@@ -91,7 +91,7 @@ describe('PoolBannerAction', () => {
   it('disables the action when the wallet has no power at all', async () => {
     session = { phase: 'connected', address: WALLET };
     respondWith(pin({ votingPower: 0 }));
-    render(<PoolBannerAction poolAddress={POOL} boosted={false} />);
+    render(<PoolBannerAction poolAddress={POOL} />);
 
     const button = await screen.findByRole('button', { name: /0 SSV voting power to delegate/ });
     expect(button).toBeDisabled();
@@ -107,7 +107,7 @@ describe('PoolBannerAction', () => {
         incomingDelegations: [{ address: POOL, power: 500 }],
       }),
     );
-    render(<PoolBannerAction poolAddress={POOL} boosted={false} />);
+    render(<PoolBannerAction poolAddress={POOL} />);
 
     const link = await screen.findByRole('link', {
       name: /You.*received from the DAO/,

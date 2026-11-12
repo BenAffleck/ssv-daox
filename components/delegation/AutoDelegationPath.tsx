@@ -20,7 +20,6 @@ import { nextUpdateEstimate } from '@/lib/leaderboard/logic/freshness';
 import type { ScoreStatus } from '@/lib/leaderboard/types';
 import { formatAddress } from '@/lib/leaderboard/utils/address';
 
-import { CAMPAIGN_PULSE } from './CampaignRibbon';
 import ConnectToDelegateButton, { PRIMARY_BUTTON } from './ConnectToDelegateButton';
 import DelegateToDaoPanel from './DelegateToDaoPanel';
 import {
@@ -48,8 +47,8 @@ interface AutoDelegationPathProps {
   optOutStepAvailable: boolean;
   /** Power the next score run allocates to the address; `null` when it isn't scored. */
   nextPower: number | null;
-  /** The Distributed Vote campaign page; `null` when no campaign runs. */
-  campaignUrl: string | null;
+  /** The Distributed Vote campaign page; unset when no campaign runs. */
+  campaignUrl?: string;
 }
 
 const LAG_NOTE =
@@ -131,7 +130,7 @@ export default function AutoDelegationPath({
   }, [indexed]);
   const [confirmedDrop, setConfirmedDrop] = useState(false);
 
-  const pulse = campaignUrl ? CAMPAIGN_PULSE : '';
+  const pulse = campaignUrl ? 'campaign-pulse' : '';
 
   const powerLabel = (power: number) => (
     <span className="text-accent tabular-nums">{formatPower(power)}</span>
@@ -196,6 +195,7 @@ export default function AutoDelegationPath({
         const power = (breakdown?.ownPower ?? 0) + (state.movesAlong?.power ?? 0);
         const { remaining } = state;
         const confirm = !locked && state.droppedDelegates.length > 0;
+        const blocked = awaitingWallet || (state.droppedDelegates.length > 0 && !confirmedDrop);
         return {
           title: remaining ? (
             <>
@@ -210,8 +210,8 @@ export default function AutoDelegationPath({
             <button
               type="button"
               onClick={() => send(state.delegations)}
-              disabled={awaitingWallet || (state.droppedDelegates.length > 0 && !confirmedDrop)}
-              className={`${PRIMARY_BUTTON} ${pulse}`}
+              disabled={blocked}
+              className={`${PRIMARY_BUTTON} ${blocked || phase !== 'idle' ? '' : pulse}`}
             >
               {awaitingWallet
                 ? 'Confirm in your wallet…'

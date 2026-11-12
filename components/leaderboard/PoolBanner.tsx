@@ -12,8 +12,8 @@ interface PoolBannerProps {
   /** `null` when the pool lookup failed; the banner is then hidden. */
   pool: PoolSummary | null;
   poolAddress: string;
-  /** The Distributed Vote campaign page; `null` when no campaign runs. */
-  campaignUrl: string | null;
+  /** The Distributed Vote campaign page; unset when no campaign runs. */
+  campaignUrl?: string;
 }
 
 /** Points leaderboard visitors to the DAO auto-delegation pool. */
@@ -24,7 +24,7 @@ export default function PoolBanner({ pool, poolAddress, campaignUrl }: PoolBanne
   return (
     <section
       aria-label="DAO auto-delegation pool"
-      className={campaignUrl ? 'card mb-6 overflow-hidden border-primary/40' : 'card mb-6'}
+      className={campaignUrl ? 'card mb-6 overflow-hidden' : 'card mb-6'}
     >
       {campaignUrl && <CampaignRibbon url={campaignUrl} />}
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -57,7 +57,7 @@ export default function PoolBanner({ pool, poolAddress, campaignUrl }: PoolBanne
             <span className="tabular-nums">{formatDelegatorCount(pool.delegatorCount)}</span>
           </p>
         </div>
-        <PoolBannerAction poolAddress={poolAddress} boosted={campaignUrl !== null} />
+        <PoolBannerAction poolAddress={poolAddress} boosted={campaignUrl !== undefined} />
       </div>
     </section>
   );

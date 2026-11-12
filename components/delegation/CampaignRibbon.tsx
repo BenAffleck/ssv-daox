@@ -1,6 +1,3 @@
-/** Pulsing brand glow for an action that delegates to the DAO while a campaign runs. */
-export const CAMPAIGN_PULSE = 'campaign-pulse';
-
 /** Strip across the top of a card announcing The Distributed Vote; links to the campaign page. */
 export default function CampaignRibbon({ url }: { url: string }) {
   return (
@@ -14,7 +11,7 @@ export default function CampaignRibbon({ url }: { url: string }) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-2.5 py-0.5 text-xs font-semibold text-accent hover:bg-accent/30"
+        className="badge badge-accent gap-1 font-semibold hover:bg-accent/30"
       >
         <span aria-hidden>⚡</span> Boosted ↗
         <span className="sr-only"> (opens the campaign page)</span>
