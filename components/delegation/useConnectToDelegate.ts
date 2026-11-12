@@ -22,14 +22,14 @@ export function useConnectToDelegate(viewed: string): () => void {
   const router = useRouter();
   const connect = useConnectAttempt((connected) => {
     if (connected === null) {
-      trackEvent('connect_modal_closed', { source: 'panel' });
+      trackEvent('connect_modal_closed', { placement: 'panel' });
     } else if (!sameAddress(connected, viewed)) {
       router.push(ownDelegateToDaoUrl(connected));
     }
   });
 
   return () => {
-    trackEvent('delegate_cta_clicked', { source: 'panel', step: 'connect' });
+    trackEvent('delegate_cta_clicked', { placement: 'panel', step: 'connect' });
     connect();
   };
 }

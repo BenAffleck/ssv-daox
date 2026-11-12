@@ -1817,16 +1817,16 @@ a visit to a wallet.
   | `client_error`                         | `app/error.tsx`, `app/[slug]/error.tsx`      | `boundary`, `digest`                                                            |
 
   **Campaign funnel.** The route from the leaderboard's pool banner or a profile's
-  "Delegate to the DAO" panel to a confirmed delegation. `source` is the placement
-  (`banner` / `panel`) for what the user sees and clicks, and the route (`leaderboard` /
-  `profile`) for the write: the banner's links carry `?via=leaderboard`, which
+  "Delegate to the DAO" panel to a confirmed delegation. `placement` (`banner` / `panel`)
+  says where the user saw or clicked something; `source` (`leaderboard` / `profile`) says
+  which route led to the write: the banner's links carry `?via=leaderboard`, which
   `/delegation` passes to `AutoDelegationPath`.
 
   | Event                   | Where                                                                             | Properties                                                                                                        |
   | ----------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-  | `delegate_cta_clicked`  | `PoolBannerAction`, `useConnectToDelegate`                                        | `source`: banner / panel, `step`: connect / open                                                                  |
-  | `connect_modal_closed`  | same, via `useConnectAttempt`                                                     | `source`; the modal closed without a wallet                                                                       |
-  | `delegate_offer_shown`  | `PoolBannerAction` (after the power fetch), `AutoDelegationPath` (connected only) | `source`, `offer`: delegate / received / delegated / none / unavailable / switch_account                          |
+  | `delegate_cta_clicked`  | `PoolBannerAction`, `useConnectToDelegate`                                        | `placement`: banner / panel, `step`: connect / open                                                               |
+  | `connect_modal_closed`  | same, via `useConnectAttempt`                                                     | `placement`; the modal closed without a wallet                                                                    |
+  | `delegate_offer_shown`  | `PoolBannerAction` (after the power fetch), `AutoDelegationPath` (connected only) | `placement`, `offer`: delegate / received / delegated / none / unavailable / switch_account                       |
   | `delegation_requested`  | `AutoDelegationPath` button                                                       | `source`: leaderboard / profile, `drops`: yes / no                                                                |
   | `delegation_sent`       | `AutoDelegationPath`, phase pending / proposed                                    | `source`, `wallet`: eoa / safe                                                                                    |
   | `delegation_confirmed`  | `AutoDelegationPath`, phase confirmed                                             | `source`                                                                                                          |

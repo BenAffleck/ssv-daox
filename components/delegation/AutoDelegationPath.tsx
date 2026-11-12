@@ -179,7 +179,7 @@ export default function AutoDelegationPath({
 
   // Once per wallet: the state moves on after a delegation, and that isn't a new offer.
   const recordOffer = useEffectEvent(() =>
-    trackEvent('delegate_offer_shown', { source: 'panel', offer: OFFERS[state.kind] }),
+    trackEvent('delegate_offer_shown', { placement: 'panel', offer: OFFERS[state.kind] }),
   );
   useEffect(() => {
     if (session.phase === 'connected') {

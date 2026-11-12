@@ -112,8 +112,8 @@ describe('AutoDelegationPath connect events', () => {
     connectModalOpen = false;
     rerender(<AutoDelegationPath {...PROPS} />);
 
-    expect(eventsNamed('delegate_cta_clicked')).toEqual([{ source: 'panel', step: 'connect' }]);
-    expect(eventsNamed('connect_modal_closed')).toEqual([{ source: 'panel' }]);
+    expect(eventsNamed('delegate_cta_clicked')).toEqual([{ placement: 'panel', step: 'connect' }]);
+    expect(eventsNamed('connect_modal_closed')).toEqual([{ placement: 'panel' }]);
   });
 
   it('records no closed modal when the wallet connects', async () => {
@@ -143,7 +143,7 @@ describe('AutoDelegationPath offer events', () => {
     session = { phase: 'connected', address: connected };
     render(<AutoDelegationPath {...PROPS} pin={pin} />);
 
-    expect(eventsNamed('delegate_offer_shown')).toEqual([{ source: 'panel', offer }]);
+    expect(eventsNamed('delegate_offer_shown')).toEqual([{ placement: 'panel', offer }]);
   });
 
   it('records the offer once, not again when the delegation is indexed', () => {
@@ -156,7 +156,9 @@ describe('AutoDelegationPath offer events', () => {
     };
     rerender(<AutoDelegationPath {...PROPS} pin={indexed} />);
 
-    expect(eventsNamed('delegate_offer_shown')).toEqual([{ source: 'panel', offer: 'delegate' }]);
+    expect(eventsNamed('delegate_offer_shown')).toEqual([
+      { placement: 'panel', offer: 'delegate' },
+    ]);
   });
 });
 

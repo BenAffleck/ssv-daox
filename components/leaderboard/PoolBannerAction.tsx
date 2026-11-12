@@ -66,7 +66,7 @@ export default function PoolBannerAction({
   const session = useWalletSession();
   const connect = useConnectAttempt((connected) => {
     if (connected === null) {
-      trackEvent('connect_modal_closed', { source: 'banner' });
+      trackEvent('connect_modal_closed', { placement: 'banner' });
     }
   });
   /** `data` is `null` when the wallet's power couldn't be loaded. */
@@ -95,7 +95,7 @@ export default function PoolBannerAction({
   const offerShownEvent = loaded && (
     <TrackEvent
       name="delegate_offer_shown"
-      properties={{ source: 'banner', offer: offer?.kind ?? 'unavailable' }}
+      properties={{ placement: 'banner', offer: offer?.kind ?? 'unavailable' }}
     />
   );
   const profileUrl = `/delegation?via=leaderboard&address=${address}`;
@@ -108,7 +108,7 @@ export default function PoolBannerAction({
       <button
         type="button"
         onClick={() => {
-          trackEvent('delegate_cta_clicked', { source: 'banner', step: 'connect' });
+          trackEvent('delegate_cta_clicked', { placement: 'banner', step: 'connect' });
           connect();
         }}
         className={delegateClass}
@@ -162,7 +162,7 @@ export default function PoolBannerAction({
       {offerShownEvent}
       <Link
         href={profileUrl}
-        onClick={() => trackEvent('delegate_cta_clicked', { source: 'banner', step: 'open' })}
+        onClick={() => trackEvent('delegate_cta_clicked', { placement: 'banner', step: 'open' })}
         className={delegateClass}
       >
         {YOU_BADGE}

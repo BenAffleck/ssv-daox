@@ -133,7 +133,7 @@ describe('PoolBannerAction', () => {
     fireEvent.click(screen.getByRole('button', { name: /Delegate to the DAO/ }));
 
     expect(track).toHaveBeenCalledWith('delegate_cta_clicked', {
-      source: 'banner',
+      placement: 'banner',
       step: 'connect',
     });
   });
@@ -146,7 +146,7 @@ describe('PoolBannerAction', () => {
     connectModalOpen = false;
     rerender(<PoolBannerAction poolAddress={POOL} />);
 
-    expect(track).toHaveBeenCalledWith('connect_modal_closed', { source: 'banner' });
+    expect(track).toHaveBeenCalledWith('connect_modal_closed', { placement: 'banner' });
   });
 
   it('records a click on the delegate link', async () => {
@@ -156,7 +156,10 @@ describe('PoolBannerAction', () => {
 
     fireEvent.click(await screen.findByRole('link', { name: /Delegate your/ }));
 
-    expect(track).toHaveBeenCalledWith('delegate_cta_clicked', { source: 'banner', step: 'open' });
+    expect(track).toHaveBeenCalledWith('delegate_cta_clicked', {
+      placement: 'banner',
+      step: 'open',
+    });
   });
 
   it.each([
@@ -168,7 +171,7 @@ describe('PoolBannerAction', () => {
     render(<PoolBannerAction poolAddress={POOL} />);
 
     await waitFor(() =>
-      expect(track).toHaveBeenCalledWith('delegate_offer_shown', { source: 'banner', offer }),
+      expect(track).toHaveBeenCalledWith('delegate_offer_shown', { placement: 'banner', offer }),
     );
   });
 
@@ -179,7 +182,7 @@ describe('PoolBannerAction', () => {
 
     await waitFor(() =>
       expect(track).toHaveBeenCalledWith('delegate_offer_shown', {
-        source: 'banner',
+        placement: 'banner',
         offer: 'unavailable',
       }),
     );

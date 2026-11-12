@@ -36,9 +36,9 @@ export interface TelemetryEvents {
   ai_rate_limited: { feature: 'summary' | 'qna' };
   timeline_extract_clicked: Record<string, never>;
   client_error: { boundary: 'root' | 'module'; digest: string };
-  delegate_cta_clicked: { source: CampaignPlacement; step: 'connect' | 'open' };
-  connect_modal_closed: { source: CampaignPlacement };
-  delegate_offer_shown: { source: CampaignPlacement; offer: DelegateOffer };
+  delegate_cta_clicked: { placement: CampaignPlacement; step: 'connect' | 'open' };
+  connect_modal_closed: { placement: CampaignPlacement };
+  delegate_offer_shown: { placement: CampaignPlacement; offer: DelegateOffer };
   delegation_requested: { source: DelegationSource; drops: 'yes' | 'no' };
   delegation_sent: { source: DelegationSource; wallet: 'eoa' | 'safe' };
   delegation_confirmed: { source: DelegationSource };
