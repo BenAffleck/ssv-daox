@@ -1,3 +1,5 @@
+import type { PoolBasis } from '@/lib/delegation/logic/power-change';
+
 import { DELEGATE_SCORE_CONFIG } from '../config';
 import type { Leaderboard, ScoreRow, ScoreStatus } from '../types';
 
@@ -15,7 +17,12 @@ interface AllocationSummary {
   run_id: number;
   /** `null` when the run is uncapped. */
   cap: number | null;
+  /** The pool power the run allocates: its pool, up to its cap. */
+  effective: number;
 }
+
+/** The latest run's side of a `PoolBasis`; the live pool comes from Snapshot. */
+export type RunBasis = Omit<PoolBasis, 'livePool'>;
 
 async function getJson<T>(
   path: string,
@@ -71,11 +78,14 @@ export async function fetchCachedRunId(): Promise<number> {
   return run_id;
 }
 
-/** The cap frozen in the latest run: the most pool power it allocates. `null` when uncapped. */
-export async function fetchAllocationCap(): Promise<number | null> {
-  const { cap } = await getJson<AllocationSummary>('/v1/allocation');
+/** The latest run's cap (`null` when uncapped) and the pool power it allocated. */
+export async function fetchAllocationBasis(): Promise<RunBasis> {
+  const { cap, effective } = await getJson<AllocationSummary>('/v1/allocation');
   if (typeof cap !== 'number' && cap !== null) {
     throw new Error('Delegate Score API /v1/allocation returned no cap');
   }
-  return cap;
+  if (typeof effective !== 'number') {
+    throw new Error('Delegate Score API /v1/allocation returned no effective pool');
+  }
+  return { cap, runEffective: effective };
 }

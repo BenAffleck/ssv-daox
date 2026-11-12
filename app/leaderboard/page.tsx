@@ -4,7 +4,11 @@ import DelegatesTable from '@/components/leaderboard/DelegatesTable';
 import DelegatesTableSkeleton from '@/components/leaderboard/DelegatesTableSkeleton';
 import PoolBanner from '@/components/leaderboard/PoolBanner';
 import ScoreFreshness from '@/components/leaderboard/ScoreFreshness';
-import { fetchPoolDelegations, fetchPoolSummary } from '@/lib/delegation/api/fetch-pin';
+import {
+  fetchPoolBasis,
+  fetchPoolDelegations,
+  fetchPoolSummary,
+} from '@/lib/delegation/api/fetch-pin';
 import { AUTO_DELEGATION_POOL_ADDRESS, getCampaignUrl } from '@/lib/delegation/config';
 import { fetchOptOutStatuses } from '@/lib/delegation/opt-out/server';
 import { fetchVotingPower, type DelegationEntry } from '@/lib/gnosis';
@@ -53,14 +57,20 @@ async function DelegatesTableSection({ rows }: { rows: ScoreRow[] }) {
     async (delegations) =>
       [delegations, await fetchVotingPower(prefetchedAddresses(rows, delegations))] as const,
   );
-  const [[poolDelegations, votingPower], voteParticipation, activeVoteData, optOutStatuses] =
-    await Promise.all([
-      recipientsWithPower,
-      fetchVoteParticipation(spaceId),
-      fetchActiveVoteStatus(spaceId),
-      // Not `row.opt_out`: the opt-out mock records requests the Score API never sees.
-      fetchOptOutStatuses(rows.map((row) => row.address)),
-    ]);
+  const [
+    [poolDelegations, votingPower],
+    voteParticipation,
+    activeVoteData,
+    optOutStatuses,
+    poolBasis,
+  ] = await Promise.all([
+    recipientsWithPower,
+    fetchVoteParticipation(spaceId),
+    fetchActiveVoteStatus(spaceId),
+    // Not `row.opt_out`: the opt-out mock records requests the Score API never sees.
+    fetchOptOutStatuses(rows.map((row) => row.address)),
+    fetchPoolBasis(),
+  ]);
 
   const delegates = transformDelegates(
     rows,
@@ -69,6 +79,7 @@ async function DelegatesTableSection({ rows }: { rows: ScoreRow[] }) {
     votingPower,
     activeVoteData,
     optOutStatuses,
+    poolBasis,
   );
 
   return (

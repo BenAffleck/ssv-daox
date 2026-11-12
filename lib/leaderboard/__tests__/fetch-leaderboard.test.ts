@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchAllocationCap, fetchLeaderboard } from '../api/fetch-leaderboard';
+import { fetchAllocationBasis, fetchLeaderboard } from '../api/fetch-leaderboard';
 import { DELEGATE_SCORE_CONFIG } from '../config';
 import type { ScoreRow } from '../types';
 
@@ -110,7 +110,7 @@ describe('fetchLeaderboard', () => {
   });
 });
 
-describe('fetchAllocationCap', () => {
+describe('fetchAllocationBasis', () => {
   beforeEach(() => {
     mockFetch.mockReset();
     vi.stubEnv('DELEGATE_SCORE_API_URL', BASE_URL);
@@ -120,30 +120,46 @@ describe('fetchAllocationCap', () => {
     vi.unstubAllEnvs();
   });
 
-  it("reads the latest run's cap from the allocation", async () => {
+  it("reads the latest run's cap and allocated pool from the allocation", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => ({ run_id: 8, as_of: '2026-09-21', delegated: 1300000, cap: 500000 }),
+      json: async () => ({
+        run_id: 8,
+        as_of: '2026-09-21',
+        delegated: 1300000,
+        cap: 500000,
+        effective: 500000,
+      }),
     });
 
-    expect(await fetchAllocationCap()).toBe(500000);
+    expect(await fetchAllocationBasis()).toEqual({ cap: 500000, runEffective: 500000 });
     expect(mockFetch.mock.calls[0][0]).toBe(`${BASE_URL}/v1/allocation`);
   });
 
   it('fails when the API is unreachable', async () => {
     mockFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
 
-    await expect(fetchAllocationCap()).rejects.toThrow('ECONNREFUSED');
+    await expect(fetchAllocationBasis()).rejects.toThrow('ECONNREFUSED');
   });
 
   it('fails when the allocation carries no cap', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => ({ run_id: 8, as_of: '2026-09-21', delegated: 1300000 }),
+      json: async () => ({ run_id: 8, as_of: '2026-09-21', delegated: 1300000, effective: 0 }),
     });
 
-    await expect(fetchAllocationCap()).rejects.toThrow('no cap');
+    await expect(fetchAllocationBasis()).rejects.toThrow('no cap');
+  });
+
+  it('fails when the allocation carries no allocated pool', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ run_id: 8, as_of: '2026-09-21', delegated: 1300000, cap: null }),
+    });
+
+    await expect(fetchAllocationBasis()).rejects.toThrow('no effective');
   });
 });

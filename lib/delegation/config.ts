@@ -29,6 +29,13 @@ export function getHighSignalConfig(): HighSignalConfig {
  */
 export const AUTO_DELEGATION_POOL_ADDRESS = '0x9a62c932F5a8Eb807F655E3D948EdaE174D39D3B';
 
+/**
+ * Next-round changes of up to this many SSV are noise and not shown. Above
+ * rounding and Snapshot's basis-point split (0.5 bp of the 500,000 cap is 25 SSV),
+ * below the smallest real change: one seat more or less in a cohort moves hundreds.
+ */
+export const NEXT_ROUND_MIN_CHANGE_SSV = 50;
+
 /** Where a DAO delegate starts contributing: proposals, forum and calls. */
 export const SSV_GOVERNANCE_URL = 'https://ssv.network/governance';
 

@@ -10,6 +10,8 @@
 
 **Allocated**: the pool power a run distributes: the pool, up to the cap. The Score API calls the run's value `effective`; the pool banner computes it from the live pool.
 
+**Next round**: what the DAO will delegate to an address once the latest run's allocation is applied: the run's seat power scaled to the live allocated pool.
+
 **DAO vote**: a proposal in the DAO's main Snapshot space. Any token holder can vote, weighted by their voting power.
 
 **Committee vote**: a proposal in a committee's Snapshot space (Leads, Operators, Grants, Multisig). Only the committee's whitelisted members can vote. Avoid "closed vote": closed means a vote has ended.

@@ -422,10 +422,19 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   a pillar that is `null` for every row is not live and its column is hidden.
 - The Cohort column shows the delegate's cohort; the sortable "DAO Delegated
   Power" column shows what the DAO delegates to the address now (the pool pin's
-  outgoing edge, `fetchPoolDelegations()`). When the run's allocated power (the
-  address's share of its identity's cohort seat) differs by more than 1 SSV (smaller gaps are rounding noise),
+  outgoing edge, `fetchPoolDelegations()`). The next round is the run's allocated
+  power (the address's share of its identity's cohort seat) projected onto the live
+  pool: `nextRoundPower()` scales it by `min(live pool, cap) / effective`, the run's
+  allocated pool (`fetchPoolBasis()`: the pool pin plus `/v1/allocation`). The Safe
+  delegates by ratio, so Snapshot splits whatever the pool holds; without the scaling
+  a pool that grew since the run would read as a drop for every seat. It matches the
+  Score API's `safe-batch?pool=`. When the pool pin or `/v1/allocation` fails,
+  `fetchPoolBasis()` returns `null` and the run's power is used unscaled. `Delegate.nextPower`
+  holds the result. When the next round differs by more than `NEXT_ROUND_MIN_CHANGE_SSV`
+  (`lib/delegation/config.ts`, 50 SSV; smaller gaps are rounding and basis-point noise),
   `NextRoundPower` adds the delta beside it, e.g. "(↑ 312)" (accent for an
-  increase, warning for a decrease; a dropped delegate shows the full drop). The delta is
+  increase, warning for a decrease; a delegation that starts or ends always shows, a
+  dropped delegate with its full drop). The delta is
   `powerChangeOf()` in `lib/delegation/logic/power-change.ts`. The Delegation
   page's "The DAO delegates x SSV to this address" heading shows the same delta after the amount. The Delegation page's address table
   uses the same label. "Delegation Status" compares the cohort with the pool's

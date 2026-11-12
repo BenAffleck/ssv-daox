@@ -4,10 +4,11 @@ import {
   type FetchVotingPowerOptions,
   type VotingPowerData,
 } from '@/lib/gnosis';
-import { fetchAllocationCap } from '@/lib/leaderboard/api/fetch-leaderboard';
+import { fetchAllocationBasis } from '@/lib/leaderboard/api/fetch-leaderboard';
 
 import { AUTO_DELEGATION_POOL_ADDRESS, DAO_FUNDING_ADDRESS } from '../config';
-import { summarizePool, type PoolSummary } from '../logic/auto-delegation';
+import { poolPowerOf, summarizePool, type PoolSummary } from '../logic/auto-delegation';
+import type { PoolBasis } from '../logic/power-change';
 
 /** Returns `null` when the Gnosis API lookup fails. */
 export async function fetchPin(
@@ -32,9 +33,24 @@ export async function fetchPoolRecipients(): Promise<string[] | null> {
 
 /** Returns `null` when the Gnosis API lookup fails; throws when the Score API fails. */
 export async function fetchPoolSummary(): Promise<PoolSummary | null> {
-  const [pool, cap] = await Promise.all([
+  const [pool, { cap }] = await Promise.all([
     fetchPin(AUTO_DELEGATION_POOL_ADDRESS),
-    fetchAllocationCap(),
+    fetchAllocationBasis(),
   ]);
   return pool && summarizePool(pool, cap, [DAO_FUNDING_ADDRESS]);
+}
+
+/**
+ * The latest run's allocation beside the live pool, to project its seats onto the pool.
+ * Returns `null` when either lookup fails: the next round then shows unscaled.
+ */
+export async function fetchPoolBasis(): Promise<PoolBasis | null> {
+  const [pool, run] = await Promise.all([
+    fetchPin(AUTO_DELEGATION_POOL_ADDRESS),
+    fetchAllocationBasis().catch((error: unknown) => {
+      console.error('[Score API] Allocation basis unavailable:', error);
+      return null;
+    }),
+  ]);
+  return pool && run && { ...run, livePool: poolPowerOf(pool) };
 }
