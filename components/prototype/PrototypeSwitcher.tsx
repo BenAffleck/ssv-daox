@@ -1,6 +1,6 @@
 'use client';
 
-// PROTOTYPE: floating variant switcher for `?variant=` UI prototypes. Never ships to production.
+// PROTOTYPE: floating variant switcher for `?variant=` UI prototypes. Callers gate it to dev and preview builds.
 import { useCallback, useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
@@ -38,8 +38,6 @@ export default function PrototypeSwitcher({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [go]);
-
-  if (process.env.NODE_ENV === 'production') return null;
 
   return (
     <div className="fixed bottom-6 left-1/2 z-[100] flex -translate-x-1/2 items-center gap-3 rounded-full bg-foreground px-3 py-2 text-[13px] text-background shadow-2xl">

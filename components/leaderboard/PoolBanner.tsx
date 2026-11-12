@@ -23,7 +23,7 @@ export default function PoolBanner({ pool, poolAddress, campaignUrl }: PoolBanne
     return null;
   }
   // PROTOTYPE: story variants; revert before merging.
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'preview') {
     return <PoolBannerPrototype pool={pool} poolAddress={poolAddress} campaignUrl={campaignUrl} />;
   }
   return (
