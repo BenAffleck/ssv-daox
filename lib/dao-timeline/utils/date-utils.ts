@@ -14,15 +14,6 @@ export function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 /**
- * Check if a date is in the past (before start of today)
- */
-export function isPastDate(date: Date): boolean {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return date < today;
-}
-
-/**
  * Day-header label: "Today", "Tomorrow", else "Monday, January 15, 2024".
  * `today` is the same reference day the countdowns use.
  */

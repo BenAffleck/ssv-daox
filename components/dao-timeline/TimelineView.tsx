@@ -48,12 +48,12 @@ export default function TimelineView({ groups, sourceColors, today }: TimelineVi
         return (
           <div key={group.date.toISOString()}>
             {/* Day header */}
-            <div className="mb-4 flex items-center gap-4">
+            <div className="mb-4 flex items-center justify-between gap-4">
               <h2 className={`min-w-0 text-lg ${isPastOffset(dayOffset) ? 'text-muted' : ''}`}>
                 <span className="sm:hidden">{getShortDateLabel(group.date, today)}</span>
                 <span className="hidden sm:inline">{group.label}</span>
               </h2>
-              <div className="h-px flex-1 bg-border" />
+              <div className="hidden h-px flex-1 bg-border sm:block" />
               <span className="shrink-0 text-sm whitespace-nowrap text-muted">
                 {group.events.length} event{group.events.length !== 1 ? 's' : ''}
               </span>

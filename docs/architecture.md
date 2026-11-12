@@ -753,7 +753,7 @@ lib/dao-timeline/
 │   ├── event-transformer.ts    # Raw → UnifiedEvent
 │   ├── recurrence-expander.ts  # RRULE parsing and occurrence queries
 │   ├── series-collapse.ts      # Series → its most recent + next occurrence
-│   ├── event-aggregator.ts     # Filter, sort, group
+│   ├── event-aggregator.ts     # Merge + sort events from all sources
 │   └── range-brush.ts          # Date-range brush domain/histogram/labels
 └── utils/
     ├── date-utils.ts           # Date helpers

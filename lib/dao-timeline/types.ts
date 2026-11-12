@@ -124,16 +124,6 @@ export interface RecurrenceRule {
 }
 
 /**
- * Filter state for timeline UI
- */
-export interface TimelineFilters {
-  sources: string[]; // source IDs
-  startDate: Date | null;
-  endDate: Date | null;
-  showPastEvents: boolean;
-}
-
-/**
  * Events grouped by day for display
  */
 export interface EventGroup {
