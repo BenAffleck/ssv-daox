@@ -60,6 +60,7 @@ const PROPS = {
   optOut: null,
   optOutStepAvailable: true,
   nextPower: null,
+  campaignUrl: null,
 };
 
 function renderPath() {
@@ -240,6 +241,17 @@ describe('AutoDelegationPath for the owner', () => {
       `Delegate your ${(1000).toLocaleString()} SSV voting power to the DAO`,
     );
     expect(screen.getByRole('button', { name: 'Delegate to the DAO' })).toBeInTheDocument();
+  });
+
+  it('links to the campaign while a campaign runs', () => {
+    render(
+      <AutoDelegationPath {...PROPS} campaignUrl="https://example.com/the-distributed-vote" />,
+    );
+
+    expect(screen.getByRole('link', { name: /Boosted/ })).toHaveAttribute(
+      'href',
+      'https://example.com/the-distributed-vote',
+    );
   });
 
   it('offers only the remaining power when the DAO holds part of the delegation', () => {

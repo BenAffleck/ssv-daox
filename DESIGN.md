@@ -295,6 +295,15 @@ Community and featured cards add a gradient overlay
 `from-secondary/10 to-accent/10` with `border-secondary/40
 hover:border-secondary` and `hover:shadow-secondary/20`.
 
+**Campaign ribbon.** A time-boxed incentive campaign (`CampaignRibbon`) tops
+its card with a strip: `from-primary/15 to-accent/15` over a
+`border-b border-primary/30`, the campaign name in `font-heading`, muted copy,
+and a `bg-accent/20 text-accent` "Boosted ↗" pill on the right linking out.
+The card gains `overflow-hidden`. The action that joins the campaign
+breathes its brand glow (`.campaign-pulse`, `--shadow-glow` ↔
+`--shadow-glow-lg`); actions that don't join it stay still. Reduced motion
+holds the glow steady.
+
 A vote card title that opens Snapshot ends in a muted 13px lucide
 `ExternalLink` icon placed inline so it wraps with the last word. Title and
 icon turn primary on hover. The icon is `aria-hidden`; sr-only text

@@ -1,3 +1,4 @@
+import CampaignRibbon from '@/components/delegation/CampaignRibbon';
 import {
   formatAmount,
   formatDelegatorCount,
@@ -11,48 +12,53 @@ interface PoolBannerProps {
   /** `null` when the pool lookup failed; the banner is then hidden. */
   pool: PoolSummary | null;
   poolAddress: string;
+  /** The Distributed Vote campaign page; `null` when no campaign runs. */
+  campaignUrl: string | null;
 }
 
 /** Points leaderboard visitors to the DAO auto-delegation pool. */
-export default function PoolBanner({ pool, poolAddress }: PoolBannerProps) {
+export default function PoolBanner({ pool, poolAddress, campaignUrl }: PoolBannerProps) {
   if (!pool) {
     return null;
   }
   return (
     <section
       aria-label="DAO auto-delegation pool"
-      className="card mb-6 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+      className={campaignUrl ? 'card mb-6 overflow-hidden border-primary/40' : 'card mb-6'}
     >
-      <div className="min-w-0">
-        <p className="font-heading text-xs font-semibold tracking-wide text-muted uppercase">
-          DAO auto-delegation pool
-        </p>
-        <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted">
-          {pool.cap === null ? (
+      {campaignUrl && <CampaignRibbon url={campaignUrl} />}
+      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="font-heading text-xs font-semibold tracking-wide text-muted uppercase">
+            DAO auto-delegation pool
+          </p>
+          <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted">
+            {pool.cap === null ? (
+              <span>
+                <span className="font-medium text-foreground tabular-nums">
+                  {formatPower(pool.totalPower)}
+                </span>{' '}
+                total
+              </span>
+            ) : (
+              <span>
+                <span className="font-medium text-foreground tabular-nums">
+                  {formatAmount(pool.allocatedPower)}
+                </span>{' '}
+                of <span className="tabular-nums">{formatPower(pool.cap)}</span> program cap reached
+              </span>
+            )}
             <span>
               <span className="font-medium text-foreground tabular-nums">
-                {formatPower(pool.totalPower)}
+                {formatPower(pool.communityPower)}
               </span>{' '}
-              total
+              community-delegated
             </span>
-          ) : (
-            <span>
-              <span className="font-medium text-foreground tabular-nums">
-                {formatAmount(pool.allocatedPower)}
-              </span>{' '}
-              of <span className="tabular-nums">{formatPower(pool.cap)}</span> program cap reached
-            </span>
-          )}
-          <span>
-            <span className="font-medium text-foreground tabular-nums">
-              {formatPower(pool.communityPower)}
-            </span>{' '}
-            community-delegated
-          </span>
-          <span className="tabular-nums">{formatDelegatorCount(pool.delegatorCount)}</span>
-        </p>
+            <span className="tabular-nums">{formatDelegatorCount(pool.delegatorCount)}</span>
+          </p>
+        </div>
+        <PoolBannerAction poolAddress={poolAddress} boosted={campaignUrl !== null} />
       </div>
-      <PoolBannerAction poolAddress={poolAddress} />
     </section>
   );
 }

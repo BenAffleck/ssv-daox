@@ -22,7 +22,11 @@ import {
   reverseEnsName,
   type EnsResolution,
 } from '@/lib/delegation/api/resolve-ens';
-import { AUTO_DELEGATION_POOL_ADDRESS, getHighSignalConfig } from '@/lib/delegation/config';
+import {
+  AUTO_DELEGATION_POOL_ADDRESS,
+  getCampaignUrl,
+  getHighSignalConfig,
+} from '@/lib/delegation/config';
 import {
   buildAddressOverview,
   isAddress,
@@ -301,9 +305,10 @@ export default async function DelegationPage({
           optOut={statuses[selected] ?? null}
           optOutStepAvailable={overview !== null}
           nextPower={leaderboard.rows.find((r) => sameAddress(r.address, address))?.power ?? null}
+          campaignUrl={getCampaignUrl()}
         />
       ) : (
-        <DelegateToDaoPanel />
+        <DelegateToDaoPanel campaignUrl={getCampaignUrl()} />
       )}
       {scoreBreakdown && <ScoreBreakdownPanel breakdown={scoreBreakdown} />}
       <VotingPowerPanel breakdown={breakdown} />

@@ -80,6 +80,7 @@ ssv-daox/
 │   │   ├── OwnerOnly.tsx            # Client: renders children for the owner wallet; useIsOwner
 │   │   ├── DelegateProfile.tsx      # Client: avatar, name, Snapshot statement
 │   │   ├── DelegateToDaoPanel.tsx   # "Delegate to the DAO" step panel
+│   │   ├── CampaignRibbon.tsx       # The Distributed Vote campaign ribbon + pulse class
 │   │   ├── VotingPowerPanel.tsx     # Server: voting power breakdown panel
 │   │   ├── ClaimIntroPanel.tsx      # "Claim on HighSignal" without an overview
 │   │   ├── ConnectToDelegateButton.tsx # Client: connect prompt for disconnected wallets
@@ -118,7 +119,7 @@ ssv-daox/
 │   │   ├── api/              # Delegate Score API fetcher
 │   │   └── logic/            # Business logic
 │   ├── delegation/           # Delegation logic
-│   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address
+│   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address, campaign URL
 │   │   ├── api/fetch-pin.ts  # Gnosis pin per address; pool pin → PoolSummary, shared by both pages
 │   │   ├── api/resolve-ens.ts  # ENS name → mainnet address via MAINNET_RPC_URL; cached reverse name
 │   │   ├── api/refresh-pins.ts # Server action: expires an address's and the pool's cached pins
@@ -994,6 +995,17 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
     happens and holds the action. It needs a selected address.
   - `VotingPowerPanel` shows the breakdown card for a valid selected address
     (scored or not, wallet connected or not), below "Delegate to the DAO".
+- **Incentive campaign.** `getCampaignUrl()` (`lib/delegation/config.ts`)
+  reads `DISTRIBUTED_VOTE_CAMPAIGN_URL`; unset means no campaign UI. The pages
+  pass it as `campaignUrl` to `PoolBanner` and to `DelegateToDaoPanel` (through
+  `AutoDelegationPath`, a client component, so the URL stays server config).
+  - `CampaignRibbon` tops both cards: "The Distributed Vote · Incentives live
+    for cSSV delegated to the DAO pool", with a "Boosted ↗" pill that opens the
+    campaign page in a new tab. It shows in every wallet state.
+  - The leaderboard action takes a brand outline (`boosted`). Only the actions
+    that lead to delegating pulse (`CAMPAIGN_PULSE`): connect and "Delegate
+    your {power}" on the banner; connect and "Delegate to the DAO" on the panel.
+  - Labels, links and on-chain actions don't change.
 - **Auto-delegation view model.** `autoDelegationView()`
   (`lib/delegation/logic/auto-delegation.ts`) is pure. It takes the selected
   address, the connected account, the address's pin data (`null` when the

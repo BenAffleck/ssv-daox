@@ -5,7 +5,7 @@ import DelegatesTableSkeleton from '@/components/leaderboard/DelegatesTableSkele
 import PoolBanner from '@/components/leaderboard/PoolBanner';
 import ScoreFreshness from '@/components/leaderboard/ScoreFreshness';
 import { fetchPoolDelegations, fetchPoolSummary } from '@/lib/delegation/api/fetch-pin';
-import { AUTO_DELEGATION_POOL_ADDRESS } from '@/lib/delegation/config';
+import { AUTO_DELEGATION_POOL_ADDRESS, getCampaignUrl } from '@/lib/delegation/config';
 import { fetchOptOutStatuses } from '@/lib/delegation/opt-out/server';
 import { fetchVotingPower, type DelegationEntry } from '@/lib/gnosis';
 import { fetchLeaderboard } from '@/lib/leaderboard/api/fetch-leaderboard';
@@ -37,7 +37,13 @@ function PageHeader({ children }: { children?: React.ReactNode }) {
 }
 
 async function PoolBannerSection() {
-  return <PoolBanner pool={await fetchPoolSummary()} poolAddress={AUTO_DELEGATION_POOL_ADDRESS} />;
+  return (
+    <PoolBanner
+      pool={await fetchPoolSummary()}
+      poolAddress={AUTO_DELEGATION_POOL_ADDRESS}
+      campaignUrl={getCampaignUrl()}
+    />
+  );
 }
 
 async function DelegatesTableSection({ rows }: { rows: ScoreRow[] }) {

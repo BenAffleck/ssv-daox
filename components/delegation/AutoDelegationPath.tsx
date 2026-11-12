@@ -20,6 +20,7 @@ import { nextUpdateEstimate } from '@/lib/leaderboard/logic/freshness';
 import type { ScoreStatus } from '@/lib/leaderboard/types';
 import { formatAddress } from '@/lib/leaderboard/utils/address';
 
+import { CAMPAIGN_PULSE } from './CampaignRibbon';
 import ConnectToDelegateButton, { PRIMARY_BUTTON } from './ConnectToDelegateButton';
 import DelegateToDaoPanel from './DelegateToDaoPanel';
 import {
@@ -47,6 +48,8 @@ interface AutoDelegationPathProps {
   optOutStepAvailable: boolean;
   /** Power the next score run allocates to the address; `null` when it isn't scored. */
   nextPower: number | null;
+  /** The Distributed Vote campaign page; `null` when no campaign runs. */
+  campaignUrl: string | null;
 }
 
 const LAG_NOTE =
@@ -97,6 +100,7 @@ export default function AutoDelegationPath({
   optOut,
   optOutStepAvailable,
   nextPower,
+  campaignUrl,
 }: AutoDelegationPathProps) {
   const session = useWalletSession();
   const connectToDelegate = useConnectToDelegate(address);
@@ -127,11 +131,13 @@ export default function AutoDelegationPath({
   }, [indexed]);
   const [confirmedDrop, setConfirmedDrop] = useState(false);
 
+  const pulse = campaignUrl ? CAMPAIGN_PULSE : '';
+
   const powerLabel = (power: number) => (
     <span className="text-accent tabular-nums">{formatPower(power)}</span>
   );
 
-  function panel(): React.ComponentProps<typeof DelegateToDaoPanel> {
+  function panel(): Omit<React.ComponentProps<typeof DelegateToDaoPanel>, 'campaignUrl'> {
     switch (state.kind) {
       case 'unavailable':
         return {
@@ -151,7 +157,9 @@ export default function AutoDelegationPath({
           return {};
         }
         if (session.phase === 'disconnected') {
-          return { action: <ConnectToDelegateButton onClick={connectToDelegate} /> };
+          return {
+            action: <ConnectToDelegateButton onClick={connectToDelegate} className={pulse} />,
+          };
         }
         if (accountSwitchPrompt(address, session.address, identityAddresses) === 'sibling') {
           return {
@@ -203,7 +211,7 @@ export default function AutoDelegationPath({
               type="button"
               onClick={() => send(state.delegations)}
               disabled={awaitingWallet || (state.droppedDelegates.length > 0 && !confirmedDrop)}
-              className={PRIMARY_BUTTON}
+              className={`${PRIMARY_BUTTON} ${pulse}`}
             >
               {awaitingWallet
                 ? 'Confirm in your wallet…'
@@ -280,5 +288,5 @@ export default function AutoDelegationPath({
     }
   }
 
-  return <DelegateToDaoPanel {...panel()} />;
+  return <DelegateToDaoPanel {...panel()} campaignUrl={campaignUrl} />;
 }

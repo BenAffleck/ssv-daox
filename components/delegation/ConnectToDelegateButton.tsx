@@ -6,13 +6,19 @@ export const PRIMARY_BUTTON =
   'rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-50';
 
 /** Renders nothing unless the wallet is disconnected. */
-export default function ConnectToDelegateButton({ onClick }: { onClick: () => void }) {
+export default function ConnectToDelegateButton({
+  onClick,
+  className = '',
+}: {
+  onClick: () => void;
+  className?: string;
+}) {
   const session = useWalletSession();
   if (session.phase !== 'disconnected') {
     return null;
   }
   return (
-    <button type="button" onClick={onClick} className={PRIMARY_BUTTON}>
+    <button type="button" onClick={onClick} className={`${PRIMARY_BUTTON} ${className}`}>
       Connect wallet to delegate
     </button>
   );
