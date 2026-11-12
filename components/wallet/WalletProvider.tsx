@@ -7,6 +7,7 @@ import { darkTheme, lightTheme, RainbowKitProvider } from '@rainbow-me/rainbowki
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 
+import WalletConnectTracker from '@/components/telemetry/WalletConnectTracker';
 import { ThemeContext } from '@/lib/theme/ThemeProvider';
 import { createWagmiConfig } from '@/lib/wallet/wagmi-config';
 
@@ -41,6 +42,7 @@ export default function WalletProvider({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
+        <WalletConnectTracker />
         <RainbowKitProvider theme={isDark ? darkTheme(ACCENT) : lightTheme(ACCENT)}>
           <WalletRestoredContext.Provider value={restored}>
             {children}

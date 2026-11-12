@@ -20,11 +20,20 @@ Minimize moving parts while maximizing developer experience and production relia
 
 ### Infrastructure
 
-| Layer         | Choice                        | Rationale                                                                  |
-| ------------- | ----------------------------- | -------------------------------------------------------------------------- |
-| Hosting       | **Vercel**                    | Zero-config Next.js deployment                                             |
-| CI            | **GitHub Actions**            | Lint + tests + catalog-sync check on every PR (`.github/workflows/ci.yml`) |
-| PR automation | **Claude Code GitHub Action** | Auto-reviews community tool PRs and answers `@claude` mentions             |
+| Layer         | Choice                        | Rationale                                                                                                                              |
+| ------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Hosting       | **Vercel**                    | Zero-config Next.js deployment                                                                                                         |
+| CI            | **GitHub Actions**            | Lint + tests + catalog-sync check on every PR (`.github/workflows/ci.yml`)                                                             |
+| PR automation | **Claude Code GitHub Action** | Auto-reviews community tool PRs and answers `@claude` mentions                                                                         |
+| Toolchain     | **Node 24 (CI), npm 11**      | npm 10 can't resolve the Vercel packages' optional peers against this tree; `engines` warns on older npm; Vercel MUST build on Node 24 |
+
+### Observability
+
+| Concern        | Choice                                         | Rationale                                                                                                             |
+| -------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Page analytics | **Vercel Web Analytics** (`@vercel/analytics`) | Built into the host, cookieless. Custom events (Pro) give the user-flow funnel; one typed catalog in `lib/telemetry`. |
+| Performance    | **Vercel Speed Insights**                      | Real-user Core Web Vitals per route, no extra vendor.                                                                 |
+| Server errors  | **`instrumentation.ts` `onRequestError`**      | Next's own hook; one JSON log line per failure, searchable in Vercel logs or a log drain. No error SDK.               |
 
 ### Data validation & tooling
 
@@ -47,7 +56,7 @@ Minimize moving parts while maximizing developer experience and production relia
 | --------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Model           | **Anthropic Claude** (Haiku default) | Summary, Q&A and timeline extraction. Behind an injected `Llm` port (`lib/ai/llm.ts`), so tests script replies instead of mocking the SDK.                              |
 | Proposal text   | **Snapshot hub, proposal by id**     | The server looks proposals up itself and allows only configured spaces, so the endpoints take ids, not text: no LLM proxy, no cache poisoning.                          |
-| Cache           | **One JSON file, `.cache/ai.json`**  | Via `lib/json-file.ts` (serialized writes). Keys hash the proposal text, so edits invalidate. Ephemeral on serverless hosts; it only saves cost.                        |
+| Cache           | **One JSON file, `ai.json`**         | In `cacheDir()` (`/tmp` on Vercel), via `lib/json-file.ts`. Keys hash the proposal text, so edits invalidate. Per instance; it only saves cost.                         |
 | Cost guard rail | **In-memory fixed-window limits**    | Per client and global per feature. Per process, not durable: the global cap bounds spend when client keys are spoofed. A shared store (e.g. Redis) is the upgrade path. |
 
 ### Wallet (app-wide)

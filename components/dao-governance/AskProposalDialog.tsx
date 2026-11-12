@@ -6,6 +6,7 @@ import { CornerDownLeft, ExternalLink, Info, Sparkles } from 'lucide-react';
 
 import { AI_QNA_CONFIG } from '@/lib/ai-qna/config';
 import type { ProposalAnswer } from '@/lib/ai-qna/types';
+import { askProposalQuestion } from '@/lib/ai/requests';
 
 /** The proposal fields the dialog needs — kept minimal so both full proposals
  *  and slim search-index entries can drive it. */
@@ -69,25 +70,13 @@ export default function AskProposalDialog({ proposal, open, onClose }: AskPropos
     // Clear the previous answer so a stale one never sits under a new question.
     setAnswer(null);
 
-    try {
-      const response = await fetch('/api/proposal-qna', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ proposalId: proposal.id, question: trimmed }),
-      });
-
-      const data = await response.json();
-
-      if (data.answer) {
-        setAnswer(data.answer);
-      } else {
-        setError(data.error || 'Failed to answer the question');
-      }
-    } catch {
-      setError('Failed to reach the Q&A service');
-    } finally {
-      setIsLoading(false);
+    const result = await askProposalQuestion(proposal.id, trimmed);
+    if (result.ok) {
+      setAnswer(result.answer);
+    } else {
+      setError(result.error);
     }
+    setIsLoading(false);
   }, [question, isLoading, proposal.id]);
 
   const onInputKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

@@ -13,11 +13,15 @@ import {
   SPLIT_DELEGATION_REGISTRY,
   toRegistryDelegations,
 } from '@/lib/gnosis/registry';
+import type { DelegationFailure } from '@/lib/telemetry/events';
 
 import DelegateName from './DelegateName';
 
+type WalletFailure = Extract<DelegationFailure, { stage: 'wallet' }>['reason'];
+
 export type Submission =
-  { kind: 'sent'; hash: Hash; safe: Address | null } | { kind: 'error'; message: string };
+  | { kind: 'sent'; hash: Hash; safe: Address | null }
+  | { kind: 'error'; message: string; reason: WalletFailure };
 
 /** The delegations to write with `setDelegation`, or `'clear'` for `clearDelegation`. */
 export type DelegationWrite = PlannedDelegation[] | 'clear';
@@ -64,12 +68,21 @@ function writeStored(key: string, submission: Submission | null) {
   }
 }
 
-// wagmi wraps the wallet's rejection in a contract-call error.
-function isUserRejection(error: unknown): boolean {
+// wagmi wraps the wallet's error in a contract-call error.
+function hasCause(error: unknown, names: string[]): boolean {
   if (error instanceof BaseError) {
-    return error.walk((e) => (e as Error).name === 'UserRejectedRequestError') !== null;
+    return error.walk((e) => names.includes((e as Error).name)) !== null;
   }
-  return error instanceof Error && error.name === 'UserRejectedRequestError';
+  return error instanceof Error && names.includes(error.name);
+}
+
+function walletFailureOf(error: unknown): WalletFailure {
+  if (hasCause(error, ['UserRejectedRequestError'])) {
+    return 'rejected';
+  }
+  return hasCause(error, ['ChainMismatchError', 'ConnectorChainMismatchError'])
+    ? 'chain_mismatch'
+    : 'error';
 }
 
 /**
@@ -125,11 +138,14 @@ export function useDelegationWrite(storageKey?: string) {
         safe: connected && code && code !== '0x' ? connected : null,
       });
     } catch (error) {
+      const reason = walletFailureOf(error);
       setSubmission({
         kind: 'error',
-        message: isUserRejection(error)
-          ? 'The transaction was rejected in your wallet.'
-          : 'The transaction could not be sent. Try again.',
+        reason,
+        message:
+          reason === 'rejected'
+            ? 'The transaction was rejected in your wallet.'
+            : 'The transaction could not be sent. Try again.',
       });
     }
   }

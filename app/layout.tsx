@@ -5,6 +5,7 @@ import './globals.css';
 
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
+import Telemetry from '@/components/telemetry/Telemetry';
 import WalletProvider from '@/components/wallet/WalletProvider';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
 
@@ -58,6 +59,7 @@ export default function RootLayout({
             <Footer />
           </WalletProvider>
         </ThemeProvider>
+        <Telemetry />
       </body>
     </html>
   );

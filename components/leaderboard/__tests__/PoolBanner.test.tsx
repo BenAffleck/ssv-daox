@@ -11,6 +11,8 @@ vi.mock('@rainbow-me/rainbowkit', () => ({ useConnectModal: () => ({}) }));
 
 const POOL_ADDRESS = '0x9a62c932F5a8Eb807F655E3D948EdaE174D39D3B';
 
+const CAMPAIGN_URL = 'https://example.com/the-distributed-vote';
+
 const POOL = {
   totalPower: 1300000,
   cap: 500000,
@@ -46,6 +48,24 @@ describe('PoolBanner', () => {
 
     expect(screen.queryByText(/cap reached/)).not.toBeInTheDocument();
     expect(screen.getByText(`${(1300000).toLocaleString()} SSV`)).toBeInTheDocument();
+  });
+
+  it('links to the campaign from a ribbon while a campaign runs', () => {
+    render(<PoolBanner pool={POOL} poolAddress={POOL_ADDRESS} campaignUrl={CAMPAIGN_URL} />);
+
+    expect(screen.getByRole('region', { name: 'DAO auto-delegation pool' })).toHaveTextContent(
+      'The Distributed Vote · Incentives live for cSSV delegated to the DAO pool',
+    );
+    const link = screen.getByRole('link', { name: /Check eligibility/ });
+    expect(link).toHaveAttribute('href', CAMPAIGN_URL);
+    expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('shows no campaign without a campaign URL', () => {
+    render(<PoolBanner pool={POOL} poolAddress={POOL_ADDRESS} />);
+
+    expect(screen.queryByText(/The Distributed Vote/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Check eligibility/ })).not.toBeInTheDocument();
   });
 
   it('renders nothing when the pool lookup failed', () => {

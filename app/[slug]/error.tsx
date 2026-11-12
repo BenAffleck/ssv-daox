@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 
+import { trackEvent } from '@/lib/telemetry/events';
+
 export default function Error({
   error,
   reset,
@@ -11,6 +13,7 @@ export default function Error({
 }) {
   useEffect(() => {
     console.error(error);
+    trackEvent('client_error', { boundary: 'module', digest: error.digest ?? 'none' });
   }, [error]);
 
   return (

@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 
 import type { ProposalSummary } from '@/lib/ai-summary/types';
+import { requestProposalSummary } from '@/lib/ai/requests';
 import type { GovernanceSpace, SnapshotActiveProposal } from '@/lib/snapshot/types';
 import { formatTimeRemaining } from '@/lib/snapshot/utils/time-remaining';
 
@@ -43,27 +44,13 @@ export default function ActiveVoteCard({
     setError(null);
     setShowSummary(true);
 
-    try {
-      const response = await fetch('/api/ai-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ proposalId: proposal.id }),
-      });
-
-      const data = await response.json();
-
-      if (data.error && !data.summary) {
-        setError(data.error);
-      } else if (data.summary) {
-        setSummary(data.summary);
-      } else {
-        setError('Failed to generate summary');
-      }
-    } catch {
-      setError('Failed to fetch summary');
-    } finally {
-      setIsLoading(false);
+    const result = await requestProposalSummary(proposal.id);
+    if (result.ok) {
+      setSummary(result.summary);
+    } else {
+      setError(result.error);
     }
+    setIsLoading(false);
   }, [summary, proposal.id]);
 
   return (

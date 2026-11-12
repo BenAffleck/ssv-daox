@@ -19,7 +19,7 @@ Next.js 16 App Router application with TypeScript strict mode. Modular design wh
 ssv-daox/
 ├── app/                      # Next.js App Router
 │   ├── page.tsx              # Landing page (module grid)
-│   ├── layout.tsx            # Root layout + ThemeProvider + Footer
+│   ├── layout.tsx            # Root layout + ThemeProvider + Footer + Telemetry
 │   ├── terms/page.tsx        # Terms of Service (defers to the SSV Network terms)
 │   ├── privacy/page.tsx      # Privacy Policy (DAOx data flows)
 │   ├── globals.css           # Tailwind v4 + theme tokens
@@ -61,6 +61,7 @@ ssv-daox/
 │   │   ├── WalletProvider.tsx    # Client: wagmi, React Query, RainbowKit, session-restored flag
 │   │   ├── WalletButton.tsx      # Client: header connect / account / wrong-network button
 │   │   ├── AccountMenu.tsx       # Client: connected account dropdown (profile, copy, Etherscan, disconnect)
+│   │   ├── useConnectAttempt.ts  # Client: open the connect modal, report connected or dismissed
 │   │   └── useWalletSession.ts   # loading | disconnected | connected
 │   ├── leaderboard/          # Leaderboard components
 │   │   ├── DelegatesTable.tsx    # Client: filter/sort state
@@ -80,6 +81,7 @@ ssv-daox/
 │   │   ├── OwnerOnly.tsx            # Client: renders children for the owner wallet; useIsOwner
 │   │   ├── DelegateProfile.tsx      # Client: avatar, name, Snapshot statement
 │   │   ├── DelegateToDaoPanel.tsx   # "Delegate to the DAO" step panel
+│   │   ├── CampaignRibbon.tsx       # The Distributed Vote campaign ribbon
 │   │   ├── VotingPowerPanel.tsx     # Server: voting power breakdown panel
 │   │   ├── ClaimIntroPanel.tsx      # "Claim on HighSignal" without an overview
 │   │   ├── ConnectToDelegateButton.tsx # Client: connect prompt for disconnected wallets
@@ -94,6 +96,7 @@ ssv-daox/
 │   │   ├── OptOutPanel.tsx          # Client: EIP-712 opt-out / opt-in + Demo banner
 │   │   ├── OptOutStatusBadge.tsx
 │   │   └── ClaimStatusBadge.tsx
+│   ├── telemetry/            # Client: Analytics + Speed Insights, TrackEvent, WalletConnectTracker
 │   └── dao-timeline/         # Timeline components
 │       ├── Timeline.tsx          # Client: main container + AI state
 │       ├── TimelineFilterControls.tsx
@@ -118,7 +121,7 @@ ssv-daox/
 │   │   ├── api/              # Delegate Score API fetcher
 │   │   └── logic/            # Business logic
 │   ├── delegation/           # Delegation logic
-│   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address
+│   │   ├── config.ts         # HighSignal URLs (env, with defaults), auto-delegation pool address, campaign URL
 │   │   ├── api/fetch-pin.ts  # Gnosis pin per address; pool pin → PoolSummary, shared by both pages
 │   │   ├── api/resolve-ens.ts  # ENS name → mainnet address via MAINNET_RPC_URL; cached reverse name
 │   │   ├── api/refresh-pins.ts # Server action: expires an address's and the pool's cached pins
@@ -147,16 +150,20 @@ ssv-daox/
 │   │   ├── rate-limit.ts     # Per-client + global fixed-window limits
 │   │   ├── llm.ts            # Llm port + LlmError
 │   │   ├── config.ts         # isAIEnabled(), getAnthropicApiKey(), model config
+│   │   ├── requests.ts       # Browser: summary + Q&A requests, with telemetry
 │   │   └── client.ts         # Anthropic Llm adapter + response helpers
 │   ├── ai-extraction/        # Extraction schema, prompt, relevance gate, transform
 │   ├── ai-summary/           # Summary schema + prompt
 │   ├── ai-qna/               # Q&A schema + prompt
 │   ├── json-file.ts          # JSON file with serialized read-modify-write (AI cache, opt-out stores)
+│   ├── cache-dir.ts          # Writable cache dir: .cache/, or /tmp/.cache on Vercel
+│   ├── telemetry/            # Typed analytics events, address redaction, request-error records (see "Telemetry")
 │   └── snapshot/             # Snapshot.org integration
 │       ├── config.ts         # API config + env vars
 │       ├── types.ts          # API types
 │       └── api/              # GraphQL queries
 │
+├── instrumentation.ts        # onRequestError → one JSON log line per failed server request
 ├── __tests__/                # Unit tests (Vitest)
 └── e2e/                      # E2E tests (Playwright)
 ```
@@ -439,7 +446,7 @@ across five cohorts (`ssvCommunity`, `verifiedOperators`, `professional`,
   count. It uses `fetchPoolSummary()` (see [Auto-delegation](#auto-delegation)). A
   failed pool lookup hides the banner; a failed cap lookup fails the page.
 - `PoolBannerAction` (client) is the banner's action. Without a wallet it is a
-  button, "SSV holder? Delegate to the DAO →", that opens the connect
+  button, "SSV or cSSV holder? Delegate to the DAO →", that opens the connect
   modal and stays on the page. With a connected wallet it fetches
   `/api/voting-power/[address]?fresh=1` (uncached, so a delegation just made on
   the profile shows here too; a successful read expires the address's cached pin, so the linked
@@ -994,6 +1001,17 @@ voting power is larger. The cap is frozen in the run; `fetchAllocationCap()`
     happens and holds the action. It needs a selected address.
   - `VotingPowerPanel` shows the breakdown card for a valid selected address
     (scored or not, wallet connected or not), below "Delegate to the DAO".
+- **Incentive campaign.** `getCampaignUrl()` (`lib/delegation/config.ts`)
+  reads `DISTRIBUTED_VOTE_CAMPAIGN_URL`; unset (`undefined`) means no campaign UI. The pages
+  pass it as `campaignUrl` to `PoolBanner` and to `DelegateToDaoPanel` (through
+  `AutoDelegationPath`, a client component, so the URL stays server config).
+  - `CampaignRibbon` tops both cards: "The Distributed Vote · Incentives live
+    for cSSV delegated to the DAO pool", with a "Check eligibility ↗" pill that opens the
+    campaign page in a new tab. It shows in every wallet state.
+  - The leaderboard action takes a brand outline (`boosted`). Only the actions
+    that lead to delegating pulse (`.campaign-pulse`): connect and "Delegate
+    your {power}" on the banner; connect and "Delegate to the DAO" on the panel, only while enabled and idle.
+  - Labels, links and on-chain actions don't change.
 - **Auto-delegation view model.** `autoDelegationView()`
   (`lib/delegation/logic/auto-delegation.ts`) is pure. It takes the selected
   address, the connected account, the address's pin data (`null` when the
@@ -1193,9 +1211,9 @@ memory store.
 
 `getOptOutService()` (`opt-out/server.ts`) wires one instance per process:
 
-- **Cache location:** `.cache/` under the working directory, or under
-  `os.tmpdir()` when `VERCEL` is set, because Vercel functions can write only
-  to `/tmp`.
+- **Cache location:** `cacheDir()` (`lib/cache-dir.ts`): `.cache/` under the
+  working directory, or under `os.tmpdir()` when `VERCEL` is set, because
+  Vercel functions can write only to `/tmp`.
 - **Nonce store:** `.cache/opt-out-nonces.json`. Records are pruned a day
   after expiry, so a late submission reads as expired, not unknown. At most
   10,000 records (about 2 MB); beyond that the nonce route answers `429`.
@@ -1700,9 +1718,13 @@ Error bodies are `{ error, code, fromCache: false }`; clients branch on `code`, 
 message text. Success bodies keep their keys: `{ summary }`, `{ answer }`,
 `{ events, eventsFiltered }`, each with `fromCache`.
 
-**Cache:** one file, `.cache/ai.json`, through `lib/json-file.ts` (serialized writes,
-expired entries pruned on write). Ephemeral on serverless hosts; a cost optimisation,
-never a source of truth.
+**Cache:** one file, `ai.json` in `cacheDir()` (`/tmp/.cache` on Vercel), through
+`lib/json-file.ts` (serialized writes, expired entries pruned on write). Per instance and
+ephemeral on serverless hosts; a cost optimisation, never a source of truth.
+
+**Browser side:** `lib/ai/requests.ts` (`requestProposalSummary`, `askProposalQuestion`)
+is the one place the vote cards and the Q&A dialog call the routes; it records the
+telemetry events below.
 
 **Testing:** `lib/ai/__tests__/features.test.ts` drives the module with a scripted `Llm`,
 in-memory proposal sources and a temp cache file, and proves each invariant above.
@@ -1770,6 +1792,66 @@ works regardless of the active space/status/search filters.
 
 ---
 
+## Telemetry
+
+Answers "where do users drop off, and what breaks" at launch scale, without tying
+a visit to a wallet.
+
+- **Web Analytics + Speed Insights:** `components/telemetry/Telemetry.tsx` in the root
+  layout. Its `beforeSend` (`redactEventUrl`) blanks the whole `address=` value (an
+  encoded unicode ENS name matches no pattern), then strips any other address or ENS name. UTM parameters stay, for campaign links.
+- **Custom events:** only through `trackEvent(name, props)` (`lib/telemetry/events.ts`).
+  `TelemetryEvents` is the catalog: one typed property set per event, none holding an
+  address. String values are redacted anyway, and a throwing tracker never breaks a flow.
+
+  | Event                                  | Where                                        | Properties                                                                      |
+  | -------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------- |
+  | `wallet_connected`                     | `WalletConnectTracker` (fresh, not restored) | `connector`                                                                     |
+  | `delegation_lookup`                    | `/delegation` via `TrackEvent`               | `result`: listed / not_listed / unresolved                                      |
+  | `optout_started` / `_signed`           | `OptOutPanel`                                | `action`                                                                        |
+  | `optout_submitted`                     | `OptOutPanel`                                | `action`, `via`: wallet / safe                                                  |
+  | `optout_failed`                        | `OptOutPanel`                                | `action`, `stage`, `reason` (server code, `http_<status>`, `rejected`, `error`) |
+  | `ai_summary_requested`, `ai_qna_asked` | `lib/ai/requests.ts`                         | none; the question is never sent                                                |
+  | `ai_rate_limited`                      | `lib/ai/requests.ts`                         | `feature`                                                                       |
+  | `timeline_extract_clicked`             | `Timeline`                                   | none                                                                            |
+  | `client_error`                         | `app/error.tsx`, `app/[slug]/error.tsx`      | `boundary`, `digest`                                                            |
+
+  **Campaign funnel.** The route from the leaderboard's pool banner or a profile's
+  "Delegate to the DAO" panel to a confirmed delegation. `placement` (`banner` / `panel`)
+  says where the user saw or clicked something; `source` (`leaderboard` / `profile`) says
+  which route led to the write: the banner's links carry `?via=leaderboard`, which
+  `/delegation` passes to `AutoDelegationPath`.
+
+  | Event                   | Where                                                                             | Properties                                                                                                        |
+  | ----------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+  | `delegate_cta_clicked`  | `PoolBannerAction`, `useConnectToDelegate`                                        | `placement`: banner / panel, `step`: connect / open                                                               |
+  | `connect_modal_closed`  | same, via `useConnectAttempt`                                                     | `placement`; the modal closed without a wallet                                                                    |
+  | `delegate_offer_shown`  | `PoolBannerAction` (after the power fetch), `AutoDelegationPath` (connected only) | `placement`, `offer`: delegate / received / delegated / none / unavailable / switch_account                       |
+  | `delegation_requested`  | `AutoDelegationPath` button                                                       | `source`: leaderboard / profile, `drops`: yes / no                                                                |
+  | `delegation_sent`       | `AutoDelegationPath`, phase pending / proposed                                    | `source`, `wallet`: eoa / safe                                                                                    |
+  | `delegation_confirmed`  | `AutoDelegationPath`, phase confirmed                                             | `source`                                                                                                          |
+  | `delegation_failed`     | `AutoDelegationPath`, phase error / failed                                        | `stage`: wallet (`reason`: rejected / chain_mismatch / error) or chain (`reason`: failed: reverted or no receipt) |
+  | `delegation_index_slow` | `AutoDelegationPath`, `useRefreshWhile` gave up                                   | none                                                                                                              |
+  | `campaign_link_clicked` | `CampaignRibbon` "Check eligibility"                                              | `placement`: banner / panel                                                                                       |
+
+  Delivery events and `delegation_index_slow` follow only a write sent on this visit; one
+  restored from storage after a reload is not counted again. The panel records its offer
+  once per connected wallet, so the state change after a delegation isn't a second offer.
+
+  Custom events need the Vercel Pro plan; on Hobby they are dropped.
+
+- **Server errors:** `instrumentation.ts` `onRequestError` logs one JSON line per failed
+  request (`describeRequestError`: route, route type, method, redacted path and message,
+  digest; no headers). Search Vercel logs or a log drain for `"event":"request_error"`.
+  A `client_error` digest matches the server line's digest.
+
+**Testing:** `lib/telemetry/__tests__/` covers redaction, `trackEvent` and the error
+record; `lib/ai/__tests__/requests.test.ts` and `OptOutPanel.test.tsx` cover the events.
+The campaign funnel is covered by `PoolBannerAction.test.tsx`, `CampaignRibbon.test.tsx`,
+`AutoDelegationPath.events.test.tsx` and `useDelegationWrite.test.tsx` (wallet failure reason).
+
+---
+
 ## Testing Strategy
 
 - **Unit tests** (`__tests__/`): Pure functions, business logic
@@ -1813,6 +1895,6 @@ _Last Updated: 2026-06-29_
 copy the text: they incorporate the SSV Network Terms of Service
 (`ssv.network/legal/terms-of-service`) by link and add a short DAOx addendum, so
 they follow that document. The privacy policy lists DAOx's actual data flows
-(Vercel hosting, wallet addresses, opt-out records, Anthropic for AI features,
-theme in local storage, no analytics). **Update it whenever a feature adds a
+(Vercel hosting and analytics, wallet addresses, opt-out records, Anthropic for AI
+features, theme in local storage). **Update it whenever a feature adds a
 third-party call, stored data or a tracker.** `Footer` links both from every page.

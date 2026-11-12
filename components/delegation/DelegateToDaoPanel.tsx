@@ -1,3 +1,5 @@
+import CampaignRibbon from './CampaignRibbon';
+
 export const DELEGATE_TO_DAO_ANCHOR = 'delegate-to-dao';
 
 const DEFAULT_SUBTITLE =
@@ -10,6 +12,8 @@ interface DelegateToDaoPanelProps {
   action?: React.ReactNode;
   /** Notes, confirmations and transaction status below the title. */
   children?: React.ReactNode;
+  /** The Distributed Vote campaign page; unset when no campaign runs. */
+  campaignUrl?: string;
 }
 
 /** "Delegate to the DAO": the page's primary action, highlighted with the brand glow. */
@@ -18,21 +22,25 @@ export default function DelegateToDaoPanel({
   subtitle = DEFAULT_SUBTITLE,
   action,
   children,
+  campaignUrl,
 }: DelegateToDaoPanelProps) {
   return (
     <section
       id={DELEGATE_TO_DAO_ANCHOR}
       aria-labelledby="delegate-to-dao-title"
-      className="card mt-6 scroll-mt-24 border-primary/50 p-5 shadow-glow"
+      className={`card mt-6 scroll-mt-24 border-primary/50 shadow-glow ${campaignUrl ? 'overflow-hidden' : ''}`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="min-w-0">
-          <h3 id="delegate-to-dao-title">{title}</h3>
-          <p className="mt-1 text-[13px] text-muted">{subtitle}</p>
+      {campaignUrl && <CampaignRibbon url={campaignUrl} placement="panel" />}
+      <div className="p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h3 id="delegate-to-dao-title">{title}</h3>
+            <p className="mt-1 text-[13px] text-muted">{subtitle}</p>
+          </div>
+          {action && <div className="shrink-0">{action}</div>}
         </div>
-        {action && <div className="shrink-0">{action}</div>}
+        {children && <div className="mt-4 space-y-3 text-[13px]">{children}</div>}
       </div>
-      {children && <div className="mt-4 space-y-3 text-[13px]">{children}</div>}
     </section>
   );
 }

@@ -18,10 +18,16 @@
     "prepare": "husky"
   },
   "description": "Your governance toolkit for the SSV Network",
+  "engines": {
+    "node": ">=22",
+    "npm": ">=11"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
     "@rainbow-me/rainbowkit": "^2.2.11",
     "@tanstack/react-query": "^5.103.2",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.1.0",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.1",
     "lucide-react": "^1.0.1",

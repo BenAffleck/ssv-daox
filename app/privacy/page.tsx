@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: 'Privacy Policy - DAOx' };
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="19 October 2026">
+    <LegalPage title="Privacy Policy" updated="12 November 2026">
       <p>
         This policy covers DAOx (<code>daox.ssv.network</code>), operated by SSV Foundation (the
         &ldquo;Company&rdquo;, &ldquo;we&rdquo;). DAOx is open source; the source code is the
@@ -36,19 +36,26 @@ export default function PrivacyPage() {
           are sent to Anthropic to generate an answer. Do not enter personal information.
         </li>
         <li>
+          <strong>Usage analytics.</strong> We use Vercel Web Analytics and Speed Insights to count
+          page views, see which pages load slowly and which steps (such as connecting a wallet,
+          looking up an address or submitting an opt-out) succeed or fail. They set no cookies and
+          do not track you across sites. Wallet addresses and ENS names are removed from page
+          addresses and events before they are sent, and Q&amp;A questions are never included.
+        </li>
+        <li>
           <strong>Browser storage.</strong> Your theme choice is kept in local storage on your
-          device. We do not use advertising or analytics trackers. Wallet providers you connect may
-          store their own data in your browser.
+          device. We do not use advertising trackers. Wallet providers you connect may store their
+          own data in your browser.
         </li>
       </ul>
 
       <h2>Third parties</h2>
       <p>
         To work, DAOx calls third-party services that see the data needed for the request, including
-        your IP address where your browser contacts them directly: Vercel (hosting), Snapshot
-        (governance data), the SSV Delegate Score API, Safe Transaction Service, an Ethereum RPC
-        provider, stamp.fyi (avatars), WalletConnect (if you use it) and Anthropic (AI features).
-        Their own privacy policies apply.
+        your IP address where your browser contacts them directly: Vercel (hosting and analytics),
+        Snapshot (governance data), the SSV Delegate Score API, Safe Transaction Service, an
+        Ethereum RPC provider, stamp.fyi (avatars), WalletConnect (if you use it) and Anthropic (AI
+        features). Their own privacy policies apply.
       </p>
 
       <h2>Blockchain data</h2>

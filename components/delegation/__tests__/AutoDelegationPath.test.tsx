@@ -242,6 +242,17 @@ describe('AutoDelegationPath for the owner', () => {
     expect(screen.getByRole('button', { name: 'Delegate to the DAO' })).toBeInTheDocument();
   });
 
+  it('links to the campaign while a campaign runs', () => {
+    render(
+      <AutoDelegationPath {...PROPS} campaignUrl="https://example.com/the-distributed-vote" />,
+    );
+
+    expect(screen.getByRole('link', { name: /Check eligibility/ })).toHaveAttribute(
+      'href',
+      'https://example.com/the-distributed-vote',
+    );
+  });
+
   it('offers only the remaining power when the DAO holds part of the delegation', () => {
     const partial: VotingPowerData = {
       ...PIN,

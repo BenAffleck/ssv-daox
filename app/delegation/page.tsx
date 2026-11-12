@@ -16,13 +16,18 @@ import ScoreBreakdownPanel from '@/components/delegation/ScoreBreakdownPanel';
 import VotingPowerPanel from '@/components/delegation/VotingPowerPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
 import ScoreFreshness from '@/components/leaderboard/ScoreFreshness';
+import TrackEvent from '@/components/telemetry/TrackEvent';
 import { fetchPin, fetchPoolRecipients } from '@/lib/delegation/api/fetch-pin';
 import {
   resolveEnsName,
   reverseEnsName,
   type EnsResolution,
 } from '@/lib/delegation/api/resolve-ens';
-import { AUTO_DELEGATION_POOL_ADDRESS, getHighSignalConfig } from '@/lib/delegation/config';
+import {
+  AUTO_DELEGATION_POOL_ADDRESS,
+  getCampaignUrl,
+  getHighSignalConfig,
+} from '@/lib/delegation/config';
 import {
   buildAddressOverview,
   isAddress,
@@ -175,7 +180,7 @@ function NotScored() {
 export default async function DelegationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ address?: string | string[] }>;
+  searchParams: Promise<{ address?: string | string[]; via?: string | string[] }>;
 }) {
   if (!DELEGATE_SCORE_CONFIG.apiBaseUrl) {
     return (
@@ -190,7 +195,7 @@ export default async function DelegationPage({
     );
   }
 
-  const { address: param } = await searchParams;
+  const { address: param, via } = await searchParams;
   const address = (Array.isArray(param) ? param[0] : param)?.trim() ?? '';
   // The leaderboard is the lookup.
   if (!address) {
@@ -209,6 +214,7 @@ export default async function DelegationPage({
           <WalletSection address={address} overview={null} />
         </PageHeader>
         <LookupProblem address={address} resolution={resolution} />
+        <TrackEvent name="delegation_lookup" properties={{ result: 'unresolved' }} />
       </div>
     );
   }
@@ -254,6 +260,7 @@ export default async function DelegationPage({
     leaderboard.rows,
   );
   const ownAddresses = overview?.addresses.map((a) => a.address) ?? [];
+  const campaignUrl = getCampaignUrl();
   const { breakdown } = autoDelegationView({
     address,
     connected: undefined,
@@ -274,6 +281,10 @@ export default async function DelegationPage({
       <PageHeader>
         <WalletSection address={address} overview={overview} />
       </PageHeader>
+      <TrackEvent
+        name="delegation_lookup"
+        properties={{ result: overview ? 'listed' : 'not_listed' }}
+      />
       <DelegateProfile
         address={address}
         name={name}
@@ -301,9 +312,11 @@ export default async function DelegationPage({
           optOut={statuses[selected] ?? null}
           optOutStepAvailable={overview !== null}
           nextPower={leaderboard.rows.find((r) => sameAddress(r.address, address))?.power ?? null}
+          campaignUrl={campaignUrl}
+          source={via === 'leaderboard' ? 'leaderboard' : 'profile'}
         />
       ) : (
-        <DelegateToDaoPanel />
+        <DelegateToDaoPanel campaignUrl={campaignUrl} />
       )}
       {scoreBreakdown && <ScoreBreakdownPanel breakdown={scoreBreakdown} />}
       <VotingPowerPanel breakdown={breakdown} />

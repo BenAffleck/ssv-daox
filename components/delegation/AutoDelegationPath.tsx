@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 
 import NextRoundPower from '@/components/leaderboard/NextRoundPower';
 import { useWalletSession } from '@/components/wallet/useWalletSession';
@@ -19,6 +19,7 @@ import { loadScoreStatus } from '@/lib/leaderboard/api/load-status';
 import { nextUpdateEstimate } from '@/lib/leaderboard/logic/freshness';
 import type { ScoreStatus } from '@/lib/leaderboard/types';
 import { formatAddress } from '@/lib/leaderboard/utils/address';
+import { trackEvent, type DelegateOffer, type DelegationSource } from '@/lib/telemetry/events';
 
 import ConnectToDelegateButton, { PRIMARY_BUTTON } from './ConnectToDelegateButton';
 import DelegateToDaoPanel from './DelegateToDaoPanel';
@@ -28,6 +29,8 @@ import {
   SubmissionStatus,
   useDelegationWrite,
   useSubmissionPhase,
+  type Submission,
+  type SubmissionPhase,
 } from './DelegationTransaction';
 import OpenOwnAddressLink from './OpenOwnAddressLink';
 import OpenStepButton, { SECONDARY_BUTTON } from './OpenStepButton';
@@ -47,10 +50,41 @@ interface AutoDelegationPathProps {
   optOutStepAvailable: boolean;
   /** Power the next score run allocates to the address; `null` when it isn't scored. */
   nextPower: number | null;
+  /** The Distributed Vote campaign page; unset when no campaign runs. */
+  campaignUrl?: string;
+  /** The route that led here, for analytics. */
+  source?: DelegationSource;
 }
 
 const LAG_NOTE =
   'Your voting power updates once the delegation API picks up the transaction, usually a few minutes after it executes. This page refreshes on its own.';
+
+const OFFERS: Record<AutoDelegationState['kind'], DelegateOffer> = {
+  ready: 'delegate',
+  'opt-out-required': 'received',
+  'awaiting-run': 'received',
+  'already-delegating': 'delegated',
+  'nothing-to-delegate': 'none',
+  unavailable: 'unavailable',
+  'switch-account': 'switch_account',
+};
+
+/** Records where a write sent from this page now stands. */
+function trackDelivery(
+  phase: SubmissionPhase,
+  submission: Submission | null,
+  source: DelegationSource,
+) {
+  if (phase === 'pending' || phase === 'proposed') {
+    trackEvent('delegation_sent', { source, wallet: phase === 'proposed' ? 'safe' : 'eoa' });
+  } else if (phase === 'confirmed') {
+    trackEvent('delegation_confirmed', { source });
+  } else if (phase === 'failed') {
+    trackEvent('delegation_failed', { stage: 'chain', reason: 'failed' });
+  } else if (phase === 'error' && submission?.kind === 'error') {
+    trackEvent('delegation_failed', { stage: 'wallet', reason: submission.reason });
+  }
+}
 
 function powerOrFallback(power: number | null): string {
   return power === null ? 'voting power' : formatPower(power);
@@ -97,6 +131,8 @@ export default function AutoDelegationPath({
   optOut,
   optOutStepAvailable,
   nextPower,
+  campaignUrl,
+  source = 'profile',
 }: AutoDelegationPathProps) {
   const session = useWalletSession();
   const connectToDelegate = useConnectToDelegate(address);
@@ -127,11 +163,37 @@ export default function AutoDelegationPath({
   }, [indexed]);
   const [confirmedDrop, setConfirmedDrop] = useState(false);
 
+  // Only a write sent on this visit counts; one restored from storage was recorded when it happened.
+  const sentHere = useRef(false);
+  useEffect(() => {
+    if (sentHere.current) {
+      trackDelivery(phase, submission, source);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per phase change
+  }, [phase]);
+  useEffect(() => {
+    if (gaveUp && sentHere.current) {
+      trackEvent('delegation_index_slow', {});
+    }
+  }, [gaveUp]);
+
+  // Once per wallet: the state moves on after a delegation, and that isn't a new offer.
+  const recordOffer = useEffectEvent(() =>
+    trackEvent('delegate_offer_shown', { placement: 'panel', offer: OFFERS[state.kind] }),
+  );
+  useEffect(() => {
+    if (session.phase === 'connected') {
+      recordOffer();
+    }
+  }, [session.phase, session.address]);
+
+  const pulse = campaignUrl ? 'campaign-pulse' : '';
+
   const powerLabel = (power: number) => (
     <span className="text-accent tabular-nums">{formatPower(power)}</span>
   );
 
-  function panel(): React.ComponentProps<typeof DelegateToDaoPanel> {
+  function panel(): Omit<React.ComponentProps<typeof DelegateToDaoPanel>, 'campaignUrl'> {
     switch (state.kind) {
       case 'unavailable':
         return {
@@ -151,7 +213,9 @@ export default function AutoDelegationPath({
           return {};
         }
         if (session.phase === 'disconnected') {
-          return { action: <ConnectToDelegateButton onClick={connectToDelegate} /> };
+          return {
+            action: <ConnectToDelegateButton onClick={connectToDelegate} className={pulse} />,
+          };
         }
         if (accountSwitchPrompt(address, session.address, identityAddresses) === 'sibling') {
           return {
@@ -188,6 +252,7 @@ export default function AutoDelegationPath({
         const power = (breakdown?.ownPower ?? 0) + (state.movesAlong?.power ?? 0);
         const { remaining } = state;
         const confirm = !locked && state.droppedDelegates.length > 0;
+        const blocked = awaitingWallet || (state.droppedDelegates.length > 0 && !confirmedDrop);
         return {
           title: remaining ? (
             <>
@@ -201,9 +266,16 @@ export default function AutoDelegationPath({
           action: !locked && (
             <button
               type="button"
-              onClick={() => send(state.delegations)}
-              disabled={awaitingWallet || (state.droppedDelegates.length > 0 && !confirmedDrop)}
-              className={PRIMARY_BUTTON}
+              onClick={() => {
+                sentHere.current = true;
+                trackEvent('delegation_requested', {
+                  source,
+                  drops: state.droppedDelegates.length > 0 ? 'yes' : 'no',
+                });
+                send(state.delegations);
+              }}
+              disabled={blocked}
+              className={`${PRIMARY_BUTTON} ${blocked || phase !== 'idle' ? '' : pulse}`}
             >
               {awaitingWallet
                 ? 'Confirm in your wallet…'
@@ -280,5 +352,5 @@ export default function AutoDelegationPath({
     }
   }
 
-  return <DelegateToDaoPanel {...panel()} />;
+  return <DelegateToDaoPanel {...panel()} campaignUrl={campaignUrl} />;
 }

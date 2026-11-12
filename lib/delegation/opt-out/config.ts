@@ -1,10 +1,6 @@
-import os from 'os';
 import path from 'path';
 
-/** Vercel functions can write only to `/tmp`; the deployment directory is read-only. */
-function cacheRoot(): string {
-  return process.env.VERCEL ? os.tmpdir() : process.cwd();
-}
+import { cacheDir } from '@/lib/cache-dir';
 
 export const OPT_OUT_CONFIG = {
   /**
@@ -22,9 +18,9 @@ export const OPT_OUT_CONFIG = {
     );
   },
   get nonceFilePath(): string {
-    return path.join(cacheRoot(), '.cache/opt-out-nonces.json');
+    return path.join(cacheDir(), 'opt-out-nonces.json');
   },
   get mockFilePath(): string {
-    return path.join(cacheRoot(), '.cache/opt-out-mock.json');
+    return path.join(cacheDir(), 'opt-out-mock.json');
   },
 } as const;

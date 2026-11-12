@@ -1,6 +1,7 @@
 import path from 'path';
 import { NextResponse } from 'next/server';
 
+import { cacheDir } from '@/lib/cache-dir';
 import { getSnapshotTimelineSpaceId } from '@/lib/dao-timeline/config';
 import { getGovernanceSpaces } from '@/lib/snapshot/config';
 
@@ -34,7 +35,7 @@ const AI_LIMITS: Record<AiFeature, Limits> = {
 let features: AiFeatures | null = null;
 
 /**
- * The AI features wired to Anthropic, Snapshot and `.cache/ai.json`. One
+ * The AI features wired to Anthropic, Snapshot and `ai.json` in the cache dir. One
  * instance per process, so its cache writes are serialized.
  */
 export function getAiFeatures(): AiFeatures {
@@ -51,7 +52,7 @@ export function getAiFeatures(): AiFeatures {
         spaceIds: [getSnapshotTimelineSpaceId() ?? ''],
         fetch,
       }),
-      cacheFilePath: path.join(process.cwd(), '.cache', 'ai.json'),
+      cacheFilePath: path.join(cacheDir(), 'ai.json'),
       limits: AI_LIMITS,
     });
   }

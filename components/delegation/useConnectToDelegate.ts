@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
 
-import { useWalletSession } from '@/components/wallet/useWalletSession';
+import { useConnectAttempt } from '@/components/wallet/useConnectAttempt';
 import { sameAddress } from '@/lib/delegation/logic/pool';
+import { trackEvent } from '@/lib/telemetry/events';
 
 import { DELEGATE_TO_DAO_ANCHOR } from './DelegateToDaoPanel';
 
@@ -21,29 +20,16 @@ export function ownDelegateToDaoUrl(address: string): string {
  */
 export function useConnectToDelegate(viewed: string): () => void {
   const router = useRouter();
-  const session = useWalletSession();
-  const { openConnectModal, connectModalOpen } = useConnectModal();
-  const pending = useRef(false);
-  const modalWasOpen = useRef(false);
-
-  useEffect(() => {
-    if (!pending.current) {
-      return;
+  const connect = useConnectAttempt((connected) => {
+    if (connected === null) {
+      trackEvent('connect_modal_closed', { placement: 'panel' });
+    } else if (!sameAddress(connected, viewed)) {
+      router.push(ownDelegateToDaoUrl(connected));
     }
-    if (session.phase === 'connected') {
-      pending.current = false;
-      if (!sameAddress(session.address, viewed)) {
-        router.push(ownDelegateToDaoUrl(session.address));
-      }
-    } else if (session.phase === 'disconnected' && modalWasOpen.current && !connectModalOpen) {
-      pending.current = false;
-    }
-    modalWasOpen.current = connectModalOpen;
-  }, [session.phase, session.address, connectModalOpen, viewed, router]);
+  });
 
   return () => {
-    pending.current = true;
-    modalWasOpen.current = false;
-    openConnectModal?.();
+    trackEvent('delegate_cta_clicked', { placement: 'panel', step: 'connect' });
+    connect();
   };
 }
