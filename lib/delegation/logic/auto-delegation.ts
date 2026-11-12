@@ -19,6 +19,11 @@ function ownPower(pin: VotingPowerData): number {
   return pin.votingPower - pin.incomingPower + pin.outgoingPower;
 }
 
+/** The pool's live power: what it keeps plus what it delegates on, nearly everything. */
+export function poolPowerOf(pool: VotingPowerData): number {
+  return pool.votingPower + pool.outgoingPower;
+}
+
 export interface PoolSummary {
   totalPower: number;
   /** The latest score run's cap; `null` when uncapped. */
@@ -54,8 +59,7 @@ export function summarizePool(
   cap: number | null,
   daoAddresses: string[] = [],
 ): PoolSummary {
-  // `votingPower` is what the pool keeps after delegating; the pool passes nearly everything on.
-  const totalPower = pool.votingPower + pool.outgoingPower;
+  const totalPower = poolPowerOf(pool);
   const isDao = (entry: DelegationEntry) => daoAddresses.some((a) => sameAddress(a, entry.address));
   const daoDelegatedPower = pool.incomingDelegations
     .filter(isDao)

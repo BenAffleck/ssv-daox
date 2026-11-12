@@ -1,3 +1,4 @@
+import { nextRoundPower, type PoolBasis } from '@/lib/delegation/logic/power-change';
 import type { OptOutStatuses } from '@/lib/delegation/opt-out/score-api';
 import type { DelegationEntry, VotingPowerMap } from '@/lib/gnosis/types';
 import type { ActiveVoteData } from '@/lib/snapshot/api/fetch-active-vote-status';
@@ -20,6 +21,7 @@ export function transformDelegates(
   votingPower?: VotingPowerMap,
   activeVoteData?: ActiveVoteData,
   optOutStatuses?: OptOutStatuses,
+  poolBasis: PoolBasis | null = null,
 ): Delegate[] {
   const delegated = new Map(
     poolDelegations.map((entry) => [entry.address.toLowerCase(), entry.power]),
@@ -54,7 +56,7 @@ export function transformDelegates(
         votes: toPillar(row.votes, row.missing_votes),
       },
       cohort: row.cohort,
-      allocatedPower: row.power,
+      nextPower: nextRoundPower(row.power, poolBasis),
 
       isAlreadyDelegated: delegated.has(address.toLowerCase()),
       currentPower: delegated.get(address.toLowerCase()) ?? 0,

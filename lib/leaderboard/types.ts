@@ -35,8 +35,8 @@ export interface Delegate {
   /** `null` entries are pillars that are not live in this run. */
   pillars: Record<PillarKey, PillarScore | null>;
   cohort: Cohort | null;
-  /** Voting power the run allocates to the delegate. */
-  allocatedPower: number | null;
+  /** What the DAO delegates once the latest run applies: its seat at the live pool, when known. */
+  nextPower: number | null;
 
   // Computed
   isAlreadyDelegated: boolean;

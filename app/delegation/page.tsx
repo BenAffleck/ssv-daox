@@ -17,7 +17,7 @@ import VotingPowerPanel from '@/components/delegation/VotingPowerPanel';
 import WalletPanel from '@/components/delegation/WalletPanel';
 import ScoreFreshness from '@/components/leaderboard/ScoreFreshness';
 import TrackEvent from '@/components/telemetry/TrackEvent';
-import { fetchPin, fetchPoolRecipients } from '@/lib/delegation/api/fetch-pin';
+import { fetchPin, fetchPoolBasis, fetchPoolRecipients } from '@/lib/delegation/api/fetch-pin';
 import {
   resolveEnsName,
   reverseEnsName,
@@ -40,6 +40,7 @@ import { delegateOptionsOf } from '@/lib/delegation/logic/delegate-search';
 import { targetScoringOf, type TargetScoring } from '@/lib/delegation/logic/delegation-plan';
 import { normalizedEnsName } from '@/lib/delegation/logic/ens';
 import { sameAddress } from '@/lib/delegation/logic/pool';
+import { nextRoundPower } from '@/lib/delegation/logic/power-change';
 import {
   fetchOptOutStatuses,
   fetchSafeRequests,
@@ -244,6 +245,7 @@ export default async function DelegationPage({
     profile,
     delegationRecipients,
     reverseName,
+    poolBasis,
   ] = await Promise.all([
     scoreContext,
     // Cached; after a write, `useRefreshWhile` expires it until the API indexes the write.
@@ -251,6 +253,7 @@ export default async function DelegationPage({
     fetchSnapshotProfile(address),
     fetchPoolRecipients(),
     reverseEnsName(address),
+    fetchPoolBasis(),
   ]);
   const overview =
     baseOverview && withSafeRequests(withOptOutStatuses(baseOverview, statuses), safeRequests);
@@ -311,7 +314,10 @@ export default async function DelegationPage({
           poolAddress={AUTO_DELEGATION_POOL_ADDRESS}
           optOut={statuses[selected] ?? null}
           optOutStepAvailable={overview !== null}
-          nextPower={leaderboard.rows.find((r) => sameAddress(r.address, address))?.power ?? null}
+          nextPower={nextRoundPower(
+            leaderboard.rows.find((r) => sameAddress(r.address, address))?.power ?? null,
+            poolBasis,
+          )}
           campaignUrl={campaignUrl}
           source={via === 'leaderboard' ? 'leaderboard' : 'profile'}
         />

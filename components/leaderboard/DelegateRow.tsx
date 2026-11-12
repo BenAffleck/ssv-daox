@@ -22,7 +22,7 @@ interface DelegateRowProps {
 export default function DelegateRow({ delegate, livePillars }: DelegateRowProps) {
   const hasCohort = delegate.cohort !== null;
   const optOutBadge = optOutBadgeOf(delegate.optOut);
-  const powerChange = powerChangeOf(delegate.currentPower, delegate.allocatedPower);
+  const powerChange = powerChangeOf(delegate.currentPower, delegate.nextPower);
 
   return (
     <tr className="group border-b border-border transition-colors hover:bg-card-hover">
