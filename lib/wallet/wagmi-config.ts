@@ -35,7 +35,17 @@ export function createWagmiConfig(walletConnectProjectId: string | undefined) {
   return createConfig({
     chains: [mainnet],
     connectors: connectorsForWallets(wallets, { appName: 'SSV DAOx', projectId }),
-    transports: { [mainnet.id]: http(RPC_PROXY_PATH) },
+    transports: { [mainnet.id]: http(rpcProxyUrl()) },
     ssr: true,
   });
+}
+
+/**
+ * The WalletConnect connector reuses the transport URL as its RPC endpoint and rejects relative URLs.
+ * During SSR there is no origin, and no request leaves the server, so the bare path is enough.
+ */
+function rpcProxyUrl(): string {
+  return typeof window === 'undefined'
+    ? RPC_PROXY_PATH
+    : new URL(RPC_PROXY_PATH, window.location.origin).href;
 }
