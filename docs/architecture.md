@@ -1519,8 +1519,11 @@ config lives in `lib/wallet/wagmi-config.ts`.
 - **Connectors:** with `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, injected,
   MetaMask, Rabby, Safe and WalletConnect. Without it, injected only, and
   `createWagmiConfig` logs a console warning.
-- **Transport:** the only transport is `http('/api/rpc')`. There is no public
-  RPC fallback. Wallets broadcast transactions themselves.
+- **Transport:** the only transport is `http()` to the `/api/rpc` proxy. There
+  is no public RPC fallback. Wallets broadcast transactions themselves. In the
+  browser the URL MUST be absolute: the WalletConnect connector reuses it as
+  its RPC endpoint and rejects relative URLs, which silently drops an approved
+  session.
 - **Page follows the wallet** (`WalletPanel`): `delegationUrlOnWalletChange`
   (`lib/delegation/logic/wallet-navigation.ts`) compares settled wallet
   states:
